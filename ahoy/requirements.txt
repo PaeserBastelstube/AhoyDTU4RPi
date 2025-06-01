@@ -1,3 +1,4 @@
 paho-mqtt>=1.5
 crcmod>=1.7
 PyYAML>=5.0
+suntimes>=1.1.2
