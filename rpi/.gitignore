@@ -1,0 +1,15 @@
+# Python
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Virtual Environment
+venv/
+
+# vim leftovers
+**.swp
+
+# log-files
+*.log
+
+# config files
+*.yml
