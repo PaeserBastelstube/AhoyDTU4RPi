@@ -45,6 +45,7 @@ AhoyDTU requires the installation of certain python libraries:
 python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests
 ```
 
+The next step takes a while!
 ```code
 git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
 cd pyRF24
