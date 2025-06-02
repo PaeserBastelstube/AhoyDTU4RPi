@@ -1,11 +1,15 @@
 AhoyDTU for Raspberry-Pi with NGINX WebServices
 ===============================================
 
-This project is a partial copy of https://github.com/lumapu/ahoy/
+This project is a partial copy of ahoy (lumapu) 'https://github.com/lumapu/ahoy/'
 
 Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
-For this project, version v0.8.155 was copied and adapted for use on a Raspberry Pi.
-The goal is to use a web server (NGINX) and not consume any power when using a battery.
+Development for Raspberry-PI controllers has been frozen. 
+In this project, the development of an AhoyDTU for Raspberry PI processors is continued independently.
+For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system using the NGINX web server.
+
+The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).
+As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
 
 Installation-Requirements
 -------------------------
