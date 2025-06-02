@@ -23,6 +23,8 @@ sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-r
 ## Download AhoyDTU from github
 ```code
 cd /home
+sudo mkdir AhoyDTU
+sudo chown pi:pi AhoyDTU/
 git clone https://github.com/PaeserBastelstube/AhoyDTU.git
 ```
 
