@@ -1,36 +1,35 @@
-# AhoyDTU
-AhoyDTU for Raspberry-Pi with NGINX WebServices
-===============================================
+# AhoyDTU for Raspberry-Pi with NGINX WebServices
 
-This project is a partial copy of https://github.com/lumapu/ahoy/
+This project is a partial copy of ***ahoy (lumapu)*** [https://github.com/lumapu/ahoy/]  
 
-Since the beginning of 2024, Ahoy has only been programmed for ESP processors. 
-For this project, version v0.8.155 was copied and adapted to use on a Raspberry-Pi. 
+Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
+Development for Raspberry-PI controllers has been frozen. 
+In this project, the development of an AhoyDTU for Raspberry PI processors is continued independently.
+For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system using the NGINX web server.
 
-The goal is to use a web-server (NGINX) and zero power consumption when using a battery.
+The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).  
+As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
 
-Installation-Requirements
--------------------------
-1. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from this directories.
+## Installation-Requirements
+1. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from USER-HOME directories.
    We prefere `/home/AhoyDTU` to install this project.
-2. `/tmp` is available for all users. AhoyDTU stores LOG- and other temp files in this dir.
-3. AhoyDTU based on PYTHON and some PYTHON modules, later more
-4. you need some specific linux applications
-
+2. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
+3. AhoyDTU based on python and need some python-modules, later more ...
+4. AhoyDTU need some specific linux packages
 ```code
 sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
 ```
 
-Installation-Instruction
-------------------------
-Download AhoyDTU from github into directory `/home/AhoyDTU`
+## Download AhoyDTU from github
 ```code
 cd /home
+sudo mkdir AhoyDTU
+sudo chown pi:pi AhoyDTU/
 git clone https://github.com/PaeserBastelstube/AhoyDTU.git
 ```
 
 Important: Debian 12 follows the recommendation of [`PEP 668`]
-(https://peps.python.org/pep-0668/) - now, PYTHON is configured as "externally-managed-environment" !
+(https://peps.python.org/pep-0668/) - now, python is configured as "externally-managed-environment" !
 - You cann't install python libs via `pip`!
 - You have to use a python virtual environment `https://docs.python.org/3/library/venv.html`
 
@@ -41,10 +40,13 @@ python3 -m venv ahoyenv       ## create python virtual environment
 source ahoyenv/bin/activate   ## activate the virtual environment
 ```
 
-Now you have to install nessasarry python libraries:
+AhoyDTU requires the installation of certain python libraries:
 ```code
 python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests
+```
 
+The next step takes a while!
+```code
 git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
 cd pyRF24
   python3 -m pip install . -v
@@ -52,29 +54,50 @@ cd pyRF24
 cd ..
 ```
 
+```code
 Package            Version
 ------------------ ---------
 DateTime           5.5
 ruamel.yaml        0.18.10
 ruamel.yaml.clib   0.2.12
 zope.interface     7.2
+```
+
+# configure AhoyDTU
+To configure `Ahoy DTU`, the file `ahoy.yml` is required.  
+Please create a copy of `ahoy.yml.example` and rename it as `ahoy.yml`.
+
+## start AhoyDTU manualy
+```code
+source /home/AhoyDTU/ahoyenv/bin/activate
+python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml'
+```
+
+## start AhoyDTU as user (system) service
+```code
+systemctl --user enable /home/AhoyDTU/ahoy/ahoy.service  # to register AhoyDTU as (system) service
+systemctl --user status ahoy.service                     # to check status of service
+systemctl --user start ahoy.service                      # start AhoyDTU as (system) service
+
+for maintenance:
+systemctl --user restart ahoy.service
+systemctl --user stop ahoy.service
+systemctl --user disable ahoy.service
+```
 
 
+# Web-Server (NGINX)
+Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
+In this project, we integrate NGINX Web-Services to present this data from hoymiles invertes.
 
-
-Web-Server (NGINX)
-==================
-Ahoy on ESP8266 or ESP32 includes an own Web-Server to present hoymiles inverter data.
-In this project we include NGINX Web-Services for present this data from hoymiles invertes.
-
-Installation NGINX
-------------------
+## Installation NGINX
 ```code
 sudo apt-get install -y nginx
 ```
-now we have to link our AhoyDTU Service into NGINX
+Finally, we need to integrate (link) our AhoyDTU service into NGINX
 ```code
 cd /home/AhoyDTU
 sudo ln -fs $(pwd) /etc/nginx/sites-enabled/AhoyDTU
+sudo systemctl restart nginx
 ```
 
