@@ -1,7 +1,6 @@
-AhoyDTU for Raspberry-Pi with NGINX WebServices
-===============================================
+# AhoyDTU for Raspberry-Pi with NGINX WebServices
 
-This project is a partial copy of ahoy (lumapu) 'https://github.com/lumapu/ahoy/'
+This project is a partial copy of ***ahoy (lumapu)*** [https://github.com/lumapu/ahoy/]
 
 Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
 Development for Raspberry-PI controllers has been frozen. 
@@ -11,8 +10,7 @@ For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for 
 The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).
 As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
 
-Installation-Requirements
--------------------------
+## Installation-Requirements
 1. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from USER-HOME directories.
    We prefere `/home/AhoyDTU` to install this project.
 2. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
@@ -22,8 +20,7 @@ Installation-Requirements
 sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
 ```
 
-Download AhoyDTU from github
-----------------------------
+## Download AhoyDTU from github
 ```code
 cd /home
 git clone https://github.com/PaeserBastelstube/AhoyDTU.git
@@ -42,7 +39,7 @@ source ahoyenv/bin/activate   ## activate the virtual environment
 ```
 
 AhoyDTU requires the installation of certain python libraries:
-```code
+c
 python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests
 
 git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
@@ -52,23 +49,23 @@ cd pyRF24
 cd ..
 ```
 
+```code
 Package            Version
 ------------------ ---------
 DateTime           5.5
 ruamel.yaml        0.18.10
 ruamel.yaml.clib   0.2.12
 zope.interface     7.2
+```
 
 
 
 
-Web-Server (NGINX)
-==================
+# Web-Server (NGINX)
 Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
 In this project, we integrate NGINX Web-Services for present this data from hoymiles invertes.
 
-Installation NGINX
-------------------
+## Installation NGINX
 ```code
 sudo apt-get install -y nginx
 ```
