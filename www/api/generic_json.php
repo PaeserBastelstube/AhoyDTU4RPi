@@ -1,5 +1,5 @@
 <?php
-$yaml_data = @yaml_parse_file('../../rpi/ahoy.yml');
+$yaml_data = @yaml_parse_file('../../ahoy/ahoy.yml');
 if (!$yaml_data) {
   echo 'Error: ', yaml_last_error_msg();
 }

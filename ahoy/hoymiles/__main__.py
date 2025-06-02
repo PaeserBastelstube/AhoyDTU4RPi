@@ -61,18 +61,20 @@ signal(SIGHUP,  signal_handler)
 ################################################################################
 ################################################################################
 
-class DataDump:
+class WebServer:
   """ Handler for DataDump and WebServices
   handle maximum values
-  save data to yaml file
+  save data to yaml file for Web-Services
   """
-  def __init__(self, reset_config):
+  def __init__(self, web_config):
+    self.filepath = web_config.get('filepath', '/tmp')
     self.AtMidnight = False
     self.AtSunrise = False
     self.AtSunset = False
     self.NotAvailable = False
     self.MaxValues = False
-    if reset_config:
+    if web_config.get('InverterResetValues', None):
+       reset_config = web_config.get('InverterResetValues')
        if reset_config.get('AtMidnight', False) == True:
           self.AtMidnight = True
        if reset_config.get('AtSunrise', False) == True:
@@ -129,7 +131,7 @@ class DataDump:
         logging.debug(f"no data found for {inv_ser} - nothing to save")
         return  # no valid instance found - nothing is saved
 
-    fn = "/tmp/AhoyDTU_" + str(inv_ser) + "_" + save_switch + ".yml"
+    fn = self.filepath + "/AhoyDTU_" + str(inv_ser) + "_" + save_switch + ".yml"
     logging.debug(f"SaveToYaml: save data to {fn}")
     with open(fn, 'w') as yaml_file:
         # logging.debug(f"SaveToYaml: {data=}")
@@ -241,7 +243,7 @@ def main_loop(ahoy_config):
             # check sunrise and sunset times and sleep in night time
             sunset.checkWaitForSunrise()
             if time.time() - t_loop_start > 6 * 60 * 60:     # Interruption at night > 6h 
-               data_dump.reset_max_value()
+               web_server.reset_max_value()
 
             for inverter in inverters:
                 poll_inverter(inverter, do_init, transmit_retries)
@@ -334,8 +336,8 @@ def poll_inverter(inverter, do_init, retries):
                     )
 
             result = decoder.decode()             # call decoder object
-            if data_dump:
-              data_dump.SaveToYaml (inverter_ser, result)     # save for using in NGINX
+            if web_server:
+              web_server.SaveToYaml (inverter_ser, result)     # save for using in NGINX
             data = result.__dict__()              # convert result into python-dict
             if hoymiles.HOYMILES_TRANSACTION_LOGGING:
                logging.debug(f'Decoded: {data}')
@@ -565,11 +567,10 @@ if __name__ == '__main__':
 
     # create WebServer client object
     web_server = None
-    data_dump = None
     webserver_config = ahoy_config.get('WebServer', None)
     if webserver_config and not webserver_config.get('disabled', False):
-       # init InverterResetValues
-       data_dump = DataDump(webserver_config.get('InverterResetValues'))
+       # init WebServices
+       web_server = WebServer(webserver_config)
 
     # create INFLUX client object
     influx_client = None

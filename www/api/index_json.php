@@ -1,9 +1,10 @@
 <?php
 include'generic_json.php';
 
-# Schleife über alle Inverter in ahoy.yml Suche nach Info-Files in /tmp
+# Schleife über alle Inverter in ahoy.yml Suche nach Info-Files in {filepath}
+$filepath = $ahoy_data["WebServer"]["filepath"];
 for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
-  $pre_fn = "/tmp/AhoyDTU_" . $ahoy_data["inverters"][$ii]["serial"];
+  $pre_fn = $filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$ii]["serial"];
   #$hw_data_yaml[$ii]     = @yaml_parse_file($pre_fn . '_HardwareInfoResponse.yml');
   $status_data_yaml[$ii] = @yaml_parse_file($pre_fn . '_StatusResponse.yml');
   #$event_data_yaml[$ii]  = @yaml_parse_file($pre_fn . '_EventsResponse.yml');

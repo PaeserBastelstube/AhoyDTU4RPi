@@ -4,7 +4,7 @@
 # aus System Config
 ##    [device] =>  $(hostname)      # wird im Betriebssystem verwaltet - nicht änderbar
 ##    [schedReboot] => on           # Neustart des Web-Servers # sudo systemctl restart nginx
-##    [darkMode] => on              # cp /home/AhoyDTU/www/html/colorBright.css /home/AhoyDTU/www/html/colors.css
+##    [darkMode] => on              # ln -fs ../html/colorBright.css ../html/colors.css
 ##    [cstLnk] => asdf              # wird in ahoy.yml gespeichert
 ##    [cstLnkTxt] => asf-Text       # wird in ahoy.yml gespeichert
 ##    [region] => 0                 # wird im Betriebssystem verwaltet - nicht änderbar

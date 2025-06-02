@@ -3,8 +3,9 @@ include 'generic_json.php'; # incl. reading ahoy.yml
 
 if (! isset($inverter_id)) {$inverter_id = 0;}
 
-# read Info-Files in /tmp with current data
-$pre_fn = "/tmp/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"];
+# read Info-Files in {filepath} with current inverter data
+$filepath = $ahoy_data["WebServer"]["filepath"];
+$pre_fn = $filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"];
 $hw_data_yaml     = @yaml_parse_file($pre_fn . '_HardwareInfoResponse.yml');
 $status_data_yaml = @yaml_parse_file($pre_fn . '_StatusResponse.yml');
 $event_data_yaml  = @yaml_parse_file($pre_fn . '_EventsResponse.yml');
@@ -66,9 +67,9 @@ $$inverter_var_id = [
 	"power_limit_read" => 100,
 	"power_limit_ack" => false,
 	"max_pwr" => $max_pwr,
-	"ts_last_success" => strtotime($status_data_yaml["time"]),
+	"ts_last_success" => strtotime($status_data_yaml['time'].'CEST'),
 	"generation" => 2,
-	"status" => (time() - strtotime($status_data_yaml["time"])) > 60 ? 0 : 1,
+	"status" => (time() - strtotime($status_data_yaml["time"].'CEST')) > 60 ? 0 : 1,
 	"alarm_cnt" => $status_data_yaml["event_count"],
 	"rssi" => 0,
 	"ts_max_ac_pwr" => $status_data_yaml["max_data"]["temp_ts"],
