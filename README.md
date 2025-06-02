@@ -1,13 +1,13 @@
 # AhoyDTU for Raspberry-Pi with NGINX WebServices
 
-This project is a partial copy of ***ahoy (lumapu)*** [https://github.com/lumapu/ahoy/]
+This project is a partial copy of ***ahoy (lumapu)*** [https://github.com/lumapu/ahoy/]  
 
 Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
 Development for Raspberry-PI controllers has been frozen. 
 In this project, the development of an AhoyDTU for Raspberry PI processors is continued independently.
 For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system using the NGINX web server.
 
-The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).
+The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).  
 As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
 
 ## Installation-Requirements
@@ -63,12 +63,32 @@ ruamel.yaml.clib   0.2.12
 zope.interface     7.2
 ```
 
+# configure AhoyDTU
+To configure `Ahoy DTU`, the file `ahoy.yml` is required.  
+Please create a copy of `ahoy.yml.example` and rename it as `ahoy.yml`.
 
+## start AhoyDTU manualy
+```code
+source /home/AhoyDTU/ahoyenv/bin/activate
+python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml'
+```
+
+## start AhoyDTU as user (system) service
+```code
+systemctl --user enable /home/AhoyDTU/ahoy/ahoy.service  # to register AhoyDTU as (system) service
+systemctl --user status ahoy.service                     # to check status of service
+systemctl --user start ahoy.service                      # start AhoyDTU as (system) service
+
+for maintenance:
+systemctl --user restart ahoy.service
+systemctl --user stop ahoy.service
+systemctl --user disable ahoy.service
+```
 
 
 # Web-Server (NGINX)
 Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
-In this project, we integrate NGINX Web-Services for present this data from hoymiles invertes.
+In this project, we integrate NGINX Web-Services to present this data from hoymiles invertes.
 
 ## Installation NGINX
 ```code
@@ -78,5 +98,6 @@ Finally, we need to integrate (link) our AhoyDTU service into NGINX
 ```code
 cd /home/AhoyDTU
 sudo ln -fs $(pwd) /etc/nginx/sites-enabled/AhoyDTU
+sudo systemctl restart nginx
 ```
 
