@@ -41,9 +41,11 @@ source ahoyenv/bin/activate   ## activate the virtual environment
 ```
 
 AhoyDTU requires the installation of certain python libraries:
-c
+```code
 python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests
+```
 
+```code
 git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
 cd pyRF24
   python3 -m pip install . -v
