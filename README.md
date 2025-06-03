@@ -1,11 +1,15 @@
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
 This work is licensed under a
 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+
 [cc-by-nc-sa]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de
 [cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
+---
 # AhoyDTU for Raspberry-Pi with NGINX WebServices
 
 This project is a partial copy of ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
@@ -15,7 +19,7 @@ This project is a partial copy of ***ahoy (lumapu)*** (https://github.com/lumapu
 Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
 Development for Raspberry-PI controllers has been frozen. 
 In this project, the development of an AhoyDTU for Raspberry PI processors is continued independently.
-For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system using the NGINX web server.
+For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system with NGINX as a web-server.
 
 The goal is to collect data from a hoymiles microinverter and present the data on a web server (NGINX).  
 As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
@@ -41,7 +45,8 @@ git clone https://github.com/PaeserBastelstube/AhoyDTU.git
 ```
 
 Important: Debian 12 follows the recommendation of [`PEP 668`]
-(https://peps.python.org/pep-0668/) - now, python is configured as "externally-managed-environment" !
+(https://peps.python.org/pep-0668/)  
+Now, python is configured as "externally-managed-environment" !
 - You cann't install python libs via `pip`!
 - You have to use a python virtual environment `https://docs.python.org/3/library/venv.html`
 
@@ -66,7 +71,8 @@ cd ..
 ```
 This step takes a while!
 
-Now check alle installed `pathon modules`:
+
+Finally, check all installed `python modules`:
 ```code
 python3 -m pip list         ## check: search for pyRF24
 
@@ -110,7 +116,7 @@ In this project, we integrate NGINX Web-Services to present this data from hoymi
 ```code
 sudo apt-get install -y nginx
 ```
-Finally, we need to integrate (link) our AhoyDTU service into NGINX
+Finally, we need to integrate (link) our AhoyDTU service into NGINX and restart NGINX Service
 ```code
 cd /home/AhoyDTU
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
