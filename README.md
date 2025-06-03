@@ -11,20 +11,22 @@ The goal is to collect data from a hoymiles microinverter and present the data o
 As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume any power when using a battery.
 
 ## Installation-Requirements
-1. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from USER-HOME directories.
-   We prefere `/home/AhoyDTU` to install this project.
-2. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
-3. AhoyDTU based on python and need some python-modules, later more ...
-4. AhoyDTU need some specific linux packages
-```code
-sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
-```
+1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
+2. AhoyDTU based on python and need some python-modules, later more ...
+3. AhoyDTU need some specific linux packages
+   ```code
+   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
+   ```
+4. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from a USER-HOME directory.  
+   We prefere `/home/AhoyDTU` to install this project:
+   ```code
+   cd /home
+   sudo mkdir AhoyDTU
+   sudo chown pi:pi AhoyDTU/
+   ```
 
 ## Download AhoyDTU from github
 ```code
-cd /home
-sudo mkdir AhoyDTU
-sudo chown pi:pi AhoyDTU/
 git clone https://github.com/PaeserBastelstube/AhoyDTU.git
 ```
 
@@ -42,19 +44,23 @@ source ahoyenv/bin/activate   ## activate the virtual environment
 
 AhoyDTU requires the installation of certain python libraries:
 ```code
-python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests
+python3 -m pip install paho-mqtt crcmod PyYAML suntimes requests pyRF24
 ```
 
-The next step takes a while!
+If you have trouble to install `pyRF24`, please use the following workaround:
 ```code
 git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
 cd pyRF24
   python3 -m pip install . -v
-  python3 -m pip list         ## check: search for pyRF24
 cd ..
 ```
+This step takes a while!
 
+Now check alle installed `pathon modules`:
 ```code
+python3 -m pip list         ## check: search for pyRF24
+
+
 Package            Version
 ------------------ ---------
 DateTime           5.5
@@ -97,7 +103,7 @@ sudo apt-get install -y nginx
 Finally, we need to integrate (link) our AhoyDTU service into NGINX
 ```code
 cd /home/AhoyDTU
-sudo ln -fs $(pwd) /etc/nginx/sites-enabled/AhoyDTU
+sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo systemctl restart nginx
 ```
 
