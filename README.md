@@ -1,6 +1,16 @@
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+This work is licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+[cc-by-nc-sa]: https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+
 # AhoyDTU for Raspberry-Pi with NGINX WebServices
 
-This project is a partial copy of ***ahoy (lumapu)*** [https://github.com/lumapu/ahoy/]  
+This project is a partial copy of ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
+***ahoy (lumapu)*** is licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
 
 Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
 Development for Raspberry-PI controllers has been frozen. 
