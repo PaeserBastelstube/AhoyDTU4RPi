@@ -76,27 +76,49 @@ $$inverter_var_id = [
 	"ts_max_temp" => $status_data_yaml["max_data"]["temp_ts"],
     # V   ,A   ,W   ,Hz  ,""   , °C ,   kWh    ,  Wh    ,W   ,   %      ,var ,W       ,  °C
     # U_AC,I_AC,P_AC,F_AC,PF_AC,Temp,YieldTotal,YieldDay,P_DC,Efficiency,Q_AC,MaxPower,MaxTemp
-	"ch" => [[$status_data_yaml["phases"][0]["voltage"],  # U_AC [V]
-			  $status_data_yaml["phases"][0]["current"],  # I_AC [A]
-			  $status_data_yaml["phases"][0]["power"],    # P_AC [W]
-			  $status_data_yaml["phases"][0]["frequency"],# F_AC [Hz]
-			  $status_data_yaml["powerfactor"],           # Pf_AC
-			  $status_data_yaml["temperature"],           # Temp [°C]
-			  $status_data_yaml["yield_total"],           # Pmax-total [kW]
-			  $status_data_yaml["yield_today"],           # Pmax-today [kW]
-			  $status_data_yaml["strings"][0]["power"] + $status_data_yaml["strings"][1]["power"], #  109,
-			  $status_data_yaml["efficiency"],            # [%]
-			  $status_data_yaml["phases"][0]["reactive_power"], # Q [var]
-			$status_data_yaml["max_data"]["power"],       # MaxPower [W]
-			$status_data_yaml["max_data"]["temp"]         # MaxTemp [°C]
-		]
-    ]
-];
-
-$$inverter_var_id += [
+	"ch" => [],
 	"ch_name" => ["AC"],
 	"ch_max_pwr" => [null]
 ];
+
+$ACvoltage = $status_data_yaml["phases"][0]["voltage"];
+$ACcurrent = $status_data_yaml["phases"][0]["current"];
+$ACpower   = $status_data_yaml["phases"][0]["power"];
+$frequency = $status_data_yaml["phases"][0]["frequency"];
+$ACQpower  = $status_data_yaml["phases"][0]["reactive_power"];
+
+if (count($status_data_yaml["phases"]) > 1) {
+    for ($ii = 0; $ii < count($status_data_yaml["phases"]); $ii++) {
+	    $ACvoltage += $status_data_yaml["phases"][$ii]["voltage"];
+        $ACcurrent += $status_data_yaml["phases"][$ii]["current"];
+		$ACpower   += $status_data_yaml["phases"][$ii]["power"];
+		$frequency += $status_data_yaml["phases"][$ii]["frequency"];
+		$ACQpower  += $status_data_yaml["phases"][$ii]["reactive_power"]; 
+	}
+    $ACvoltage /= count($status_data_yaml["phases"]);
+    $frequency /= count($status_data_yaml["phases"]);
+}
+
+$DCpower = 0;
+for ($ii = 0; $ii < count($status_data_yaml["strings"]); $ii++) {
+	$DCpower += $status_data_yaml["strings"][$ii]["power"];
+}
+
+array_push($$inverter_var_id["ch"],[ 
+    $ACvoltage,                                 # U_AC [V]
+    $ACcurrent,                                 # I_AC [A]
+	$ACpower,                                   # P_AC [W]
+	$frequency,                                 # F_AC [Hz]
+	$status_data_yaml["powerfactor"],           # Pf_AC
+	$status_data_yaml["temperature"],           # Temp [°C]
+	$status_data_yaml["yield_total"],           # Pmax-total [kW]
+	$status_data_yaml["yield_today"],           # Pmax-today [kW]
+	$DCpower,                                   # P_DC [W]
+	$status_data_yaml["efficiency"],            # [%]
+	$ACQpower,                                  # Q [var]
+	$status_data_yaml["max_data"]["power"],     # MaxPower [W]
+	$status_data_yaml["max_data"]["temp"]       # MaxTemp [°C]
+]);   
 
 for ($ii = 0; $ii < count($status_data_yaml["strings"]); $ii++) {
   $$inverter_var_id["ch"][$ii + 1] = [

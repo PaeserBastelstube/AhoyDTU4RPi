@@ -335,10 +335,11 @@ def poll_inverter(inverter, do_init, retries):
                     strings=inverter_strings
                     )
 
-            result = decoder.decode()             # call decoder object
+            result = decoder.decode()                          # call decoder object
             if web_server:
-              web_server.SaveToYaml (inverter_ser, result)     # save for using in NGINX
-            data = result.__dict__()              # convert result into python-dict
+               web_server.SaveToYaml (inverter_ser, result)    # save for using in NGINX
+
+            data = result.__dict__()                           # convert result into python-dict
             if hoymiles.HOYMILES_TRANSACTION_LOGGING:
                logging.debug(f'Decoded: {data}')
 
@@ -366,6 +367,7 @@ def poll_inverter(inverter, do_init, retries):
                    influx_client.store_status(data)
 
                 if volkszaehler_client:
+                   # logging.info(f"call: VolkszaehlerOutputPlugin.store_status")
                    volkszaehler_client.store_status(data)
 
             # check decoder object for different data types

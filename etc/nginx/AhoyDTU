@@ -2,8 +2,8 @@
 # WebService with NGINX for AhoyDTU
 #
 server {
-	listen 82 default_server;
-	listen [::]:82 default_server;
+	listen 80 default_server;
+	listen [::]:80 default_server;
 
 	server_name AhoyDTU;
 
