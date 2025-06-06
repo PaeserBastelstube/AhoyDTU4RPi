@@ -28,6 +28,12 @@ server {
 	#add_header Content-Type text/plain;
 	#return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 
+	location ~ /events$ {
+		rewrite ^/(events)$ /api/$1.php last;
+	add_header Content-Type text/plain;
+	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+      
+    }
 	location ~ /(login|save|upload|updat)$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
