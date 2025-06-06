@@ -29,7 +29,7 @@ As an additional feature, it is planed to control the hoymiles microinverter for
 2. AhoyDTU based on python and need some python-modules, later more ...
 3. AhoyDTU need some specific linux packages
    ```code
-   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
+   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio php-yaml
    ```
 4. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or API scripts from a USER-HOME directory.  
    We prefere `/home/AhoyDTU` to install this project:
@@ -106,13 +106,14 @@ zope.interface     7.2
 ```
 
 # configure AhoyDTU
-To configure `Ahoy DTU`, the file `ahoy.yml` is required.  
+To configure `AhoyDTU`, the file `ahoy.yml` is required.  
 Please create a copy of `ahoy.yml.example` and rename it as `ahoy.yml`.
 
 ## start AhoyDTU manualy
 ```code
 source /home/AhoyDTU/ahoyenv/bin/activate
-python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml'
+cd ahoy
+python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml
 ```
 
 ## start AhoyDTU as user (system) service
@@ -141,5 +142,10 @@ Finally, we need to integrate (link) our AhoyDTU service into NGINX and restart 
 cd /home/AhoyDTU
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo systemctl restart nginx
+```
+
+If you have an trouble, have a look to NGINX log files:
+```code
+tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
 
