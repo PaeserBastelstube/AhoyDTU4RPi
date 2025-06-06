@@ -41,7 +41,7 @@ As an additional feature, it is planed to control the hoymiles microinverter for
 
 ## Download AhoyDTU from github
 ```code
-git clone https://github.com/PaeserBastelstube/AhoyDTU.git
+git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
 ```
 
 Important: Debian 12 follows the recommendation of [`PEP 668`]
@@ -75,8 +75,28 @@ This step takes a while!
 Finally, check all installed `python modules`:
 ```code
 python3 -m pip list         ## check: search for pyRF24
+Package            Version
+------------------ ---------
+certifi            2025.4.26
+charset-normalizer 3.4.2
+crcmod             1.7
+idna               3.10
+jdcal              1.4.1
+paho-mqtt          2.1.0
+pip                20.3.4
+pkg-resources      0.0.0
+pyrf24             0.5.0
+pytz               2025.2
+PyYAML             6.0.2
+requests           2.32.3
+setuptools         44.1.1
+suntimes           1.1.2
+typing-extensions  4.14.0
+tzlocal            5.3.1
+urllib3            2.4.0
 
 
+history:
 Package            Version
 ------------------ ---------
 DateTime           5.5
