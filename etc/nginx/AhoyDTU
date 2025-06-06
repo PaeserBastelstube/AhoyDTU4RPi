@@ -131,7 +131,7 @@ server {
 		include /etc/nginx/snippets/fastcgi-php.conf;
 		#include snippets/fastcgi-php.conf;
 	    # With php-fpm (or other unix sockets):
-		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+		fastcgi_pass unix:/run/php/php-fpm.sock;
 	# add_header Content-Type text/plain;
 	# return 200 "loc:php-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
@@ -151,7 +151,7 @@ server {
 	add_header Content-Type text/plain;
 	return 200 "loc:ext3 document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 		include /etc/nginx/snippets/fastcgi-php.conf;
-		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+		fastcgi_pass unix:/run/php/php-fpm.sock;
 	add_header Content-Type text/plain;
 	return 200 "loc:ext-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
