@@ -1,0 +1,42 @@
+# Volkszaehler
+
+include /etc/nginx/proxy_params;
+
+# redirect from https to http
+#server {
+#    # SSL configuration auf Port 443 (https)
+#    listen 443 ssl default_server;
+#    listen [::]:443 ssl default_server;
+#    rewrite ^(.*) http://$host/$1 permanent;
+#    # return 301 http://$host$request_uri;
+#}
+
+server {
+  listen 82;
+  listen [::]:82;
+  server_name volkszaehler.org;
+
+
+  root /home/volkszaehler.org/htdocs;
+  index index.php index.html;
+
+  location / {
+        try_files $uri $uri/ =404;
+        if (!-e $request_filename){
+            rewrite ^/(?:middleware|api)(/.*)? /middleware.php$1 break;
+        }
+  }
+
+  location /frontend {
+      rewrite ^/frontend/(.*) /$1 break;
+  }
+
+  # wichtig: bei der "location" \.php darf kein $ am Ende stehen
+  # (also nicht \.php$), denn dann wird php nicht aufgerufen
+  location ~ \.php {
+          include snippets/fastcgi-php.conf;
+          fastcgi_pass unix:/var/run/php/php-fpm.sock;
+  }
+
+}
+
