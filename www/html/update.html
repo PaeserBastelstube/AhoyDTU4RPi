@@ -53,9 +53,11 @@
         </div>
 <div id="footer">
         <div class="left">
-        <a href="https://ahoydtu.de" target="_blank">this is a copy from ahoy(lumapu)&copy; 2025</a></br>
-        <a href="https://discord.gg/WzhxEY62mB" target="_blank">original ahoy on Discord</a></br>
-        <a href="https://github.com/lumapu/ahoy" target="_blank">original ahoy on github</a>
+		<ul>
+          <li><a href="https://ahoydtu.de" target="_blank">this is a copy from ahoy(lumapu)&copy; 2025</a></li>
+          <li><a href="https://discord.gg/WzhxEY62mB" target="_blank">original ahoy on Discord</a></li>
+          <li><a href="https://github.com/lumapu/ahoy" target="_blank">original ahoy on github</a></li>
+		</ul>
     </div>
     <div class="right">
         <ul>
@@ -89,7 +91,7 @@
                 parseRssi(obj)
                 parseTitle(obj)
                 env = obj.env
-                document.getElementById("version").innerHTML = "250607_ahoy_0.8.155_0000000_" + obj.env + ".bin"
+                document.getElementById("version").innerHTML = "250608_ahoy_0.8.155_0000000_" + obj.env + ".bin"
             }
 
             function hide() {
