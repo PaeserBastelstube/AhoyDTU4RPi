@@ -132,20 +132,33 @@ systemctl --user disable ahoy.service
 # Web-Server (NGINX)
 Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
 In this project, we integrate NGINX Web-Services to present this data from hoymiles invertes.
+To do this, we need PHP FastCGI Process Manager, too.
 
-## Installation NGINX
+## Installation of NGINX Web-Server
 ```code
-sudo apt-get install -y nginx
+sudo apt-get install -y nginx php-fpm php-yaml
 ```
-Finally, we need to integrate (link) our AhoyDTU service into NGINX and restart NGINX Service
+
+Than, we need to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
 ```code
 cd /home/AhoyDTU
+sudo rm /etc/nginx/sites-enabled/default
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
+sudo nginx -t
+```
+
+Finally, we must restart NGINX Service
+```code
 sudo systemctl restart nginx
+```
+
+# Test your Web-Server
+Now you can test, if your your WebServer can display your AhoyDTU startpage. Start your prefered browser and load the URL like this example:
+```code
+http://rpi-zero2wh.fritz.box
 ```
 
 If you have an trouble, have a look to NGINX log files:
 ```code
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
-
