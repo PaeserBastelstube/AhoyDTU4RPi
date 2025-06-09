@@ -34,7 +34,7 @@ server {
 	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
       
     }
-	location ~ /(login|save|upload|updat)$ {
+	location ~ ^/(login|save|upload|updat)$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
 		if ($request_method = GET ) {
@@ -88,10 +88,10 @@ server {
 	return 200 "loc:system document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api/html/(system)$ {            #(9)
+	location ~ /api/html/(save|system)$ {            #(9)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		rewrite ^/api/html/(system)$ /api/html.php?$1 last;
+		rewrite ^/api/html/(save|system)$ /api/html.php?$1 last;
 	add_header Content-Type text/plain;
 	return 200 "loc:html document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
