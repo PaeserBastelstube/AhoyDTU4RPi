@@ -11,8 +11,9 @@ import traceback
 import re
 
 import argparse
-import yaml
-from yaml.loader import SafeLoader
+from ruamel.yaml import YAML
+yaml = YAML(typ='rt')
+
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -135,10 +136,10 @@ class WebServer:
     logging.debug(f"SaveToYaml: save data to {fn}")
     with open(fn, 'w') as yaml_file:
         # logging.debug(f"SaveToYaml: {data=}")
-        yaml.dump(data, yaml_file, default_flow_style=False)
+        yaml.dump(data, yaml_file)
         if isinstance(DTU_result, hoymiles.decoders.StatusResponse):
            logging.debug(f"SaveToYaml: {self.max_value=}")
-           yaml.dump({'max_data':self.max_value}, yaml_file, default_flow_style=False)
+           yaml.dump({'max_data':self.max_value}, yaml_file)
 
 class SunsetHandler:
     """ Sunset class
@@ -514,10 +515,10 @@ if __name__ == '__main__':
     try:
         if isinstance(global_config.config_file, str):
             with open(global_config.config_file, 'r') as fh_yaml:
-                cfg = yaml.load(fh_yaml, Loader=SafeLoader)
+                cfg = yaml.load(fh_yaml)
         else:
             with open('ahoy.yml', 'r') as fh_yaml:
-                cfg = yaml.load(fh_yaml, Loader=SafeLoader)
+                cfg = yaml.load(fh_yaml)
     except FileNotFoundError:
         logging.error("Could not load config file. Try --help")
         sys.exit(2)

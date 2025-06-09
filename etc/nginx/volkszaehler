@@ -14,10 +14,10 @@ include /etc/nginx/proxy_params;
 server {
   listen 82;
   listen [::]:82;
-  server_name volkszaehler.org;
+  server_name volkszaehler;
 
 
-  root /home/volkszaehler.org/htdocs;
+  root /home/volkszaehler/htdocs;
   index index.php index.html;
 
   location / {
