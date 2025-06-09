@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/home/pi/ahoyenv/bin/python
 """
 26.01.2023 Knut Hallstein - initial
+15.04.2025 Knut Hallstein - add "electric meter"
 
 search for missing channel configurations in ahoy.yml
 and create new on in VZ
@@ -9,6 +10,7 @@ add these new channel configs into ahoy.yml
 
 source ahoyenv/bin/activate
 python3 -m pip install ruamel-yaml
+
 """
 
 import os, json, argparse
@@ -28,53 +30,57 @@ def prepare_and_create_channels(channels):
     creating_results = {}
 
     for channel in channels:
-        if channel["type"] == "ac_voltage0":
-            creating_results[channel["type"]] = create_vz_channel("voltage",     1, "ac-Voltage")
-        if channel["type"] == "ac_current0":
-            creating_results[channel["type"]] = create_vz_channel("current",     1, "ac-Current")
+        if channel["type"] == "temperature":
+            creating_results[channel["type"]] = create_vz_channel("temperature",    1, "Temperature")
+        if channel["type"] == "yield_total":
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "Yield-Total")
+        if channel["type"] == "yield_today":
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "Yield-Today")
         if channel["type"] == "ac_power0":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "ac-Power")
+            creating_results[channel["type"]] = create_vz_channel("powersensor",    1, "ac-Power")
+
+        if channel["type"] == "dc_power0":
+            creating_results[channel["type"]] = create_vz_channel("powersensor",    1, "dc_Power_0")
+        if channel["type"] == "dc_power1":
+            creating_results[channel["type"]] = create_vz_channel("powersensor",    1, "dc_Power_1")
+
+        """
+        if channel["type"] == "powerfactor":
+            creating_results[channel["type"]] = create_vz_channel("valve",          1, "Powerfactor")
+        if channel["type"] == "efficiency":
+            creating_results[channel["type"]] = create_vz_channel("valve",          1, "Efficiency")
+
+        if channel["type"] == "ac_voltage0":
+            creating_results[channel["type"]] = create_vz_channel("voltage",        1, "ac-Voltage")
+        if channel["type"] == "ac_current0":
+            creating_results[channel["type"]] = create_vz_channel("current",        1, "ac-Current")
         if channel["type"] == "ac_reactive_power0":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "ac-Reactive-Power[Q]")
+            creating_results[channel["type"]] = create_vz_channel("powersensor",    1, "ac-Reactive-Power[Q]")
         if channel["type"] == "ac_frequency0":
-            creating_results[channel["type"]] = create_vz_channel("frequency",   1, "ac-Frequency")
+            creating_results[channel["type"]] = create_vz_channel("frequency",      1, "ac-Frequency")
 
         if channel["type"] == "dc_voltage0":
-            creating_results[channel["type"]] = create_vz_channel("voltage",     1, "dc_Voltage_0")
+            creating_results[channel["type"]] = create_vz_channel("voltage",        1, "dc_Voltage_0")
         if channel["type"] == "dc_current0":
-            creating_results[channel["type"]] = create_vz_channel("current",     1, "dc_Current_0")
-        if channel["type"] == "dc_power0":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Power_0")
+            creating_results[channel["type"]] = create_vz_channel("current",        1, "dc_Current_0")
         if channel["type"] == "dc_energy_total0":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Yield-Total_0")
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "dc_Yield-Total_0")
         if channel["type"] == "dc_energy_daily0":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Yield_Today_0")
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "dc_Yield_Today_0")
         if channel["type"] == "dc_irradiation0":
-            creating_results[channel["type"]] = create_vz_channel("valve",       1, "dc_Irradiation_0")
+            creating_results[channel["type"]] = create_vz_channel("valve",          1, "dc_Irradiation_0")
 
         if channel["type"] == "dc_voltage1":
-            creating_results[channel["type"]] = create_vz_channel("voltage",     1, "dc_Voltage_1")
+            creating_results[channel["type"]] = create_vz_channel("voltage",        1, "dc_Voltage_1")
         if channel["type"] == "dc_current1":
-            creating_results[channel["type"]] = create_vz_channel("current",     1, "dc_Current_1")
-        if channel["type"] == "dc_power1":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Power_1")
+            creating_results[channel["type"]] = create_vz_channel("current",        1, "dc_Current_1")
         if channel["type"] == "dc_energy_total1":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Yield-Total_1")
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "dc_Yield-Total_1")
         if channel["type"] == "dc_energy_daily1":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "dc_Yield_Today_1")
+            creating_results[channel["type"]] = create_vz_channel('power meter',	1, "dc_Yield_Today_1")
         if channel["type"] == "dc_irradiation1":
-            creating_results[channel["type"]] = create_vz_channel("valve",       1, "dc_Irradiation_1")
-
-        if channel["type"] == "temperature":
-            creating_results[channel["type"]] = create_vz_channel("temperature", 1, "Temperature")
-        if channel["type"] == "powerfactor":
-            creating_results[channel["type"]] = create_vz_channel("valve",       1, "Powerfactor")
-        if channel["type"] == "yield_total":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "Yield-Total")
-        if channel["type"] == "yield_today":
-            creating_results[channel["type"]] = create_vz_channel("powersensor", 1, "Yield-Today")
-        if channel["type"] == "efficiency":
-            creating_results[channel["type"]] = create_vz_channel("valve",       1, "Efficiency")
+            creating_results[channel["type"]] = create_vz_channel("valve",          1, "dc_Irradiation_1")
+        """
 
     return creating_results
 
@@ -135,9 +141,8 @@ def retrieve_all_channels_from_database():
 def create_vz_channel(type, res, ch_vz_name):
     """ creating channel in VZ-DB """
 
-    # print(f'type: {type:20}  res: {res:2} ch_vz_name: {ch_vz_name}')
-    RCC = f'{VZC} add channel type={type} resolution={res} title={ch_vz_name} public=1'
-    # print(RCC)
+    RCC = f"{VZC} add channel type=\'{type}\' resolution={res} title={ch_vz_name} public=1"
+    print(f"{RCC=}")
 
     # create channel on VZ-DB
     result_data = os.popen(f"{RCC}")
