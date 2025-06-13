@@ -87,9 +87,9 @@
 
                 parseRssi(obj)
                 if(true == exeOnce) {
-                    parseNav(obj["generic"])
-                    parseESP(obj["generic"])
-                    parseTitle(obj["generic"])
+                    parseNav(obj)
+                    parseESP(obj)
+                    parseTitle(obj)
                     window.setInterval("getAjax('/api/generic', parseGeneric)", 5000);
                     exeOnce = false;
                     setTimeOffset();
