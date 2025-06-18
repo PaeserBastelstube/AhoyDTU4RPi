@@ -29,5 +29,9 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
     include 'api.php';
   }
 
+  if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
+    print ("\n");
+  }
+
 }
 ?>

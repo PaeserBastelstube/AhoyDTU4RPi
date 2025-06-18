@@ -1,20 +1,20 @@
 <?php
-include 'generic_json.php';
+# include 'generic_json.php'; ## allready call in system_json 
 include 'system_json.php';
 
 
 $setup_json = $generic_json + [
 	"system" => $system_json, 
 	"mqtt" => [
-		"broker" => "",
+		"broker" => $ahoy_data["mqtt"]["host"],
 		"clientId" => "",
-		"port" => "1883",
-		"user" => "",
-		"pwd" => "",
-		"topic" => "inverter",
+		"port" => $ahoy_data["mqtt"]["port"],
+		"user" => $ahoy_data["mqtt"]["user"],
+		"pwd" => $ahoy_data["mqtt"]["password"],
+		"topic" => $ahoy_data["mqtt"]["topic"],
 		"json" => false,
 		"interval" => "0",
-		"retain" => true],
+		"retain" => $ahoy_data["mqtt"]["Retain"]],
 	"ntp" => [
 		"addr" => trim(shell_exec("timedatectl show-timesync -p SystemNTPServers --value")),
 		"port" => "123",
@@ -46,51 +46,51 @@ $setup_json = $generic_json + [
 		"freq_min" => 860,
 		"freq_max" => 870],
 	"eth" => [
-		"en" => false,
-		"cs" => 15,
-		"sclk" => 14,
-		"miso" => 12,
-		"mosi" => 13,
-		"irq" => 4,
-		"reset" => 255],
+		"en"    => $net_wired,
+		"cs"    => 0xff,
+		"sclk"  => 0xff,
+		"miso"  => 0xff,
+		"mosi"  => 0xff,
+		"irq"   => 0xff,
+		"reset" => 0xff],
 	"radioNrf" => [
 		"en" => false],
 	"serial" => [
 		"show_live_data" => false,
-		"debug" => false,
-		"priv" => true,
-		"wholeTrace" => false,
-		"log2mqtt" => false],
+		"debug"          => false,
+		"priv"           => true,
+		"wholeTrace"     => false,
+		"log2mqtt"       => false],
 	"static_ip" => [
-		"ip" => $net_ip,         # "",
-		"mask" => $net_mask,     # "",
-		"dns1" => $net_dns1,     # "",
-		"dns2" => $net_dns2,     # "",
-		"gateway" => $net_gw],   # ""],
+		"ip"      => $net_ip,    # 
+		"mask"    => $net_mask,  #
+		"dns1"    => $net_dns1,  #
+		"dns2"    => $net_dns2,  #
+		"gateway" => $net_gw],   #
 	"display" => [
 		"disp_typ" => 0,
 		"disp_pwr" => false,
 		"disp_screensaver" => 0,
-		"disp_rot" => 0,
+		"disp_rot"  => 0,
 		"disp_cont" => 140,
 		"disp_graph_ratio" => 0,
-		"disp_graph_size" => 2,
-		"disp_clk" => 255,
+		"disp_graph_size"  => 2,
+		"disp_clk"  => 255,
 		"disp_data" => 255,
-		"disp_cs" => 255,
-		"disp_dc" => 255,
-		"disp_rst" => 255,
-		"disp_bsy" => 255,
-		"pir_pin" => 255]
+		"disp_cs"   => 255,
+		"disp_dc"   => 255,
+		"disp_rst"  => 255,
+		"disp_bsy"  => 255,
+		"pir_pin"   => 255]
 ];
 
-$setup_getip_json = [ "ip" => `hostname -I` ];
+$setup_getip_json = [ "ip" => trim(`hostname -I`) ];
 $setup_networks_json = [ "success" => false, ] + $setup_getip_json;
 
 # if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-  header('Content-Type: application/json; charset=utf-8');
-  #print json_encode($_SERVER, JSON_PRETTY_PRINT);
+  # header('Content-Type: application/json; charset=utf-8');
+  # print json_encode($_SERVER, JSON_PRETTY_PRINT);
 
   print "\setup_json:\n" . json_encode($setup_json) . "\n";
   print "\setup_getip_json:\n" . json_encode($setup_getip_json) . "\n";

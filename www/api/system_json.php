@@ -7,6 +7,8 @@ $net_hw   = $ip_route[4];
 $net_ip   = $ip_route[8];
 $net_mac  = trim(shell_exec("ifconfig $net_hw | awk '/ether/ {print $2}'"));
 $net_mask = trim(shell_exec("ifconfig $net_hw | awk '/netmask/ {print $4}'"));
+$net_wired= true;
+# if ($net_hw
 
 # list ($net_dns1, $net_dns2) = shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'");
 list ($net_dns1, $net_dns2) = explode("\n", shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'"));
@@ -44,7 +46,7 @@ $system_json = [
 		"interval"  => 0],
 	"network" => [
 		"wifi_channel" => "",
-		"wired"        => true,
+		"wired"        => $net_wired,
 		"ap_pwd"       => "esp_8266",
 		"ssid"         => "",
 		"hidd"         => false,

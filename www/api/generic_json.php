@@ -42,7 +42,7 @@ $generic_json = [
 ];
 
 # print_r ($generic_json);
-if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
   #header('Content-Type: application/json; charset=utf-8');
   # print_r ($generic_json);
 }

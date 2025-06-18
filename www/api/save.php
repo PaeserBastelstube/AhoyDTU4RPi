@@ -105,16 +105,15 @@
 	
 
 
-
+$ahoyChanged = false;
 header('Content-Type: application/json; charset=utf-8');
-if ($_SERVER["REQUEST_METHOD"] = "POST") {
-	print_r ($_POST);
-	# print_r ($_POST["darkMode"]);
-	# print `pwd`;
-    # print `ls -l ../html`;
-    # print "\n";
+# print_r (["REQUEST_METHOD" => $_SERVER["REQUEST_METHOD"]]);
 
-	# check switch Dark or Bright color
+if ($_SERVER["REQUEST_METHOD"] = "POST") {
+	include 'generic_json.php';
+	print_r ($_POST);
+
+	# check and switch for Dark or Bright color
 	if ($_POST["darkMode"] == "on") {
 		unlink ('../html/colors.css');
 		symlink ('../html/colorDark.css', '../html/colors.css');
@@ -124,42 +123,48 @@ if ($_SERVER["REQUEST_METHOD"] = "POST") {
 	}
 
 	# Check custom link
-	include 'generic_json.php';
 	if (($ahoy_data["cst"]["lnk"] != $_POST["cstLnk"]) or
 	    ($ahoy_data["cst"]["txt"] != $_POST["cstLnkTxt"])) {
-		$yaml_data["ahoy"]["cst"]["lnk"] = $_POST["cstLnk"];
-		$yaml_data["ahoy"]["cst"]["txt"] = $_POST["cstLnkTxt"];
-		print_r ($yaml_data);
+		$ahoy_data["cst"]["lnk"] = $_POST["cstLnk"];
+		$ahoy_data["cst"]["txt"] = $_POST["cstLnkTxt"];
+		$ahoyChanged = true;
+        # print_r (["Check custom link" => $ahoy_data["cst"]["lnk"]]);
 	}
 
     # check inverter - invInterval 
 	if ($ahoy_data["interval"] != $_POST["invInterval"]) {
-		$yaml_data["ahoy"]["interval"] = $_POST["invInterval"];
-		print_r ($yaml_data);
+		$ahoy_data["interval"] = $_POST["invInterval"];
+		$ahoyChanged = true;
+        # print_r (["check inverter - invInterval" => $yaml_data["ahoy"]["interval"]]);
 	}
 
     # check Reset values
-	if (($ahoy_data["InverterResetValues"]["AtMidnight"] != $_POST["invRstMid"]) or
-        ($ahoy_data["InverterResetValues"]["AtSunrise"] != $_POST["invRstComStart"]) or
-        ($ahoy_data["InverterResetValues"]["AtSunset"] != $_POST["invRstComStop"]) or
-        ($ahoy_data["InverterResetValues"]["NotAvailable"] != $_POST["invRstNotAvail"]) or
-        ($ahoy_data["InverterResetValues"]["MaxValues"] != $_POST["invRstMaxMid"])) 
+	if (($ahoy_data["WebServer"]["InverterResetValues"]["AtMidnight"]   != $_POST["invRstMid"]) or
+        ($ahoy_data["WebServer"]["InverterResetValues"]["AtSunrise"]    != $_POST["invRstComStart"]) or
+        ($ahoy_data["WebServer"]["InverterResetValues"]["AtSunset"]     != $_POST["invRstComStop"]) or
+        ($ahoy_data["WebServer"]["InverterResetValues"]["NotAvailable"] != $_POST["invRstNotAvail"]) or
+        ($ahoy_data["WebServer"]["InverterResetValues"]["MaxValues"]    != $_POST["invRstMaxMid"])) 
     {
-		$yaml_data["ahoy"]["AtMidnight"] = $_POST["invRstMid"];
-        $ahoy_data["InverterResetValues"]["AtSunrise"] = $_POST["invRstComStart"];
-        $ahoy_data["InverterResetValues"]["AtSunset"] = $_POST["invRstComStop"];
-        $ahoy_data["InverterResetValues"]["NotAvailable"] = $_POST["invRstNotAvail"];
-        $ahoy_data["InverterResetValues"]["MaxValues"] = $_POST["invRstMaxMid"];
-		print_r ($yaml_data);
+		$ahoy_data["WebServer"]["InverterResetValues"]["AtMidnight"]   = $_POST["invRstMid"];
+		$ahoy_data["WebServer"]["InverterResetValues"]["AtSunrise"]    = $_POST["invRstComStart"];
+        $ahoy_data["WebServer"]["InverterResetValues"]["AtSunset"]     = $_POST["invRstComStop"];
+        $ahoy_data["WebServer"]["InverterResetValues"]["NotAvailable"] = $_POST["invRstNotAvail"];
+        $ahoy_data["WebServer"]["InverterResetValues"]["MaxValues"]    = $_POST["invRstMaxMid"];
+		$ahoyChanged = true;
+        # print_r (["check Reset values" => $ahoy_data["InverterResetValues"]]);
 	}
 
+    # if any change request for ahoy, dump yml - file
+    if ($ahoyChanged) {
+		print_r ($ahoy_data);
+    }
 } else {
 	print_r ($_SERVER);
 }
 
 # print ($my_login);
 
-if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
   print "\n";
 }
 ?>
