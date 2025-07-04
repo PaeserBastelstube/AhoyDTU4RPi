@@ -81,14 +81,14 @@ if (! isset($ahoy_data["mqtt"]["host"])) {
 	$ahoy_data["mqtt"]["Retain"] = "";
 }
 
-if (!isset($ahoy_data["generic"]["cst"]["lnk"])) {$ahoy_data["generic"]["cst"]["lnk"] = "";}
-if (!isset($ahoy_data["generic"]["cst"]["txt"])) {$ahoy_data["generic"]["cst"]["txt"] = "";}
+if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["lnk"])) {$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = "";}
+if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["txt"])) {$ahoy_data["WebServer"]["generic"]["cst"]["txt"] = "";}
 
-if (!isset($ahoy_data["sunset"]["latitude"])) {$ahoy_data["sunset"]["latitude"] = "";}
+if (!isset($ahoy_data["sunset"]["latitude"]))  {$ahoy_data["sunset"]["latitude"]  = "";}
 if (!isset($ahoy_data["sunset"]["longitude"])) {$ahoy_data["sunset"]["longitude"] = "";}
 
-if (!isset($ahoy_data["generic"]["region"])) {$ahoy_data["generic"]["region"] = 0;}
-if (!isset($ahoy_data["generic"]["timezone"])) {$ahoy_data["generic"]["timezone"] = 1;}
+if (!isset($ahoy_data["WebServer"]["generic"]["region"]))	{$ahoy_data["WebServer"]["generic"]["region"] = 0;}
+if (!isset($ahoy_data["WebServer"]["generic"]["timezone"])) {$ahoy_data["WebServer"]["generic"]["timezone"] = 1;}
 
 # create "ahoy-generic-data"
 $generic_json = [
@@ -104,10 +104,10 @@ $generic_json = [
 		"menu_prot"   => false,
 		"menu_mask"   => 61,
 		"menu_protEn" => false,
-		"cst_lnk"     => $ahoy_data["generic"]["cst"]["lnk"],	# custom 
-		"cst_lnk_txt" => $ahoy_data["generic"]["cst"]["txt"],
-		"region"      => $ahoy_data["generic"]["region"],		# wo wird das benötigt
-		"timezone"    => $ahoy_data["generic"]["timezone"], 	# wo wird das benötigt
+		"cst_lnk"     => $ahoy_data["WebServer"]["generic"]["cst"]["lnk"],	# custom 
+		"cst_lnk_txt" => $ahoy_data["WebServer"]["generic"]["cst"]["txt"],
+		"region"      => $ahoy_data["WebServer"]["generic"]["region"],		# wo wird das benötigt
+		"timezone"    => $ahoy_data["WebServer"]["generic"]["timezone"], 	# wo wird das benötigt
 		"esp_type"    => "RASPI"
 	]
 ];

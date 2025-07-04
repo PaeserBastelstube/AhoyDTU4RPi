@@ -20,10 +20,10 @@ function showSave($my_post){
 	## [region] => 0			# wofür wird das benötigt
 	## [timezone] => 13			# wofür wird das benötigt
 
-	if (isset($my_post["schedReboot"]))	$ahoy_data["system"]["sched_reboot"] = $my_post["schedReboot"];
-	else unset($ahoy_data["system"]["sched_reboot"]);
-	if (isset($my_post["region"]))		$ahoy_data["generic"]["region"]      = $my_post["region"];
-	if (isset($my_post["timezone"]))	$ahoy_data["generic"]["timezone"]    = $my_post["timezone"] -12;
+	if (isset($my_post["schedReboot"]))	$ahoy_data["WebServer"]["system"]["sched_reboot"] = $my_post["schedReboot"];
+	else unset($ahoy_data["WebServer"]["system"]["sched_reboot"]);
+	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]      = $my_post["region"];
+	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]    = $my_post["timezone"] -12;
 
 	# check and switch for Dark or Bright color
 	if (isset ($my_post["darkMode"]) and $my_post["darkMode"] == "on") {
@@ -35,22 +35,22 @@ function showSave($my_post){
 	}
 
 	# Check custom link
-	if (isset($my_post["cstLnk"]))		$ahoy_data["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
-	if (isset($my_post["cstLnkTxt"]))	$ahoy_data["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
+	if (isset($my_post["cstLnk"]))		$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
+	if (isset($my_post["cstLnkTxt"]))	$ahoy_data["WebServer"]["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
 
 
 	## Serial console # from web.h - line 603
 	# "serEn":"on","serDbg":"on","priv":"on","wholeTrace":"on","log2mqtt":"on",
-	if (isset($my_post["serEn"]))		$ahoy_data["serial"]["serEn"] = $my_post["serEn"];
-	else unset($ahoy_data["serial"]["serEn"]);
-	if (isset($my_post["serDbg"]))		$ahoy_data["serial"]["serDbg"] = $my_post["serDbg"];
-	else unset($ahoy_data["serial"]["serDbg"]);
-	if (isset($my_post["priv"]))		$ahoy_data["serial"]["priv"] = $my_post["priv"];
-	else unset($ahoy_data["serial"]["priv"]);
-	if (isset($my_post["wholeTrace"]))	$ahoy_data["serial"]["wholeTrace"] = $my_post["wholeTrace"];
-	else unset($ahoy_data["serial"]["wholeTrace"]);
-	if (isset($my_post["log2mqtt"]))	$ahoy_data["serial"]["log2mqtt"] = $my_post["log2mqtt"];
-	else unset($ahoy_data["serial"]["log2mqtt"]);
+	if (isset($my_post["serEn"]))		$ahoy_data["WebServer"]["serial"]["serEn"] = $my_post["serEn"];
+	else unset($ahoy_data["WebServer"]["serial"]["serEn"]);
+	if (isset($my_post["serDbg"]))		$ahoy_data["WebServer"]["serial"]["serDbg"] = $my_post["serDbg"];
+	else unset($ahoy_data["WebServer"]["serial"]["serDbg"]);
+	if (isset($my_post["priv"]))		$ahoy_data["WebServer"]["serial"]["priv"] = $my_post["priv"];
+	else unset($ahoy_data["WebServer"]["serial"]["priv"]);
+	if (isset($my_post["wholeTrace"]))	$ahoy_data["WebServer"]["serial"]["wholeTrace"] = $my_post["wholeTrace"];
+	else unset($ahoy_data["WebServer"]["serial"]["wholeTrace"]);
+	if (isset($my_post["log2mqtt"]))	$ahoy_data["WebServer"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
+	else unset($ahoy_data["WebServer"]["serial"]["log2mqtt"]);
 
 	# aus Network # from web.h - line 500
 	##    [ap_pwd] => esp_8266          #Standard in AhoyDTU
@@ -74,16 +74,16 @@ function showSave($my_post){
 	##    [protMask4] => on   # Update
 	##    [protMask5] => on   # System
 	##    [protMask6] => on   # History
-	if (isset($my_post["adminpwd"])) $ahoy_data["system"]["pwd_set"] = true;
-	$ahoy_data["system"]["prot_mask"] = 0;
-	if (isset($my_post["protMask0"]) and $my_post["protMask0"] == "on") $ahoy_data["system"]["prot_mask"] += 2**0;
-	if (isset($my_post["protMask1"]) and $my_post["protMask1"] == "on") $ahoy_data["system"]["prot_mask"] += 2**1;
-	if (isset($my_post["protMask2"]) and $my_post["protMask2"] == "on") $ahoy_data["system"]["prot_mask"] += 2**2;
-	if (isset($my_post["protMask3"]) and $my_post["protMask3"] == "on") $ahoy_data["system"]["prot_mask"] += 2**3;
-	if (isset($my_post["protMask4"]) and $my_post["protMask4"] == "on") $ahoy_data["system"]["prot_mask"] += 2**4;
-	if (isset($my_post["protMask5"]) and $my_post["protMask5"] == "on") $ahoy_data["system"]["prot_mask"] += 2**5;
-	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $ahoy_data["system"]["prot_mask"] += 2**6;
-	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $ahoy_data["system"]["prot_mask"] += 2**7;
+	if (isset($my_post["adminpwd"])  and $my_post["adminpwd"]  != "")   $ahoy_data["WebServer"]["system"]["pwd_set"] = true;
+	$ahoy_data["WebServer"]["system"]["prot_mask"] = 0;
+	if (isset($my_post["protMask0"]) and $my_post["protMask0"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**0;
+	if (isset($my_post["protMask1"]) and $my_post["protMask1"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**1;
+	if (isset($my_post["protMask2"]) and $my_post["protMask2"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**2;
+	if (isset($my_post["protMask3"]) and $my_post["protMask3"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**3;
+	if (isset($my_post["protMask4"]) and $my_post["protMask4"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**4;
+	if (isset($my_post["protMask5"]) and $my_post["protMask5"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**5;
+	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**6;
+	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**7;
 
 # aus Inverter
 ##    [invInterval] => 99

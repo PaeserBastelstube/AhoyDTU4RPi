@@ -30,14 +30,14 @@ $app    = preg_split("/\s+/", shell_exec('df -k /run | tail -1 '));
 $spiffs = preg_split("/\s+/", shell_exec('df -k /boot/firmware | tail -1 '));
 $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 
-if (!isset($ahoy_data["system"]["sched_reboot"])) $ahoy_data["system"]["sched_reboot"] = false;
+if (!isset($ahoy_data["WebServer"]["system"]["sched_reboot"])) $ahoy_data["WebServer"]["system"]["sched_reboot"] = false;
 
 $system_json = [
 	"device_name"  => $generic_json["generic"]["host"] . "  (cannot be changed)",
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
-	"sched_reboot" => $ahoy_data["system"]["sched_reboot"],
-	"pwd_set"      => false,
-	"prot_mask"    => 0]      # 61]
+	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"],
+	"pwd_set"      => "",
+	"prot_mask"    => $ahoy_data["WebServer"]["system"]["prot_mask"]]      # 61]
     + $generic_json + [
 	"chip" => [
 		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),                      # CPU Frequency

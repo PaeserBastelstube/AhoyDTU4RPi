@@ -3,11 +3,11 @@
 include 'system_json.php';
 
 
-if (!isset($ahoy_data["serial"]["serEn"]))		$ahoy_data["serial"]["serEn"] = false;
-if (!isset($ahoy_data["serial"]["serDbg"]))		$ahoy_data["serial"]["serDbg"] = false;
-if (!isset($ahoy_data["serial"]["priv"]))		$ahoy_data["serial"]["priv"] = false;
-if (!isset($ahoy_data["serial"]["wholeTrace"]))	$ahoy_data["serial"]["wholeTrace"] = false;
-if (!isset($ahoy_data["serial"]["log2mqtt"]))	$ahoy_data["serial"]["log2mqtt"] = false;
+if (!isset($ahoy_data["WebServer"]["serial"]["serEn"]))			$ahoy_data["WebServer"]["serial"]["serEn"] = false;
+if (!isset($ahoy_data["WebServer"]["serial"]["serDbg"]))		$ahoy_data["WebServer"]["serial"]["serDbg"] = false;
+if (!isset($ahoy_data["WebServer"]["serial"]["priv"]))			$ahoy_data["WebServer"]["serial"]["priv"] = false;
+if (!isset($ahoy_data["WebServer"]["serial"]["wholeTrace"]))	$ahoy_data["WebServer"]["serial"]["wholeTrace"] = false;
+if (!isset($ahoy_data["WebServer"]["serial"]["log2mqtt"]))		$ahoy_data["WebServer"]["serial"]["log2mqtt"] = false;
 
 $setup_json = $generic_json + [
 	"system" => $system_json, 
@@ -62,11 +62,11 @@ $setup_json = $generic_json + [
 	"radioNrf" => [
 		"en" => false],
 	"serial" => [
-		"show_live_data" => $ahoy_data["serial"]["serEn"],		# serEn
-		"debug"          => $ahoy_data["serial"]["serDbg"],		# serDbg
-		"priv"           => $ahoy_data["serial"]["priv"],		# priv
-		"wholeTrace"     => $ahoy_data["serial"]["wholeTrace"],	# wholeTrace
-		"log2mqtt"       => $ahoy_data["serial"]["log2mqtt"]],	# log2mqtt
+		"show_live_data" => $ahoy_data["WebServer"]["serial"]["serEn"],		# serEn
+		"debug"          => $ahoy_data["WebServer"]["serial"]["serDbg"],		# serDbg
+		"priv"           => $ahoy_data["WebServer"]["serial"]["priv"],		# priv
+		"wholeTrace"     => $ahoy_data["WebServer"]["serial"]["wholeTrace"],	# wholeTrace
+		"log2mqtt"       => $ahoy_data["WebServer"]["serial"]["log2mqtt"]],	# log2mqtt
 	"static_ip" => [
 		"ip"      => $net_ip,    # 
 		"mask"    => $net_mask,  #
