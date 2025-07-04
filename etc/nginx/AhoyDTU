@@ -13,6 +13,9 @@ server {
 	index index.html index.htm ; #index.php;
 	default_type application/json;
 
+	# https://stackoverflow.com/questions/12165810/how-to-disable-output-buffering-in-nginx-for-php-application
+	fastcgi_buffering off;
+
 ################################################################################
 #      Aufruf        --> Ziel              --> $uri
 # (1)  /api          --> /api/api.php      --> /api
@@ -28,24 +31,24 @@ server {
 	#add_header Content-Type text/plain;
 	#return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 
-	location ~ /events$ {
+	location ~ ^/events$ {
 		rewrite ^/(events)$ /api/$1.php last;
 	add_header Content-Type text/plain;
 	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
       
     }
-	location ~ ^/(login|save|upload|updat)$ {
+	location ~ ^/(erase|login|save|upload|updat|get_setup|coredump)+$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
-		if ($request_method = GET ) {
-			rewrite ^/(login|save|upload|update)$ /$1.html last;
-		}
-		rewrite ^/(login|save|upload|update)$ /$1.php last;
+		#if ($request_method = GET ) {
+		#	rewrite ^/(login|save|upload|update)$ /$1.html last;
+		#}
+		rewrite ^/(erase|login|save|upload|update|get_setup|coredump)+$ /operating.php?$1 last;
 	add_header Content-Type text/plain;
 	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api/ctrl$ {
+	location ~ ^/api/ctrl$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
 		rewrite ^/api/ctrl$ /api/ctrl.php last;
@@ -53,50 +56,49 @@ server {
 	return 200 "loc:crtl document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /(get_setup|coredump)$ {
+	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)*$ {            #(6)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		rewrite ^/(get_setup|coredump)$ /api/download.php?$1 last;
-	add_header Content-Type text/plain;
-	return 200 "loc:get_setup document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-	}
-
-	location ~ /api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)*$ {            #(6)
-		limit_except GET { deny all; }
-		root /home/AhoyDTU/www;
-		rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)?$ /api/inverter.php?$1=$2 last;
+		rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)?$ /api/inverter.php?$1=$2 permanent;
+		#rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)?$ /api/inverter.php?$1=$2 last;
 	add_header Content-Type text/plain;
 	return 200 "loc:inverter document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api/setup/?(getip|networks)?$ {            #(7)
+	location ~ ^/api/setup/?(getip|networks)?$ {            #(7)
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www;
 		if ($request_method = GET ) {
-			rewrite ^/setup$ /setup.html last;
+			rewrite ^/setup$ /html/setup.html permanent;
 		}
+
+		# return 307 /setup.php?$1;
 		rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 last;
+		# rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 redirect;
+		# rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 permanent;
 	add_header Content-Type text/plain;
 	return 200 "loc:setup document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api/system$ {            #(8)
+	location ~ ^/api/system$ {            #(8)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		rewrite ^/api/system$ /api/system.php last;
+		# rewrite ^/api/system$ /api/system.php last;
+		rewrite ^/api/system$ /api/system.php permanent;
 	add_header Content-Type text/plain;
 	return 200 "loc:system document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api/html/(save|system)$ {            #(9)
+	location ~ ^/api/html/(save|system)$ {            #(9)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		rewrite ^/api/html/(save|system)$ /api/html.php?$1 last;
+		# rewrite ^/api/html/(save|system)$ /api/html.php?$1 last;
+		rewrite ^/api/html/(save|system)$ /api/html.php?$1 permanent;
 	add_header Content-Type text/plain;
 	return 200 "loc:html document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ /api$|api/(.*)$ {
+	location ~ ^/api$|api/(.*)$ {
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
 		fastcgi_index api.php;
@@ -125,34 +127,34 @@ server {
 	}
 
 	location ~ \.php$ {
+	# add_header Content-Type text/plain;
+	# return 200 "loc:php-start document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www/api;
 		index index.php;
 		include /etc/nginx/snippets/fastcgi-php.conf;
-		#include snippets/fastcgi-php.conf;
-	    # With php-fpm (or other unix sockets):
 		fastcgi_pass unix:/run/php/php-fpm.sock;
 	# add_header Content-Type text/plain;
 	# return 200 "loc:php-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location @extensionless-php {
-		limit_except GET { deny all; }
-		root /home/AhoyDTU/www;
-		## rewrite ^(/.*)/$ $1;                         ## wird nicht gebraucht
-		if ( -f $document_root$uri.php ) {     #(2)
-	#add_header Content-Type text/plain;
-	#return 200 "loc:ext2 document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-			rewrite ^ $uri.php last;           # neustart der Suche mit angehängtem ".php" und wird zu einer (3)
-		}
-		if ( -f $document_root/api$uri.php ) {
-			rewrite ^ $document_root/api$uri.php last;
-		}
-	add_header Content-Type text/plain;
-	return 200 "loc:ext3 document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-		include /etc/nginx/snippets/fastcgi-php.conf;
-		fastcgi_pass unix:/run/php/php-fpm.sock;
-	add_header Content-Type text/plain;
-	return 200 "loc:ext-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-	}
+##	location @extensionless-php {
+##		limit_except GET { deny all; }
+##		root /home/AhoyDTU/www;
+##		## rewrite ^(/.*)/$ $1;                         ## wird nicht gebraucht
+##		if ( -f $document_root$uri.php ) {     #(2)
+##	#add_header Content-Type text/plain;
+##	#return 200 "loc:ext2 document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+##			rewrite ^ $uri.php last;           # neustart der Suche mit angehängtem ".php" und wird zu einer (3)
+##		}
+##		if ( -f $document_root/api$uri.php ) {
+##			rewrite ^ $document_root/api$uri.php last;
+##		}
+##	add_header Content-Type text/plain;
+##	return 200 "loc:ext3 document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+##		include /etc/nginx/snippets/fastcgi-php.conf;
+##		fastcgi_pass unix:/run/php/php-fpm.sock;
+##	add_header Content-Type text/plain;
+##	return 200 "loc:ext-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+##	}
 }

@@ -1,5 +1,8 @@
 <?PHP
-$my_uri = $_SERVER['REQUEST_SCHEME'] . "://" . $_SERVER['HTTP_HOST'];
+$requestScheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : "http";
+$httpHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : trim(shell_exec("hostname -A | awk '{print $1}'"));
+$my_uri = $requestScheme . "://" . $httpHost;
+
 $endpoints_json = [
 	"inverter/list"			=> $my_uri . "/api/inverter/list",
 	"inverter/id/0"			=> $my_uri . "/api/inverter/id/0",
@@ -17,10 +20,11 @@ $endpoints_json = [
 ];
 
 $avail_endpoints = array("avail_endpoints" => $endpoints_json);
-header('Content-Type: application/json; charset=utf-8');
 
+header('Content-Type: application/json; charset=utf-8');
 print json_encode($avail_endpoints);
-if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
-  print "\n";
+
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
+	print "\n";
 }
 ?>

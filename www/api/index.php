@@ -7,5 +7,9 @@ if (file_exists('../html/visualization.html') and ! is_link('../html/live.html')
 }
 header('Content-Type: application/json; charset=utf-8');
 include 'index_json.php';
+
 print json_encode($index_json);
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {
+  print("\n");
+}
 ?>

@@ -19,9 +19,8 @@ $powerHistoryDay_json = [
 ];
 
 if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
-  header('Content-Type: application/json; charset=utf-8');
-  # print json_encode($_SERVER, JSON_PRETTY_PRINT);
-  print "\powerHistory_json:\n" . json_encode($powerHistory_json) . "\n";
-  print "\powerHistoryDay_json:\n" . json_encode($powerHistoryDay_json) . "\n";
+	header('Content-Type: application/json; charset=utf-8');
+	print "/powerHistory_json:\n" . json_encode($powerHistory_json) . "\n";
+	print "/powerHistoryDay_json:\n" . json_encode($powerHistoryDay_json) . "\n";
 }
 ?>

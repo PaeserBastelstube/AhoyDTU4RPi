@@ -3,6 +3,12 @@
 include 'system_json.php';
 
 
+if (!isset($ahoy_data["serial"]["serEn"]))		$ahoy_data["serial"]["serEn"] = false;
+if (!isset($ahoy_data["serial"]["serDbg"]))		$ahoy_data["serial"]["serDbg"] = false;
+if (!isset($ahoy_data["serial"]["priv"]))		$ahoy_data["serial"]["priv"] = false;
+if (!isset($ahoy_data["serial"]["wholeTrace"]))	$ahoy_data["serial"]["wholeTrace"] = false;
+if (!isset($ahoy_data["serial"]["log2mqtt"]))	$ahoy_data["serial"]["log2mqtt"] = false;
+
 $setup_json = $generic_json + [
 	"system" => $system_json, 
 	"mqtt" => [
@@ -56,11 +62,11 @@ $setup_json = $generic_json + [
 	"radioNrf" => [
 		"en" => false],
 	"serial" => [
-		"show_live_data" => false,
-		"debug"          => false,
-		"priv"           => true,
-		"wholeTrace"     => false,
-		"log2mqtt"       => false],
+		"show_live_data" => $ahoy_data["serial"]["serEn"],		# serEn
+		"debug"          => $ahoy_data["serial"]["serDbg"],		# serDbg
+		"priv"           => $ahoy_data["serial"]["priv"],		# priv
+		"wholeTrace"     => $ahoy_data["serial"]["wholeTrace"],	# wholeTrace
+		"log2mqtt"       => $ahoy_data["serial"]["log2mqtt"]],	# log2mqtt
 	"static_ip" => [
 		"ip"      => $net_ip,    # 
 		"mask"    => $net_mask,  #
@@ -92,8 +98,8 @@ if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
   # header('Content-Type: application/json; charset=utf-8');
   # print json_encode($_SERVER, JSON_PRETTY_PRINT);
 
-  print "\setup_json:\n" . json_encode($setup_json) . "\n";
-  print "\setup_getip_json:\n" . json_encode($setup_getip_json) . "\n";
-  print "\setup_networks_json:\n" . json_encode($setup_networks_json) . "\n";
+  print "/setup_json:\n" . json_encode($setup_json) . "\n";
+  print "/setup_getip_json:\n" . json_encode($setup_getip_json) . "\n";
+  print "/setup_networks_json:\n" . json_encode($setup_networks_json) . "\n";
 }
 ?>

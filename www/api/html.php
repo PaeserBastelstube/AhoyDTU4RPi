@@ -1,6 +1,8 @@
 <?php
 include 'html_json.php';
-header('Content-Type: application/json; charset=utf-8');
+if (! isset($_SERVER["TERM"]) ) {
+	header('Content-Type: application/json; charset=utf-8');
+}
 
 $arrKeys = array_keys($_GET);
 # print_r ($arrKeys);

@@ -74,8 +74,8 @@ class WebServer:
     self.AtSunset = False
     self.NotAvailable = False
     self.MaxValues = False
-    if web_config.get('InverterResetValues', None):
-       reset_config = web_config.get('InverterResetValues')
+    if web_config.get('InverterReset', None):
+       reset_config = web_config.get('InverterReset')
        if reset_config.get('AtMidnight', False) == True:
           self.AtMidnight = True
        if reset_config.get('AtSunrise', False) == True:

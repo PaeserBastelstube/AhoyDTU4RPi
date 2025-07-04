@@ -12,12 +12,15 @@ $live_json = $generic_json + [
 ];
 
 # loop over inverters
-for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
+if (isset($ahoy_data["inverters"])) {
+  for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
 	# "iv" => [true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
     array_push($live_json["iv"], ! $ahoy_data["inverters"][$ii]["disabled"]);
+  }
 }
 
-if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
-  print "live_json: " . json_encode($live_json) . "\n";
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {
+	header('Content-Type: application/json; charset=utf-8');
+	print "\live_json:\n" . json_encode($live_json) . "\n";
 }
 ?>
