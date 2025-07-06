@@ -1,8 +1,5 @@
 <?php
-if (! isset($_SERVER["TERM"])) {
-	header('Content-Type: application/json; charset=utf-8');
-}
-# print_r ($_SERVER);
+if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=utf-8');
 
 if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") {
 	include 'showSave.php';
@@ -19,10 +16,6 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
   include 'setup_json.php';
 
   $arrKeys = array_keys($_GET);
-  # print_r ($arrKeys);
-  #  print ($arrKeys[0]);
-  # print json_encode($_SERVER, JSON_PRETTY_PRINT);
-  # echo "\n";
 
   if (count($arrKeys) > 0) {
     $inv_id = htmlspecialchars($_GET[$arrKeys[0]]);
@@ -31,18 +24,9 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
     $var_name = "setup_json";
   }
 
-  # print $var_name;
-  # echo "\n";
+  if (isset ($$var_name)) print json_encode($$var_name);
+  else include 'api.php';
 
-  if (isset ($$var_name)) {
-    print json_encode($$var_name);
-  } else {
-    include 'api.php';
-  }
-
-  if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-    print ("\n");
-  }
-
+  if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") print ("\n");
 }
 ?>

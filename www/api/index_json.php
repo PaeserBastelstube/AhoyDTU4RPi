@@ -60,7 +60,8 @@ $index_json["disNightComm"] = $disNightComm;                                  # 
 $index_json["warnings"] = [];                                                 # Anzahl von Meldungen des Inverters
 
 EOF:
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
+		$argv[0] == "index_json.php") {
 	# header('Content-Type: application/json; charset=utf-8');
 	print "/index_json:\n" . json_encode($index_json) . "\n";
 }

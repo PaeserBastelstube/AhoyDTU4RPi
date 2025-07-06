@@ -1,5 +1,5 @@
 <?PHP
-# erase|login|save|upload|update|get_setup|coredump
+# erase|login|save|upload|update|get_setup|coredump|factory
 
 header('Content-Type: application/json; charset=utf-8');
 include 'generic_json.php';
@@ -58,6 +58,15 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=' . $filename);
 		print json_encode(["version" => $filename] + ["coredump" => $ahoy_data], JSON_PRETTY_PRINT);
+
+	} elseif ($getSwitch == "factory") {
+		include 'generic_json.php';
+		unlink ($ahoy_config["filename"]);
+		header("Location: index.html");
+
+	} elseif ($getSwitch == "reboot") {
+		include 'generic_json.php';
+		print json_encode(["reboot" => "tbd","coredump" => $ahoy_data], JSON_PRETTY_PRINT);
 	}
 }
 

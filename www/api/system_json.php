@@ -30,17 +30,17 @@ $app    = preg_split("/\s+/", shell_exec('df -k /run | tail -1 '));
 $spiffs = preg_split("/\s+/", shell_exec('df -k /boot/firmware | tail -1 '));
 $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 
-if (!isset($ahoy_data["WebServer"]["system"]["sched_reboot"])) $ahoy_data["WebServer"]["system"]["sched_reboot"] = false;
+if (!isset($ahoy_data["WebServer"]["system"]["sched_reboot"]))	$ahoy_data["WebServer"]["system"]["sched_reboot"] = false;
 
 $system_json = [
 	"device_name"  => $generic_json["generic"]["host"] . "  (cannot be changed)",
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
 	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"],
-	"pwd_set"      => "",
-	"prot_mask"    => $ahoy_data["WebServer"]["system"]["prot_mask"]]      # 61]
+	"pwd_set"      => $generic_json["generic"]["menu_protEn"],
+	"prot_mask"    => $generic_json["generic"]["menu_mask"]]
     + $generic_json + [
 	"chip" => [
-		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),                      # CPU Frequency
+		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),
 		"sdk"           => "v4.4.7-dirty",
 		"temp_sensor_c" => $chip_temp,
 		"revision"      => 1,
@@ -81,9 +81,8 @@ $system_json = [
 	]
 ];
 
-# if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {
-	# header('Content-Type: application/json; charset=utf-8');
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm" and
+	$argv[0] == "system_json.php") {
 	print "/system_json:\n" . json_encode($system_json) . "\n";
 }
 ?>

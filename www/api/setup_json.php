@@ -3,6 +3,19 @@
 include 'system_json.php';
 
 
+if (!isset($ahoy_data["mqtt"]["host"]))		$ahoy_data["mqtt"]["host"] = "";
+if (!isset($ahoy_data["mqtt"]["port"]))		$ahoy_data["mqtt"]["port"] = "";
+if (!isset($ahoy_data["mqtt"]["clientId"]))	$ahoy_data["mqtt"]["clientId"] = "";
+if (!isset($ahoy_data["mqtt"]["user"]))		$ahoy_data["mqtt"]["user"] = "";
+if (!isset($ahoy_data["mqtt"]["password"]))	$ahoy_data["mqtt"]["password"] = "";
+if (!isset($ahoy_data["mqtt"]["topic"]))	$ahoy_data["mqtt"]["topic"] = "";
+if (!isset($ahoy_data["mqtt"]["asJson"]))	$ahoy_data["mqtt"]["asJson"] = false;
+if (!isset($ahoy_data["mqtt"]["Interval"]))	$ahoy_data["mqtt"]["Interval"] = 0;
+if (!isset($ahoy_data["mqtt"]["Retain"]))	$ahoy_data["mqtt"]["Retain"] = "";
+
+if (!isset($ahoy_data["sunset"]["latitude"]))  {$ahoy_data["sunset"]["latitude"]  = "";}
+if (!isset($ahoy_data["sunset"]["longitude"])) {$ahoy_data["sunset"]["longitude"] = "";}
+
 if (!isset($ahoy_data["WebServer"]["serial"]["serEn"]))			$ahoy_data["WebServer"]["serial"]["serEn"] = false;
 if (!isset($ahoy_data["WebServer"]["serial"]["serDbg"]))		$ahoy_data["WebServer"]["serial"]["serDbg"] = false;
 if (!isset($ahoy_data["WebServer"]["serial"]["priv"]))			$ahoy_data["WebServer"]["serial"]["priv"] = false;
@@ -12,22 +25,22 @@ if (!isset($ahoy_data["WebServer"]["serial"]["log2mqtt"]))		$ahoy_data["WebServe
 $setup_json = $generic_json + [
 	"system" => $system_json, 
 	"mqtt" => [
-		"broker" => $ahoy_data["mqtt"]["host"],
-		"clientId" => "",
-		"port" => $ahoy_data["mqtt"]["port"],
-		"user" => $ahoy_data["mqtt"]["user"],
-		"pwd" => $ahoy_data["mqtt"]["password"],
-		"topic" => $ahoy_data["mqtt"]["topic"],
-		"json" => false,
-		"interval" => "0",
-		"retain" => $ahoy_data["mqtt"]["Retain"]],
+		"broker"	=> $ahoy_data["mqtt"]["host"],
+		"port"		=> $ahoy_data["mqtt"]["port"],
+		"clientId"	=> $ahoy_data["mqtt"]["clientId"],
+		"user"		=> $ahoy_data["mqtt"]["user"],
+		"pwd"		=> $ahoy_data["mqtt"]["password"],
+		"topic"		=> $ahoy_data["mqtt"]["topic"],
+		"json"		=> $ahoy_data["mqtt"]["asJson"],
+		"interval"	=> $ahoy_data["mqtt"]["Interval"],
+		"retain"	=> $ahoy_data["mqtt"]["Retain"]],
 	"ntp" => [
-		"addr" => trim(shell_exec("timedatectl show-timesync -p SystemNTPServers --value")),
+		"addr" => trim(shell_exec("timedatectl show-timesync -p SystemNTPServers --value")) . "  - cannot be changed",
 		"port" => "123",
 		"interval" => "720"],
 	"sun" => [
-		"lat" => $ahoy_data["sunset"]["latitude"],            # "52.48533",
-		"lon" => $ahoy_data["sunset"]["longitude"],           # "10.31578",
+		"lat" => $ahoy_data["sunset"]["latitude"],
+		"lon" => $ahoy_data["sunset"]["longitude"],
 		"offsSr" => 0,
 		"offsSs" => 0],
 	"pinout" => [
@@ -63,9 +76,9 @@ $setup_json = $generic_json + [
 		"en" => false],
 	"serial" => [
 		"show_live_data" => $ahoy_data["WebServer"]["serial"]["serEn"],		# serEn
-		"debug"          => $ahoy_data["WebServer"]["serial"]["serDbg"],		# serDbg
+		"debug"          => $ahoy_data["WebServer"]["serial"]["serDbg"],	# serDbg
 		"priv"           => $ahoy_data["WebServer"]["serial"]["priv"],		# priv
-		"wholeTrace"     => $ahoy_data["WebServer"]["serial"]["wholeTrace"],	# wholeTrace
+		"wholeTrace"     => $ahoy_data["WebServer"]["serial"]["wholeTrace"],# wholeTrace
 		"log2mqtt"       => $ahoy_data["WebServer"]["serial"]["log2mqtt"]],	# log2mqtt
 	"static_ip" => [
 		"ip"      => $net_ip,    # 
@@ -93,11 +106,8 @@ $setup_json = $generic_json + [
 $setup_getip_json = [ "ip" => trim(`hostname -I`) ];
 $setup_networks_json = [ "success" => false, ] + $setup_getip_json;
 
-# if (isset($_SERVER["DISPLAY"]) and substr($_SERVER["DISPLAY"],0,10) == "localhost:") {
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-  # header('Content-Type: application/json; charset=utf-8');
-  # print json_encode($_SERVER, JSON_PRETTY_PRINT);
-
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
+	$argv[0] == "setup_json.php") {
   print "/setup_json:\n" . json_encode($setup_json) . "\n";
   print "/setup_getip_json:\n" . json_encode($setup_getip_json) . "\n";
   print "/setup_networks_json:\n" . json_encode($setup_networks_json) . "\n";

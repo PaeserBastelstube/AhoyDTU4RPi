@@ -19,8 +19,8 @@ if (isset($ahoy_data["inverters"])) {
   }
 }
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {
-	header('Content-Type: application/json; charset=utf-8');
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm" and
+	$argv[0] == "live_json.php") {
 	print "\live_json:\n" . json_encode($live_json) . "\n";
 }
 ?>

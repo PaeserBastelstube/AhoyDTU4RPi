@@ -3,8 +3,7 @@ include 'generic_json.php'; # incl. reading ahoy.yml
 
 
 # read Info-Files in {filepath} with current inverter data
-# if (isset($ahoy_data["inverters"])){
-if ((isset($inverter_id)) and ($inverter_id > -1)) {
+if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 	$filepath = $ahoy_data["WebServer"]["filepath"];
 	$pre_fn = $filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"];
 	$hw_data_yaml     = @yaml_parse_file($pre_fn . '_HardwareInfoResponse.yml');
@@ -13,13 +12,6 @@ if ((isset($inverter_id)) and ($inverter_id > -1)) {
 } else {
 	$inverter_id = 0;
 }
-
-#  if (!$hw_data_yaml) {
-#    #echo 'Error: ', yaml_last_error_msg();
-#  }
-#print_r ($hw_data_yaml);
-#print_r ($status_data_yaml);
-#print_r ($event_data_yaml);
 
 if (isset($hw_data_yaml)) {
   $fw_date = $hw_data_yaml["FW_build_dd"] . "." . $hw_data_yaml["FW_build_mm"] . "." . $hw_data_yaml["FW_build_yy"];  #"0-00-00"
@@ -44,14 +36,6 @@ if (! isset($status_data_yaml["inverter_name"])) {
 	$status_data_yaml["event_count"] = 0;
 	$status_data_yaml["max_data"]["temp_ts"] = 0;
 }
-
-#if (! isset($ahoy_data["inverters"][$inverter_id]["name"])) {
-#	$ahoy_data["inverters"][$inverter_id]["name"] = "";
-#	$ahoy_data["inverters"][$inverter_id]["serial"] = "";
-#	$ahoy_data["inverters"][$inverter_id]["disabled"] = true;
-#	$ahoy_data["inverters"][$inverter_id]["strings"] = [];
-#}
-
 
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 # 1141-Series Inverters, 2 MPPT, 1 Phase

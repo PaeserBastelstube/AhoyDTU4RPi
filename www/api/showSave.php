@@ -53,131 +53,59 @@ function showSave($my_post){
 	else unset($ahoy_data["WebServer"]["serial"]["log2mqtt"]);
 
 	# aus Network # from web.h - line 500
-	##    [ap_pwd] => esp_8266          #Standard in AhoyDTU
-	##    [ssid] => wifi-ssid
-	##    [hidd] => off
-	##    [pwd] => {PWD}
-	##    [ipAddr] => 1.1.1.1
-	##    [ipMask] => 2.2.2.2
-	##    [ipDns1] => 3.3.3.3
-	##    [ipDns2] => 4.4.4.4
-	##    [ipGateway] => 5.5.5.5
+	## [ap_pwd] => esp_8266          #Standard in AhoyDTU
+	## [ssid] => wifi-ssid
+	## [hidd] => off
+	## [pwd] => {PWD}
+	## [ipAddr] => 1.1.1.1
+	## [ipMask] => 2.2.2.2
+	## [ipDns1] => 3.3.3.3
+	## [ipDns2] => 4.4.4.4
+	## [ipGateway] => 5.5.5.5
 	### on RASPBERRY: system managed - not by AhoyDTU
 
 
 	# aus Protection # from web.h - line 489
-	##    [adminpwd] => {PWD}
-	##    [protMask0] => on   # Index
-	##    [protMask1] => on   # Live
-	##    [protMask2] => on   # Webserial
-	##    [protMask3] => on   # Settings
-	##    [protMask4] => on   # Update
-	##    [protMask5] => on   # System
-	##    [protMask6] => on   # History
-	if (isset($my_post["adminpwd"])  and $my_post["adminpwd"]  != "")   $ahoy_data["WebServer"]["system"]["pwd_set"] = true;
-	$ahoy_data["WebServer"]["system"]["prot_mask"] = 0;
-	if (isset($my_post["protMask0"]) and $my_post["protMask0"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**0;
-	if (isset($my_post["protMask1"]) and $my_post["protMask1"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**1;
-	if (isset($my_post["protMask2"]) and $my_post["protMask2"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**2;
-	if (isset($my_post["protMask3"]) and $my_post["protMask3"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**3;
-	if (isset($my_post["protMask4"]) and $my_post["protMask4"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**4;
-	if (isset($my_post["protMask5"]) and $my_post["protMask5"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**5;
-	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**6;
-	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $ahoy_data["WebServer"]["system"]["prot_mask"] += 2**7;
-
-# aus Inverter
-##    [invInterval] => 99
-##    [invRstMid] => on
-##    [invRstComStart] => on
-##    [invRstComStop] => on
-##    [invRstNotAvail] => on
-##    [invRstMaxMid] => on
-##    [strtWthtTm] => on
-##    [rdGrid] => on
-
-# aus NTP Server
-##    [ntpAddr] => wird im Betriebssystem verwaltet - nicht änderbar
-##    [ntpPort] => 999
-##    [ntpIntvl] => 100
-
-# aus Sunrise & Sunset
-##    [sunLat] => 53                   ## In ahoy.yml speichern
-##    [sunLon] => 10                   ## In ahoy.yml speichern
-##    [sunOffsSr] => 0
-##    [sunOffsSs] => 0
-
-# aus MQTT
-##    [mqttAddr] => MQTT Broker        ## In ahoy.yml speichern
-##    [mqttPort] => 9998               ## In ahoy.yml speichern
-##    [mqttClientId] => das            ## In ahoy.yml speichern
-##    [mqttUser] => ich                ## In ahoy.yml speichern
-##    [mqttPwd] => du                  ## In ahoy.yml speichern
-##    [mqttTopic] => erSieEs           ## In ahoy.yml speichern
-##    [mqttJson] => on                 ## In ahoy.yml speichern
-##    [mqttInterval] => 22             ## In ahoy.yml speichern
-##    [retain] => on                   ## In ahoy.yml speichern
-
-# aus Pinout Configuration
-##    [pinLed0] => 255
-##    [pinLed1] => 255
-##    [pinLed2] => 255
-##    [pinLedHighActive] => 0
-##    [pinLedLum] => 255
-
-##    [nrfEnable] => on
-##    [pinCs] => 5
-##    [pinCe] => 4
-##    [pinIrq] => 15
-##    [pinSclk] => 18
-##    [pinMosi] => 23
-##    [pinMiso] => 19
-
-##    [cmtEnable] => on
-##    [pinCmtSclk] => 14
-##    [pinSdio] => 12
-##    [pinCsb] => 15
-##    [pinFcsb] => 26
-##    [pinGpio3] => 23
-
-##    [ethEn] => on
-##    [ethCs] => 15
-##    [ethSclk] => 14
-##    [ethMiso] => 12
-##    [ethMosi] => 13
-##    [ethIrq] => 4
-##   [ethRst] => 255
-
-# aus Display Config
-##    [disp_pwr] => on
-##    [disp_cont] => 88
-##    [disp_graph_ratio] => 1
-
-# aus SAVE Button
-##    [reboot] => on
-
-## bool saveSettings() { # .../src/config/settings.h - Zeile 323
-##       jsonNetwork(root[F("wifi")].to<JsonObject>(), true);
-##           jsonNrf(root[F("nrf")].to<JsonObject>(), true);
-##           jsonCmt(root[F("cmt")].to<JsonObject>(), true);
-##           jsonNtp(root[F("ntp")].to<JsonObject>(), true);
-##           jsonSun(root[F("sun")].to<JsonObject>(), true);
-##        jsonSerial(root[F("serial")].to<JsonObject>(), true);
-##          jsonMqtt(root[F("mqtt")].to<JsonObject>(), true);
-##           jsonLed(root[F("led")].to<JsonObject>(), true);
-##        jsonPlugin(root[F("plugin")].to<JsonObject>(), true);
-##          jsonInst(root[F("inst")].to<JsonObject>(), true);
-
-## bool saveSettings() { # .../src/config/settings.h - Zeile 382
-##        void loadDefaults(bool keepWifi = false) {
-
-
-
-    # check invInterval 
-	if (isset($my_post["invInterval"]) and $ahoy_data["interval"] != $my_post["invInterval"]) {
-		$ahoy_data["interval"]  = $my_post["invInterval"];
+	## [adminpwd] => {PWD}
+	## [protMask0] => on   # Index
+	## [protMask1] => on   # Live
+	## [protMask2] => on   # Webserial
+	## [protMask3] => on   # Settings
+	## [protMask4] => on   # Update
+	## [protMask5] => on   # System
+	## [protMask6] => on   # History
+	if (isset($my_post["adminpwd"])) {
+ 		if ($my_post["adminpwd"] == "") unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
+ 		else $ahoy_data["WebServer"]["system"]["pwd_pwd"] = $my_post["adminpwd"];
+	}
+	if (isset($my_post["login"]) and $my_post["login"] == "login") {
+		if (isset($my_post["pwd"]) and $my_post["pwd"] == $ahoy_data["WebServer"]["system"]["pwd_pwd"]) unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
 	}
 
-    # check WebServer Reset values
+	$prot_mask = 0;
+	if (isset($my_post["protMask0"]) and $my_post["protMask0"] == "on") $prot_mask += 2**0;
+	if (isset($my_post["protMask1"]) and $my_post["protMask1"] == "on") $prot_mask += 2**1;
+	if (isset($my_post["protMask2"]) and $my_post["protMask2"] == "on") $prot_mask += 2**2;
+	if (isset($my_post["protMask3"]) and $my_post["protMask3"] == "on") $prot_mask += 2**3;
+	if (isset($my_post["protMask4"]) and $my_post["protMask4"] == "on") $prot_mask += 2**4;
+	if (isset($my_post["protMask5"]) and $my_post["protMask5"] == "on") $prot_mask += 2**5;
+	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $prot_mask += 2**6;
+	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $prot_mask += 2**7;
+	if ($prot_mask > 0) $ahoy_data["WebServer"]["system"]["prot_mask"] = $prot_mask;
+
+
+	# aus Inverter # from web.h - line 512
+	## [invInterval] => 99
+	## [invRstMid] => on
+	## [invRstComStart] => on
+	## [invRstComStop] => on
+	## [invRstNotAvail] => on
+	## [invRstMaxMid] => on
+	## [strtWthtTm] => on
+	## [rdGrid] => on
+	if (isset($my_post["invInterval"]) and $ahoy_data["interval"] != $my_post["invInterval"])
+		$ahoy_data["interval"]  = $my_post["invInterval"];
+
 	# Reset values and YieldDay at midnight
 	if (isset($my_post["invRstMid"])) $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = $my_post["invRstMid"];
 	else                              $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;
@@ -206,15 +134,17 @@ function showSave($my_post){
 	if (isset($my_post["rdGrid"]))	$ahoy_data["WebServer"]["rdGrid"] = $my_post["rdGrid"];
 	else							$ahoy_data["WebServer"]["rdGrid"] = false;
 
-	if (isset($_SERVER["QUERY_STRING"]) and $_SERVER["QUERY_STRING"] == "upload") {
-		# file content
-		$fileContentString = file_get_contents(htmlspecialchars($_FILES["upload"]["tmp_name"]));
-		$fileContentArray  = json_decode($fileContentString, true);  ## WICHTIG: ",true" - sonst JSON und kein ARRAY
-		$ahoy_data = $fileContentArray["ahoy"];
-	}
+	# aus NTP Server - # from web.h - line 566
+	## [ntpAddr] => wird im Betriebssystem verwaltet - nicht änderbar
+	## [ntpPort] => 999
+	## [ntpIntvl] => 100
 
 
-	# check for sunrise and sunset data
+	# check for sunrise and sunset data - # from web.h - line 573
+	## [sunLat] => 53
+	## [sunLon] => 10
+	## [sunOffsSr] => 0
+	## [sunOffsSs] => 0
     if (isset($my_post["sunLat"]) and isset($my_post["sunLon"])) {
 		if (!isset($ahoy_data["sunset"]["latitude"]) or
 			!isset($ahoy_data["sunset"]["longitude"]) or
@@ -222,6 +152,7 @@ function showSave($my_post){
 			$my_post["sunLon"] != $ahoy_data["sunset"]["longitude"]) {
 			$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
 			$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
+
 			if ($my_post["sunLat"] == "" or $my_post["sunLon"] == "") {
 				$ahoy_data["sunset"]["disabled"] = true;
 			} else {
@@ -229,6 +160,87 @@ function showSave($my_post){
 			}
 		}
     }
+
+
+	# aus MQTT - # from web.h - line 586
+	## [mqttAddr] ## [mqttPort] ## [mqttClientId] ## [mqttUser] ## [mqttPwd] ## [mqttTopic]
+	## [mqttJson] ## [mqttInterval] ## [retain]
+    if (isset($my_post["mqttAddr"]))	 $ahoy_data["mqtt"]["host"]     = $my_post["mqttAddr"];
+    if (isset($my_post["mqttPort"]))	 $ahoy_data["mqtt"]["port"]     = $my_post["mqttPort"];
+    if (isset($my_post["mqttClientId"])) $ahoy_data["mqtt"]["clientId"] = $my_post["mqttClientId"];
+    if (isset($my_post["mqttUser"]))	 $ahoy_data["mqtt"]["user"]     = $my_post["mqttUser"];
+    if (isset($my_post["mqttPwd"]))		 $ahoy_data["mqtt"]["password"] = $my_post["mqttPwd"];
+    if (isset($my_post["mqttTopic"]))	 $ahoy_data["mqtt"]["topic"]    = $my_post["mqttTopic"];
+    if (isset($my_post["mqttJson"]))	 $ahoy_data["mqtt"]["asJson"]   = $my_post["mqttJson"];
+    if (isset($my_post["mqttInterval"])) $ahoy_data["mqtt"]["Interval"] = $my_post["mqttInterval"];
+    if (isset($my_post["retain"]))		 $ahoy_data["mqtt"]["Retain"]   = $my_post["retain"];
+	$ahoy_data["mqtt"]["disabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? false : true;
+
+
+
+
+	# aus Pinout Configuration
+	## [pinLed0] => 255
+	## [pinLed1] => 255
+	## [pinLed2] => 255
+	## [pinLedHighActive] => 0
+	## [pinLedLum] => 255
+
+	## [nrfEnable] => on
+	## [pinCs] => 5
+	## [pinCe] => 4
+	## [pinIrq] => 15
+	## [pinSclk] => 18
+	## [pinMosi] => 23
+	## [pinMiso] => 19
+
+	## [cmtEnable] => on
+	## [pinCmtSclk] => 14
+	## [pinSdio] => 12
+	## [pinCsb] => 15
+	## [pinFcsb] => 26
+	## [pinGpio3] => 23
+
+	## [ethEn] => on
+	## [ethCs] => 15
+	## [ethSclk] => 14
+	## [ethMiso] => 12
+	## [ethMosi] => 13
+	## [ethIrq] => 4
+	## [ethRst] => 255
+
+	# aus Display Config
+	## [disp_pwr] => on
+	## [disp_cont] => 88
+	## [disp_graph_ratio] => 1
+
+	# aus SAVE Button
+	##  [reboot] => on
+
+## bool saveSettings() { # .../src/config/settings.h - Zeile 323
+##       jsonNetwork(root[F("wifi")].to<JsonObject>(), true);
+##           jsonNrf(root[F("nrf")].to<JsonObject>(), true);
+##           jsonCmt(root[F("cmt")].to<JsonObject>(), true);
+##           jsonNtp(root[F("ntp")].to<JsonObject>(), true);
+##           jsonSun(root[F("sun")].to<JsonObject>(), true);
+##        jsonSerial(root[F("serial")].to<JsonObject>(), true);
+##          jsonMqtt(root[F("mqtt")].to<JsonObject>(), true);
+##           jsonLed(root[F("led")].to<JsonObject>(), true);
+##        jsonPlugin(root[F("plugin")].to<JsonObject>(), true);
+##          jsonInst(root[F("inst")].to<JsonObject>(), true);
+
+## bool saveSettings() { # .../src/config/settings.h - Zeile 382
+##        void loadDefaults(bool keepWifi = false) {
+
+
+
+	if (isset($_SERVER["QUERY_STRING"]) and $_SERVER["QUERY_STRING"] == "upload") {
+		# file content
+		$fileContentString = file_get_contents(htmlspecialchars($_FILES["upload"]["tmp_name"]));
+		$fileContentArray  = json_decode($fileContentString, true);  ## WICHTIG: ",true" - sonst JSON und kein ARRAY
+		$ahoy_data = $fileContentArray["ahoy"];
+	}
+
 
 # {"cmd":"save_iv","token":"*","id":1,"ser":142929835590,"name":"qwert","en":true,
 # "ch":[{"pwr":"","name":"","yld":"0"},{"pwr":"","name":"","yld":"0"},
