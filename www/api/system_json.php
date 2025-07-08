@@ -8,11 +8,27 @@ $net_ip   = $ip_route[8];
 $net_mac  = trim(shell_exec("ifconfig $net_hw | awk '/ether/ {print $2}'"));
 $net_mask = trim(shell_exec("ifconfig $net_hw | awk '/netmask/ {print $4}'"));
 
-$net_wifi_channel = "";
-$net_wired= true;
+$net_wired= str_starts_with($net_hw, 'eth') ? true : false;
 $net_ap_pwd = "esp_8266";  # standard PW
-$net_ssid = "";
-$net_hidd = false;
+
+$output_including_status = shell_exec("iwlist $net_hw scan  2>&1; echo $?");
+$o_array = explode("\n", trim($output_including_status));
+if (end($o_array) == 0)  {
+    $ch_key = array_search("Channel", $o_array);
+	$ch_array = explode(":", $o_array[$ch_key]);
+
+    $ssid_key = array_search("ESSID", $o_array);
+	$ssid_array = explode(":", $o_array[$ssid_key]);
+
+	$net_wifi_channel = $ch_array[1];
+	$net_ssid = $ssid_array[1];
+	$net_hidd = false;
+} else {
+	# no WiFi - wired ethernet
+	$net_wifi_channel = "";
+	$net_ssid = "";
+	$net_hidd = false;
+}
 
 # list ($net_dns1, $net_dns2) = shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'");
 list ($net_dns1, $net_dns2) = explode("\n", shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'"));
