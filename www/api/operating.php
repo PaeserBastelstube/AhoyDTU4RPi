@@ -5,10 +5,10 @@ header('Content-Type: application/json; charset=utf-8');
 include 'generic_json.php';
 $filename = date('Y-m-d_H-i-s') . "_v" . $generic_json["generic"]["version"];
 
-#file_put_contents("/tmp/asdf", "get:"    . json_encode($_GET)        . "\n", LOCK_EX);
-#file_put_contents("/tmp/asdf", "post:"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
-#file_put_contents("/tmp/asdf", "server:" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
-#file_put_contents("/tmp/asdf", "config:" . json_encode($ahoy_config) . "\n", FILE_APPEND | LOCK_EX);
+#file_put_contents("/tmp/AhoyDTU_asdf", "get:"    . json_encode($_GET)        . "\n", LOCK_EX);
+#file_put_contents("/tmp/AhoyDTU_asdf", "post:"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
+#file_put_contents("/tmp/AhoyDTU_asdf", "server:" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
+#file_put_contents("/tmp/AhoyDTU_asdf", "config:" . json_encode($ahoy_config) . "\n", FILE_APPEND | LOCK_EX);
 ## curl -d '{"key1":"value1", "key2":"value2"}' -H "Content-Type: application/json" -X POST http://localhost/upload
 #print ("get: " . json_encode($_GET) . "\n");
 #print ("post: " . json_encode($_POST) . "\n");
@@ -61,7 +61,13 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 
 	} elseif ($getSwitch == "factory") {
 		include 'generic_json.php';
-		unlink ($ahoy_config["filename"]);
+		$toUnlinkArray  = array($ahoy_config["filename"], "../html/colors.css", "../html/live.html");
+		array_push($toUnlinkArray, $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_*.log*");
+		foreach ($toUnlinkArray as $wildcardToUnlink) {
+			foreach (glob($wildcardToUnlink) as $fileToUnlink) {
+				if (file_exists($fileToUnlink)) unlink ($fileToUnlink);
+			}
+		}
 		header("Location: index.html");
 
 	} elseif ($getSwitch == "reboot") {

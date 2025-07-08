@@ -4,12 +4,12 @@ header('Content-Type: application/json; charset=utf-8');
 function showSave($my_post){
 	include 'generic_json.php';    # to load AhoyDTU configuration
 
-	file_put_contents("/tmp/asdf", "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
-	file_put_contents("/tmp/asdf", "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/asdf", "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/asdf", "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/asdf", "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/asdf", "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
 
 	## System Config # from web.h - line 465
 	## [device] =>  $(hostname)	# wird im Betriebssystem verwaltet - nicht änderbar
@@ -279,13 +279,13 @@ function showSave($my_post){
 					"s_yield"    => $channel["yld"]
 				);
 	 		}
-  			#file_put_contents("/tmp/asdf", "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
+  			#file_put_contents("/tmp/AhoyDTU_asdf", "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
 			if (! isset($ahoy_data["inverters"])) $ahoy_data["inverters"] = [];
 			$ahoy_data["inverters"][$my_post["id"]] = $inverter;
 		}	
 	}
 
-	file_put_contents("/tmp/asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file
 	$RC = yaml_emit_file($ahoy_config["filename"], ["ahoy" => $ahoy_data]);
