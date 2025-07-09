@@ -11,9 +11,6 @@ $AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));					# hostname o
 $dtu_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));		# MAC of network interface
 $dtu_serial = $dtu_array[0] * $dtu_array[1] * $dtu_array[2] * $dtu_array[3];	# def DTU-Serial from MAC
 
-$_generic_rssi_str = @shell_exec('iwconfig wlan0 2>&1 | grep Quality');			# RSSI
-if (empty($generic_rssi_str)) {$generic_rssi_str =  "LAN connected";}			# 
-
 $generic_uptime_str   = @file_get_contents('/proc/uptime');						# tbd
 $generic_uptime_array = explode(' ', $generic_uptime_str);						# 
 
@@ -83,7 +80,7 @@ if (!isset($ahoy_data["WebServer"]["system"]["prot_mask"]))		$ahoy_data["WebServ
 # create "ahoy-generic-data"
 $generic_json = [
 	"generic" => [
-		"wifi_rssi"   => $generic_rssi_str,						# WIFI-RSSI or LAN
+		"wifi_rssi"   => 0,										# WIFI-RSSI or LAN
 		"ts_uptime"   => intval($generic_uptime_array[0]),		# system uptime
 		"ts_now"      => time(),								# current time
 		"version"     => "0.8.155",

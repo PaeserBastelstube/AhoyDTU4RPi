@@ -1,4 +1,7 @@
 <?php
+#
+#2345678901234567890123456789012345678901234567890123456789012345678901234567890
+#
 include 'generic_json.php';
 
 $ip_route = explode(" ", shell_exec('ip route | grep default'));
@@ -11,20 +14,21 @@ $net_mask = trim(shell_exec("ifconfig $net_hw | awk '/netmask/ {print $4}'"));
 $net_wired= str_starts_with($net_hw, 'eth') ? true : false;
 $net_ap_pwd = "esp_8266";  # standard PW
 
-$output_including_status = shell_exec("iwlist $net_hw scan  2>&1; echo $?");
-$o_array = explode("\n", trim($output_including_status));
-if (end($o_array) == 0)  {
-    $ch_key = array_search("Channel", $o_array);
-	$ch_array = explode(":", $o_array[$ch_key]);
+$iwconfig_including_status = trim(shell_exec("iwconfig $net_hw 2>&1; echo $?"));
+$iwlist_including_status = trim(shell_exec("iwlist $net_hw frequency 2>&1; echo $?"));
 
-    $ssid_key = array_search("ESSID", $o_array);
-	$ssid_array = explode(":", $o_array[$ssid_key]);
+# https://www.phpliveregex.com/#tab-preg-match-all
+preg_match_all('/ESSID:"(.+)"|Signal level=([-\d]+)|^(\d+)$/m', $iwconfig_including_status, $matches);
+preg_match_all('/\(Channel (\d+)\)|^(\d+)$/m', $iwlist_including_status, $match_list);
 
-	$net_wifi_channel = $ch_array[1];
-	$net_ssid = $ssid_array[1];
-	$net_hidd = false;
+if (end($matches[0]) == 0) {
+	$generic_json["generic"]["wifi_rssi"] = $matches[2][1] . " dBm";
+    $net_ssid = $matches[1][0];
+	$net_wifi_channel = $match_list[1][0];
+	$net_hidd = ($matches[2][1] < 0 and $net_ssid == "") ? true : false;
 } else {
 	# no WiFi - wired ethernet
+	$generic_rssi_str = "LAN connected"; 		# RSSI
 	$net_wifi_channel = "";
 	$net_ssid = "";
 	$net_hidd = false;
