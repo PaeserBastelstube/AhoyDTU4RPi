@@ -173,7 +173,7 @@ if (isset($ahoy_data["inverters"]) and count($ahoy_data["inverters"]) > 0) {
 		#print_r($ii); print("\n");print (json_encode($inv) . "\n");
 		array_push($inverter_list_json["inverter"], [
 			"id"           => $ii,
-			"enabled"      => ! $inv["disabled"],
+			"enabled"      => $inv["enabled"],
 			"name"         => $inv["name"],
 			"serial"       => $inv["serial"],
 			"channels"     => count($inv["strings"]),

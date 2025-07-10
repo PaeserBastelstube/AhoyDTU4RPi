@@ -154,9 +154,9 @@ function showSave($my_post){
 			$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
 
 			if ($my_post["sunLat"] == "" or $my_post["sunLon"] == "") {
-				$ahoy_data["sunset"]["disabled"] = true;
+				$ahoy_data["sunset"]["enabled"] = false;
 			} else {
-				$ahoy_data["sunset"]["disabled"] = false;
+				$ahoy_data["sunset"]["enabled"] = true;
 			}
 		}
     }
@@ -174,7 +174,7 @@ function showSave($my_post){
     if (isset($my_post["mqttJson"]))	 $ahoy_data["mqtt"]["asJson"]   = $my_post["mqttJson"];
     if (isset($my_post["mqttInterval"])) $ahoy_data["mqtt"]["Interval"] = $my_post["mqttInterval"];
     if (isset($my_post["retain"]))		 $ahoy_data["mqtt"]["Retain"]   = $my_post["retain"];
-	$ahoy_data["mqtt"]["disabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? false : true;
+	$ahoy_data["mqtt"]["enabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? true : false;
 
 
 
@@ -264,11 +264,11 @@ function showSave($my_post){
 			}
 
 			$inverter = [                                             ## def var for inverter
-				"name"     => $my_post["name"],
-				"disabled" => ! $my_post["en"],
-				"serial"   => base_convert($my_post["ser"], 10, 16),  #!! Kodierung dec2hex
-				"txpower"  => $my_post["pa"],
-				"strings"  => [],
+				"name"		=> $my_post["name"],
+				"enabled"	=> $my_post["en"],
+				"serial"	=> base_convert($my_post["ser"], 10, 16),  #!! Kodierung dec2hex
+				"txpower"	=> $my_post["pa"],
+				"strings"	=> [],
 				"disnightcom" => $my_post["disnightcom"]
 			];
 			foreach ($my_post["ch"] as $ii => $channel) {             ## add channel to inv var
@@ -284,6 +284,14 @@ function showSave($my_post){
 			$ahoy_data["inverters"][$my_post["id"]] = $inverter;
 		}	
 	}
+
+	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on")
+		$ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
+	else $ahoy_data["nrf"]["enabled"] = false;
+
+	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on")
+		$ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
+	else $ahoy_data["cmt"]["enabled"] = false;
 
 	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
 

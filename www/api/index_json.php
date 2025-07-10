@@ -26,7 +26,7 @@ if (isset($ahoy_data["inverters"])) {
 }
 
 $lat = 0; $lon = 0; $disNightComm = false;
-if (isset($ahoy_data["sunset"]) and $ahoy_data["sunset"]["disabled"] != true) {
+if (isset($ahoy_data["sunset"]) and $ahoy_data["sunset"]["enabled"] == true) {
    $lat = $ahoy_data["sunset"]["latitude"]  == "" ? 0 : $ahoy_data["sunset"]["latitude"];
    $lon = $ahoy_data["sunset"]["longitude"] == "" ? 0 : $ahoy_data["sunset"]["longitude"];
    $disNightComm = $lat > 0 and $lon > 0 ? true : false;

@@ -15,7 +15,7 @@ $live_json = $generic_json + [
 if (isset($ahoy_data["inverters"])) {
   for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
 	# "iv" => [true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
-    array_push($live_json["iv"], ! $ahoy_data["inverters"][$ii]["disabled"]);
+    array_push($live_json["iv"], ! $ahoy_data["inverters"][$ii]["enabled"]);
   }
 }
 

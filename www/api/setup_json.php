@@ -1,4 +1,10 @@
 <?php
+#
+# setup_jason-php
+#
+#2345678901234567890123456789012345678901234567890123456789012345678901234567890
+#
+
 # include 'generic_json.php'; ## allready call in system_json 
 include 'system_json.php';
 
@@ -61,7 +67,7 @@ $setup_json = $generic_json + [
 		"csb" => 15,
 		"fcsb" => 26,
 		"gpio3" => 23,
-		"en" => true,
+		"en" => $ahoy_data["cmt"]["enabled"],
 		"freq_min" => 860,
 		"freq_max" => 870],
 	"eth" => [
@@ -73,7 +79,7 @@ $setup_json = $generic_json + [
 		"irq"   => 0xff,
 		"reset" => 0xff],
 	"radioNrf" => [
-		"en" => false],
+		"en" => $ahoy_data["nrf"]["enabled"]],
 	"serial" => [
 		"show_live_data" => $ahoy_data["WebServer"]["serial"]["serEn"],		# serEn
 		"debug"          => $ahoy_data["WebServer"]["serial"]["serDbg"],	# serDbg

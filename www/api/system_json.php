@@ -57,8 +57,34 @@ $system_json = [
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
 	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"],
 	"pwd_set"      => $generic_json["generic"]["menu_protEn"],
-	"prot_mask"    => $generic_json["generic"]["menu_mask"]]
+	"prot_mask"    => $generic_json["generic"]["menu_mask"]
+	]
     + $generic_json + [
+	"radioNrf" => [
+		"en"   => $ahoy_data["nrf"]["enabled"]
+	],
+	"radioCmt" => [
+		"en"          => $ahoy_data["cmt"]["enabled"],
+		"isconnected" => false,
+		"sn"          => "",
+		"irqOk"       => false
+	],
+	"mqtt" => [
+		"enabled"   => $ahoy_data["mqtt"]["enabled"],
+		"connected" => false,
+		"tx_cnt"    => 0,
+		"rx_cnt"    => 0,
+		"interval"  => 0
+	],
+	"network" => [
+		"wifi_channel" => $net_wifi_channel,			# RestApi.h:807
+		"wired"        => $net_wired,
+		"ap_pwd"       => $net_ap_pwd,
+		"ssid"         => $net_ssid,
+		"hidd"         => $net_hidd,
+		"mac"          => $net_mac,
+		"ip"           => $net_ip
+	],
 	"chip" => [
 		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),
 		"sdk"           => "v4.4.7-dirty",
@@ -66,23 +92,8 @@ $system_json = [
 		"revision"      => 1,
 		"model"         => file_get_contents("/sys/firmware/devicetree/base/model"), # "ESP32-D0WDQ6",
 		"cores"         => $lscpu["lscpu"][8]["data"],
-		"reboot_reason" => "Software"],
-	"radioNrf" => [
-		"en"   => false],
-	"mqtt" => [
-		"enabled"   => false,
-		"connected" => false,
-		"tx_cnt"    => 0,
-		"rx_cnt"    => 0,
-		"interval"  => 0],
-	"network" => [
-		"wifi_channel" => $net_wifi_channel,
-		"wired"        => $net_wired,
-		"ap_pwd"       => $net_ap_pwd,
-		"ssid"         => $net_ssid,
-		"hidd"         => $net_hidd,
-		"mac"          => $net_mac,
-		"ip"           => $net_ip],
+		"reboot_reason" => "Software"
+	],
 	"memory" => [
         "flash_size"        => $flash[1] * 1024,
 		"heap_frag"         => 0,     # Fragmentation
@@ -92,12 +103,7 @@ $system_json = [
 		"par_used_app0"     => $app[2],
 		"heap_total"        => $heap[1],
 		"par_size_spiffs"   => $spiffs[1],
-		"par_used_spiffs"   => $spiffs[2]],
-	"radioCmt" => [
-		"en"          => false,
-		"isconnected" => false,
-		"sn"          => "",
-		"irqOk"       => false
+		"par_used_spiffs"   => $spiffs[2]
 	]
 ];
 
