@@ -41,16 +41,16 @@ function showSave($my_post){
 
 	## Serial console # from web.h - line 603
 	# "serEn":"on","serDbg":"on","priv":"on","wholeTrace":"on","log2mqtt":"on",
-	if (isset($my_post["serEn"]))		$ahoy_data["WebServer"]["serial"]["serEn"] = $my_post["serEn"];
-	else unset($ahoy_data["WebServer"]["serial"]["serEn"]);
-	if (isset($my_post["serDbg"]))		$ahoy_data["WebServer"]["serial"]["serDbg"] = $my_post["serDbg"];
-	else unset($ahoy_data["WebServer"]["serial"]["serDbg"]);
-	if (isset($my_post["priv"]))		$ahoy_data["WebServer"]["serial"]["priv"] = $my_post["priv"];
-	else unset($ahoy_data["WebServer"]["serial"]["priv"]);
-	if (isset($my_post["wholeTrace"]))	$ahoy_data["WebServer"]["serial"]["wholeTrace"] = $my_post["wholeTrace"];
-	else unset($ahoy_data["WebServer"]["serial"]["wholeTrace"]);
-	if (isset($my_post["log2mqtt"]))	$ahoy_data["WebServer"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
-	else unset($ahoy_data["WebServer"]["serial"]["log2mqtt"]);
+	if (isset($my_post["serEn"]))		$ahoy_data["logging"]["serial"]["serEn"] = $my_post["serEn"];
+	else unset($ahoy_data["logging"]["serial"]["serEn"]);
+	if (isset($my_post["serDbg"]))		$ahoy_data["logging"]["serial"]["serDbg"] = $my_post["serDbg"];
+	else unset($ahoy_data["logging"]["serial"]["serDbg"]);
+	if (isset($my_post["priv"]))		$ahoy_data["logging"]["serial"]["priv"] = $my_post["priv"];
+	else unset($ahoy_data["logging"]["serial"]["priv"]);
+	if (isset($my_post["wholeTrace"]))	$ahoy_data["logging"]["serial"]["wholeTrace"] = $my_post["wholeTrace"];
+	else unset($ahoy_data["logging"]["serial"]["wholeTrace"]);
+	if (isset($my_post["log2mqtt"]))	$ahoy_data["logging"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
+	else unset($ahoy_data["logging"]["serial"]["log2mqtt"]);
 
 	# aus Network # from web.h - line 500
 	## [ap_pwd] => esp_8266          #Standard in AhoyDTU
@@ -145,35 +145,41 @@ function showSave($my_post){
 	## [sunLon] => 10
 	## [sunOffsSr] => 0
 	## [sunOffsSs] => 0
-    if (isset($my_post["sunLat"]) and isset($my_post["sunLon"])) {
-		if (!isset($ahoy_data["sunset"]["latitude"]) or
-			!isset($ahoy_data["sunset"]["longitude"]) or
-			$my_post["sunLat"] != $ahoy_data["sunset"]["latitude"] or
-			$my_post["sunLon"] != $ahoy_data["sunset"]["longitude"]) {
-			$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
-			$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
-
-			if ($my_post["sunLat"] == "" or $my_post["sunLon"] == "") {
-				$ahoy_data["sunset"]["enabled"] = false;
-			} else {
-				$ahoy_data["sunset"]["enabled"] = true;
-			}
-		}
-    }
-
+	if (isset($my_post["sunLat"]))	$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
+	else unset($ahoy_data["sunset"]["latitude"]);
+	if (isset($my_post["sunLon"]))	$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
+	else unset($ahoy_data["sunset"]["longitude"]);
+	if (isset($my_post["sunOffsSr"]))	$ahoy_data["sunset"]["sunOffsSr"] = 60 * $my_post["sunOffsSr"];
+	else unset($ahoy_data["sunset"]["sunOffsSr"]);
+	if (isset($my_post["sunOffsSs"]))	$ahoy_data["sunset"]["sunOffsSs"] = 60 * $my_post["sunOffsSs"];
+	else unset($ahoy_data["sunset"]["sunOffsSs"]);
+	if (isset($ahoy_data["sunset"]["latitude"]) and isset($ahoy_data["sunset"]["longitude"])) {
+		$ahoy_data["sunset"]["enabled"] = true;
+	} else {
+		$ahoy_data["sunset"]["enabled"] = false;
+	}
 
 	# aus MQTT - # from web.h - line 586
 	## [mqttAddr] ## [mqttPort] ## [mqttClientId] ## [mqttUser] ## [mqttPwd] ## [mqttTopic]
 	## [mqttJson] ## [mqttInterval] ## [retain]
-    if (isset($my_post["mqttAddr"]))	 $ahoy_data["mqtt"]["host"]     = $my_post["mqttAddr"];
-    if (isset($my_post["mqttPort"]))	 $ahoy_data["mqtt"]["port"]     = $my_post["mqttPort"];
-    if (isset($my_post["mqttClientId"])) $ahoy_data["mqtt"]["clientId"] = $my_post["mqttClientId"];
-    if (isset($my_post["mqttUser"]))	 $ahoy_data["mqtt"]["user"]     = $my_post["mqttUser"];
-    if (isset($my_post["mqttPwd"]))		 $ahoy_data["mqtt"]["password"] = $my_post["mqttPwd"];
-    if (isset($my_post["mqttTopic"]))	 $ahoy_data["mqtt"]["topic"]    = $my_post["mqttTopic"];
-    if (isset($my_post["mqttJson"]))	 $ahoy_data["mqtt"]["asJson"]   = $my_post["mqttJson"];
-    if (isset($my_post["mqttInterval"])) $ahoy_data["mqtt"]["Interval"] = $my_post["mqttInterval"];
-    if (isset($my_post["retain"]))		 $ahoy_data["mqtt"]["Retain"]   = $my_post["retain"];
+    if (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")	 $ahoy_data["mqtt"]["host"]     = $my_post["mqttAddr"];
+	else unset($ahoy_data["mqtt"]["host"]);
+    if (isset($my_post["mqttPort"]) and $my_post["mqttPort"] != "")	 $ahoy_data["mqtt"]["port"]     = $my_post["mqttPort"];
+	else unset($ahoy_data["mqtt"]["port"]);
+    if (isset($my_post["mqttClientId"]) and $my_post["mqttClientId"] != "") $ahoy_data["mqtt"]["clientId"] = $my_post["mqttClientId"];
+	else unset($ahoy_data["mqtt"]["clientId"]);
+    if (isset($my_post["mqttUser"]) and $my_post["mqttUser"] != "")	 $ahoy_data["mqtt"]["user"]     = $my_post["mqttUser"];
+	else unset($ahoy_data["mqtt"]["user"]);
+    if (isset($my_post["mqttPwd"]) and $my_post["mqttPwd"] != "")	 $ahoy_data["mqtt"]["password"] = $my_post["mqttPwd"];
+	else unset($ahoy_data["mqtt"]["password"]);
+    if (isset($my_post["mqttTopic"]) and $my_post["mqttTopic"] != "")$ahoy_data["mqtt"]["topic"]    = $my_post["mqttTopic"];
+	else unset($ahoy_data["mqtt"]["topic"]);
+    if (isset($my_post["mqttJson"]) and $my_post["mqttJson"] != "")	 $ahoy_data["mqtt"]["asJson"]   = $my_post["mqttJson"];
+	else unset($ahoy_data["mqtt"]["asJson"]);
+    if (isset($my_post["mqttInterval"]) and $my_post["mqttInterval"] != 0) $ahoy_data["mqtt"]["Interval"] = $my_post["mqttInterval"];
+	else unset($ahoy_data["mqtt"]["Interval"]);
+    if (isset($my_post["retain"]) and $my_post["retain"] != "")		 $ahoy_data["mqtt"]["Retain"]   = $my_post["retain"];
+	else unset($ahoy_data["mqtt"]["Retain"]);
 	$ahoy_data["mqtt"]["enabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? true : false;
 
 

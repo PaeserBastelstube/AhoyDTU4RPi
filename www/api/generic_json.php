@@ -52,11 +52,12 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval($dtu_serial) . ".log", 
 			 "level" => "INFO", "max_log_filesize" => 1000000, "max_log_files" => 1];
 
-  # "nrfEnable":"on","pinCs":"5","pinCe":"4","pinIrq":"15","pinSclk":"18","pinMosi":"23","pinMiso":"19",
+  $ahoy_data["sunset"]["enabled"] = false;
   $ahoy_data["nrf"]["enabled"] = false;
-
-  # [cmtEnable] [pinCmtSclk] [pinSdio] [pinCsb] [pinFcsb] [pinGpio3] 
   $ahoy_data["cmt"]["enabled"] = false;
+  $ahoy_data["mqtt"]["enabled"] = false;
+  $ahoy_data["volkszaehler"]["enabled"] = false;
+  $ahoy_data["influxdb"]["enabled"] = false;
 
   $ahoy_data["WebServer"]["filepath"] = "/tmp";
   $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;        # Reset values and YieldDay at midnight
@@ -66,11 +67,6 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = false;         # Include reset 'max' values
   $ahoy_data["WebServer"]["strtWthtTm"] = false;                         # Start without time sync
   $ahoy_data["WebServer"]["rdGrid"] = false;                             # Read Grid Profile
-
-  $ahoy_data["sunset"]["enabled"] = false;
-  $ahoy_data["mqtt"]["enabled"] = false;
-  $ahoy_data["volkszaehler"]["enabled"] = false;
-  $ahoy_data["influxdb"]["enabled"] = false;
 }
 
 if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["lnk"])) {$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = "";}
