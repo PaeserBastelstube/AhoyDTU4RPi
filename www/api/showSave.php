@@ -20,10 +20,9 @@ function showSave($my_post){
 	## [region] => 0			# wofür wird das benötigt
 	## [timezone] => 13			# wofür wird das benötigt
 
+	# Reboot Ahoy at midnight
 	if (isset($my_post["schedReboot"]))	$ahoy_data["WebServer"]["system"]["sched_reboot"] = $my_post["schedReboot"];
 	else unset($ahoy_data["WebServer"]["system"]["sched_reboot"]);
-	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]      = $my_post["region"];
-	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]    = $my_post["timezone"] -12;
 
 	# check and switch for Dark or Bright color
 	if (isset ($my_post["darkMode"]) and $my_post["darkMode"] == "on") {
@@ -33,13 +32,15 @@ function showSave($my_post){
 		unlink ('../html/colors.css');
 		symlink ('../html/colorBright.css', '../html/colors.css');
 	}
+	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]      = $my_post["region"];
+	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]    = $my_post["timezone"] -12;
 
-	# Check custom link
+	# custom link
 	if (isset($my_post["cstLnk"]))		$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
 	if (isset($my_post["cstLnkTxt"]))	$ahoy_data["WebServer"]["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
 
 
-	## Serial console # from web.h - line 603
+	## System configuration / Serial console # from web.h - line 603
 	# "serEn":"on","serDbg":"on","priv":"on","wholeTrace":"on","log2mqtt":"on",
 	if (isset($my_post["serEn"]))		$ahoy_data["logging"]["serial"]["serEn"] = $my_post["serEn"];
 	else unset($ahoy_data["logging"]["serial"]["serEn"]);
@@ -52,7 +53,7 @@ function showSave($my_post){
 	if (isset($my_post["log2mqtt"]))	$ahoy_data["logging"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
 	else unset($ahoy_data["logging"]["serial"]["log2mqtt"]);
 
-	# aus Network # from web.h - line 500
+	# Network configuration # from web.h - line 500
 	## [ap_pwd] => esp_8266          #Standard in AhoyDTU
 	## [ssid] => wifi-ssid
 	## [hidd] => off
@@ -65,8 +66,17 @@ function showSave($my_post){
 	### on RASPBERRY: system managed - not by AhoyDTU
 
 
-	# aus Protection # from web.h - line 489
+	# Protection configuration # from web.h - line 489
 	## [adminpwd] => {PWD}
+	if (isset($my_post["adminpwd"])) {
+ 		if ($my_post["adminpwd"] == "") unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
+ 		else $ahoy_data["WebServer"]["system"]["pwd_pwd"] = $my_post["adminpwd"];
+	}
+	if (isset($my_post["login"]) and $my_post["login"] == "login") {
+		if (isset($my_post["pwd"]) and $my_post["pwd"] == $ahoy_data["WebServer"]["system"]["pwd_pwd"])
+			unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
+	}
+
 	## [protMask0] => on   # Index
 	## [protMask1] => on   # Live
 	## [protMask2] => on   # Webserial
@@ -74,14 +84,6 @@ function showSave($my_post){
 	## [protMask4] => on   # Update
 	## [protMask5] => on   # System
 	## [protMask6] => on   # History
-	if (isset($my_post["adminpwd"])) {
- 		if ($my_post["adminpwd"] == "") unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
- 		else $ahoy_data["WebServer"]["system"]["pwd_pwd"] = $my_post["adminpwd"];
-	}
-	if (isset($my_post["login"]) and $my_post["login"] == "login") {
-		if (isset($my_post["pwd"]) and $my_post["pwd"] == $ahoy_data["WebServer"]["system"]["pwd_pwd"]) unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
-	}
-
 	$prot_mask = 0;
 	if (isset($my_post["protMask0"]) and $my_post["protMask0"] == "on") $prot_mask += 2**0;
 	if (isset($my_post["protMask1"]) and $my_post["protMask1"] == "on") $prot_mask += 2**1;
@@ -94,15 +96,9 @@ function showSave($my_post){
 	if ($prot_mask > 0) $ahoy_data["WebServer"]["system"]["prot_mask"] = $prot_mask;
 
 
-	# aus Inverter # from web.h - line 512
-	## [invInterval] => 99
-	## [invRstMid] => on
-	## [invRstComStart] => on
-	## [invRstComStop] => on
-	## [invRstNotAvail] => on
-	## [invRstMaxMid] => on
-	## [strtWthtTm] => on
-	## [rdGrid] => on
+	# Inverter configuration # from web.h - line 512
+	## [invInterval invRstMid invRstComStart invRstComStop invRstNotAvail invRstMaxMid strtWthtTm rdGrid
+
 	if (isset($my_post["invInterval"]) and $ahoy_data["interval"] != $my_post["invInterval"])
 		$ahoy_data["interval"]  = $my_post["invInterval"];
 
@@ -134,17 +130,14 @@ function showSave($my_post){
 	if (isset($my_post["rdGrid"]))	$ahoy_data["WebServer"]["rdGrid"] = $my_post["rdGrid"];
 	else							$ahoy_data["WebServer"]["rdGrid"] = false;
 
-	# aus NTP Server - # from web.h - line 566
-	## [ntpAddr] => wird im Betriebssystem verwaltet - nicht änderbar
-	## [ntpPort] => 999
-	## [ntpIntvl] => 100
+	# NTP Server configuration # from web.h - line 566
+	## ntpAddr  => wird im Betriebssystem verwaltet - nicht änderbar
+	## ntpPort  => 123
+	## ntpIntvl => 720
 
 
-	# check for sunrise and sunset data - # from web.h - line 573
-	## [sunLat] => 53
-	## [sunLon] => 10
-	## [sunOffsSr] => 0
-	## [sunOffsSs] => 0
+	# Sunrise & Sunset configuration # from web.h - line 573
+	## sunLat - sunLon - sunOffsSr - sunOffsSs
 	if (isset($my_post["sunLat"]))	$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
 	else unset($ahoy_data["sunset"]["latitude"]);
 	if (isset($my_post["sunLon"]))	$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
@@ -153,15 +146,15 @@ function showSave($my_post){
 	else unset($ahoy_data["sunset"]["sunOffsSr"]);
 	if (isset($my_post["sunOffsSs"]))	$ahoy_data["sunset"]["sunOffsSs"] = 60 * $my_post["sunOffsSs"];
 	else unset($ahoy_data["sunset"]["sunOffsSs"]);
-	if (isset($ahoy_data["sunset"]["latitude"]) and isset($ahoy_data["sunset"]["longitude"])) {
+	if (isset($ahoy_data["sunset"]["latitude"]) and $ahoy_data["sunset"]["latitude"] != "" and
+		isset($ahoy_data["sunset"]["longitude"]) and $ahoy_data["sunset"]["longitude"] != "") {
 		$ahoy_data["sunset"]["enabled"] = true;
 	} else {
 		$ahoy_data["sunset"]["enabled"] = false;
 	}
 
-	# aus MQTT - # from web.h - line 586
-	## [mqttAddr] ## [mqttPort] ## [mqttClientId] ## [mqttUser] ## [mqttPwd] ## [mqttTopic]
-	## [mqttJson] ## [mqttInterval] ## [retain]
+	# MQTT configuration # from web.h - line 586
+	## mqttAddr - mqttPort - mqttClientId - mqttUser - mqttPwd - mqttTopic - mqttJson - mqttInterval - retain
     if (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")	 $ahoy_data["mqtt"]["host"]     = $my_post["mqttAddr"];
 	else unset($ahoy_data["mqtt"]["host"]);
     if (isset($my_post["mqttPort"]) and $my_post["mqttPort"] != "")	 $ahoy_data["mqtt"]["port"]     = $my_post["mqttPort"];
@@ -183,45 +176,71 @@ function showSave($my_post){
 	$ahoy_data["mqtt"]["enabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? true : false;
 
 
+	# Pinout Configuration
+	# "pinLed0":"255","pinLed1":"255","pinLed2":"255","pinLedHighActive":"0","pinLedLum":"255",
+	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] == "255") unset($ahoy_data["ledpin"]["pinLed0"]);
+	else $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
+	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] == "255") unset($ahoy_data["ledpin"]["pinLed1"]);
+	else $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
+	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] == "255") unset($ahoy_data["ledpin"]["pinLed2"]);
+	else $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
+	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] == "0") unset($ahoy_data["ledpin"]["pinLedHighActive"]);
+	else $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
+	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] == "0") unset($ahoy_data["ledpin"]["pinLedLum"]);
+	else $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
+	if (isset($ahoy_data["ledpin"]) and count($ahoy_data["ledpin"]) == 0) unset($ahoy_data["ledpin"]);
+	
+	# "pinCs":"255","pinCe":"255","pinIrq":"255","pinSclk":"255","pinMosi":"255","pinMiso":"255"
+	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
+	else $ahoy_data["nrf"]["enabled"] = false;
+	if (isset($my_post["pinCs"])    and $my_post["pinCs"]   == "255") unset($ahoy_data["nrf"]["pinCs"]);
+	else $ahoy_data["nrf"]["pinCs"]   = $my_post["pinCs"];
+	if (isset($my_post["pinCe"])    and $my_post["pinCe"]   == "255") unset($ahoy_data["nrf"]["pinCe"]);
+	else $ahoy_data["nrf"]["pinCe"]   = $my_post["pinCe"];
+	if (isset($my_post["pinIrq"])   and $my_post["pinIrq"]  == "255") unset($ahoy_data["nrf"]["pinIrq"]);
+	else $ahoy_data["nrf"]["pinIrq"]  = $my_post["pinIrq"];
+	if (isset($my_post["pinSclk"])  and $my_post["pinSclk"] == "255") unset($ahoy_data["nrf"]["pinSclk"]);
+	else $ahoy_data["nrf"]["pinSclk"] = $my_post["pinSclk"];
+	if (isset($my_post["pinMosi"])  and $my_post["pinMosi"] == "255") unset($ahoy_data["nrf"]["pinMosi"]);
+	else $ahoy_data["nrf"]["pinMosi"] = $my_post["pinMosi"];
+	if (isset($my_post["pinMiso"])  and $my_post["pinMiso"] == "255") unset($ahoy_data["nrf"]["pinMiso"]);
+	else $ahoy_data["nrf"]["pinMiso"] = $my_post["pinMiso"];
 
+	# "cmtEnable":"on","pinCmtSclk":"255","pinSdio":"255","pinCsb":"255","pinFcsb":"255","pinGpio3":"255"
+	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
+	else $ahoy_data["cmt"]["enabled"] = false;
+	if (isset($my_post["pinCmtSclk"])  and $my_post["pinCmtSclk"] == "255") unset($ahoy_data["cmt"]["pinCmtSclk"]);
+	else $ahoy_data["cmt"]["pinCmtSclk"] = $my_post["pinCmtSclk"];
+	if (isset($my_post["pinSdio"])     and $my_post["pinSdio"]    == "255") unset($ahoy_data["cmt"]["pinSdio"]);
+	else $ahoy_data["cmt"]["pinSdio"]    = $my_post["pinSdio"];
+	if (isset($my_post["pinCsb"])      and $my_post["pinCsb"]     == "255") unset($ahoy_data["cmt"]["pinCsb"]);
+	else $ahoy_data["cmt"]["pinCsb"]     = $my_post["pinCsb"];
+	if (isset($my_post["pinFcsb"])     and $my_post["pinFcsb"]    == "255") unset($ahoy_data["cmt"]["pinFcsb"]);
+	else $ahoy_data["cmt"]["pinFcsb"]    = $my_post["pinFcsb"];
+	if (isset($my_post["pinGpio3"])    and $my_post["pinGpio3"]   == "255") unset($ahoy_data["cmt"]["pinGpio3"]);
+	else $ahoy_data["cmt"]["pinGpio3"]   = $my_post["pinGpio3"];
 
-	# aus Pinout Configuration
-	## [pinLed0] => 255
-	## [pinLed1] => 255
-	## [pinLed2] => 255
-	## [pinLedHighActive] => 0
-	## [pinLedLum] => 255
-
-	## [nrfEnable] => on
-	## [pinCs] => 5
-	## [pinCe] => 4
-	## [pinIrq] => 15
-	## [pinSclk] => 18
-	## [pinMosi] => 23
-	## [pinMiso] => 19
-
-	## [cmtEnable] => on
-	## [pinCmtSclk] => 14
-	## [pinSdio] => 12
-	## [pinCsb] => 15
-	## [pinFcsb] => 26
-	## [pinGpio3] => 23
-
-	## [ethEn] => on
-	## [ethCs] => 15
-	## [ethSclk] => 14
-	## [ethMiso] => 12
-	## [ethMosi] => 13
-	## [ethIrq] => 4
-	## [ethRst] => 255
+	# "ethEn":"on","ethCs":"255","ethSclk":"255","ethMiso":"255","ethMosi":"255","ethIrq":"255","ethRst":"255"
+	if (isset($my_post["ethEn"])    and $my_post["ethEn"]   != "on") unset($ahoy_data["eth"]["ethEn"]);
+	else $ahoy_data["eth"]["ethEn"]   = $my_post["ethEn"];
+	if (isset($my_post["ethCs"])    and $my_post["ethCs"]   == "255") unset($ahoy_data["eth"]["ethCs"]);
+	else $ahoy_data["eth"]["ethCs"]   = $my_post["ethCs"];
+	if (isset($my_post["ethSclk"])  and $my_post["ethSclk"] == "255") unset($ahoy_data["eth"]["ethSclk"]);
+	else $ahoy_data["eth"]["ethSclk"] = $my_post["ethSclk"];
+	if (isset($my_post["ethMiso"])  and $my_post["ethMiso"] == "255") unset($ahoy_data["eth"]["ethMiso"]);
+	else $ahoy_data["eth"]["ethMiso"] = $my_post["ethMiso"];
+	if (isset($my_post["ethMosi"])  and $my_post["ethMosi"] == "255") unset($ahoy_data["eth"]["ethMosi"]);
+	else $ahoy_data["eth"]["ethMosi"] = $my_post["ethMosi"];
+	if (isset($my_post["ethIrq"])   and $my_post["ethIrq"]  == "255") unset($ahoy_data["eth"]["ethIrq"]);
+	else $ahoy_data["eth"]["ethIrq"]  = $my_post["ethIrq"];
+	if (isset($my_post["ethRst"])   and $my_post["ethRst"]  == "255") unset($ahoy_data["eth"]["ethRst"]);
+	else $ahoy_data["eth"]["ethRst"]  = $my_post["ethRst"];
+	
 
 	# aus Display Config
 	## [disp_pwr] => on
 	## [disp_cont] => 88
 	## [disp_graph_ratio] => 1
-
-	# aus SAVE Button
-	##  [reboot] => on
 
 ## bool saveSettings() { # .../src/config/settings.h - Zeile 323
 ##       jsonNetwork(root[F("wifi")].to<JsonObject>(), true);
@@ -291,30 +310,6 @@ function showSave($my_post){
 		}	
 	}
 
-	# "pinLed0":"255","pinLed1":"255","pinLed2":"255","pinLedHighActive":"0","pinLedLum":"255",
-	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] == "255")
-		unset($ahoy_data["ledpin"]["pinLed0"]);
-	else $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
-	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] == "255")
-		unset($ahoy_data["ledpin"]["pinLed1"]);
-	else $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
-	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] == "255")
-		unset($ahoy_data["ledpin"]["pinLed2"]);
-	else $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
-	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] == "0")
-		unset($ahoy_data["ledpin"]["pinLedHighActive"]);
-	else $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
-	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] == "255")
-		unset($ahoy_data["ledpin"]["pinLedLum"]);
-	else $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
-	
-
-	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
-	else $ahoy_data["nrf"]["enabled"] = false;
-
-	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
-	else $ahoy_data["cmt"]["enabled"] = false;
-
 	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file
@@ -323,6 +318,9 @@ function showSave($my_post){
 	# print ($RC ? "alles OK\n" : "Fehler\n");
 	if ($RC == true) {
 		print json_encode(["success" => true]);
+
+		##  [reboot] => on - from SAVE button
+		# if (isset($my_post["reboot"])) { reboot in 1 sec.}
 	} else {
 		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $myFilename . "\n");
 		print ("Length: " . count($ahoy_data) . ": " . json_encode($ahoy_data) . "\n");

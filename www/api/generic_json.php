@@ -75,7 +75,10 @@ if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["txt"])) {$ahoy_data["WebSe
 if (!isset($ahoy_data["WebServer"]["generic"]["region"]))	{$ahoy_data["WebServer"]["generic"]["region"] = 0;}
 if (!isset($ahoy_data["WebServer"]["generic"]["timezone"])) {$ahoy_data["WebServer"]["generic"]["timezone"] = 1;}
 
-if (!isset($ahoy_data["WebServer"]["system"]["prot_mask"]))		$ahoy_data["WebServer"]["system"]["prot_mask"] = 0;
+$menu_mask   = isset($ahoy_data["WebServer"]["system"]["prot_mask"]) ? $ahoy_data["WebServer"]["system"]["prot_mask"] : 0;
+$menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
+$menu_prot   = $menu_protEn and $prot_mask > 0 ? true : false;
+	
 
 # create "ahoy-generic-data"
 $generic_json = [
@@ -88,9 +91,9 @@ $generic_json = [
 		"build"       => "5feb293",
 		"env"         => $Environment,							# "esp32-wroom32-de",
 		"host"        => $AhoyHost,								# hostname
-		"menu_prot"   => true,	# Switch, if prot=set - true=locked - false=unlocked
-		"menu_mask"   => $ahoy_data["WebServer"]["system"]["prot_mask"],	# exp-sum of 7 switches
-		"menu_protEn" => isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false, # check, if prot-PW != "\0"
+		"menu_prot"   => $menu_prot,										# Switch, if prot=set - true=locked - false=unlocked
+		"menu_mask"   => $menu_mask,										# exp-sum of 7 switches
+		"menu_protEn" => $menu_protEn,										# check, if prot-PW != "\0"
 		"cst_lnk"     => $ahoy_data["WebServer"]["generic"]["cst"]["lnk"],	# custom 
 		"cst_lnk_txt" => $ahoy_data["WebServer"]["generic"]["cst"]["txt"],
 		"region"      => $ahoy_data["WebServer"]["generic"]["region"],		# wo wird das benötigt

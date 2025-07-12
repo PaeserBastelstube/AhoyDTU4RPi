@@ -8,86 +8,71 @@
 # include 'generic_json.php'; ## allready call in system_json 
 include 'system_json.php';
 
-
-if (!isset($ahoy_data["mqtt"]["host"]))		$ahoy_data["mqtt"]["host"] = "";
-if (!isset($ahoy_data["mqtt"]["port"]))		$ahoy_data["mqtt"]["port"] = "";
-if (!isset($ahoy_data["mqtt"]["clientId"]))	$ahoy_data["mqtt"]["clientId"] = "";
-if (!isset($ahoy_data["mqtt"]["user"]))		$ahoy_data["mqtt"]["user"] = "";
-if (!isset($ahoy_data["mqtt"]["password"]))	$ahoy_data["mqtt"]["password"] = "";
-if (!isset($ahoy_data["mqtt"]["topic"]))	$ahoy_data["mqtt"]["topic"] = "";
-if (!isset($ahoy_data["mqtt"]["asJson"]))	$ahoy_data["mqtt"]["asJson"] = false;
-if (!isset($ahoy_data["mqtt"]["Interval"]))	$ahoy_data["mqtt"]["Interval"] = 0;
-if (!isset($ahoy_data["mqtt"]["Retain"]))	$ahoy_data["mqtt"]["Retain"] = "";
-
-if (!isset($ahoy_data["sunset"]["latitude"]))  {$ahoy_data["sunset"]["latitude"]  = "";}
-if (!isset($ahoy_data["sunset"]["longitude"])) {$ahoy_data["sunset"]["longitude"] = "";}
-if (!isset($ahoy_data["sunset"]["sunOffsSr"])) {$ahoy_data["sunset"]["sunOffsSr"] = "";}
-if (!isset($ahoy_data["sunset"]["sunOffsSs"])) {$ahoy_data["sunset"]["sunOffsSs"] = "";}
-
-if (!isset($ahoy_data["logging"]["serial"]["serEn"]))		$ahoy_data["logging"]["serial"]["serEn"] = false;
-if (!isset($ahoy_data["logging"]["serial"]["serDbg"]))		$ahoy_data["logging"]["serial"]["serDbg"] = false;
-if (!isset($ahoy_data["logging"]["serial"]["priv"]))		$ahoy_data["logging"]["serial"]["priv"] = false;
-if (!isset($ahoy_data["logging"]["serial"]["wholeTrace"]))	$ahoy_data["logging"]["serial"]["wholeTrace"] = false;
-if (!isset($ahoy_data["logging"]["serial"]["log2mqtt"]))	$ahoy_data["logging"]["serial"]["log2mqtt"] = false;
-
 $setup_json = $generic_json + [
 	"system" => $system_json, 
 	"mqtt" => [
-		"broker"	=> $ahoy_data["mqtt"]["host"],
-		"port"		=> $ahoy_data["mqtt"]["port"],
-		"clientId"	=> $ahoy_data["mqtt"]["clientId"],
-		"user"		=> $ahoy_data["mqtt"]["user"],
-		"pwd"		=> $ahoy_data["mqtt"]["password"],
-		"topic"		=> $ahoy_data["mqtt"]["topic"],
-		"json"		=> $ahoy_data["mqtt"]["asJson"],
-		"interval"	=> $ahoy_data["mqtt"]["Interval"],
-		"retain"	=> $ahoy_data["mqtt"]["Retain"]],
+		"broker"	=> isset($ahoy_data["mqtt"]["host"])     ? $ahoy_data["mqtt"]["host"] : "",
+		"port"		=> isset($ahoy_data["mqtt"]["port"])     ? $ahoy_data["mqtt"]["port"] : "",
+		"clientId"	=> isset($ahoy_data["mqtt"]["clientId"]) ? $ahoy_data["mqtt"]["clientId"] : "",
+		"user"		=> isset($ahoy_data["mqtt"]["user"])     ? $ahoy_data["mqtt"]["user"] : "",
+		"pwd"		=> isset($ahoy_data["mqtt"]["password"]) ? $ahoy_data["mqtt"]["password"] : "",
+		"topic"		=> isset($ahoy_data["mqtt"]["topic"])    ? $ahoy_data["mqtt"]["topic"] : "",
+		"json"		=> isset($ahoy_data["mqtt"]["asJson"])   ? $ahoy_data["mqtt"]["asJson"] : false,
+		"interval"	=> isset($ahoy_data["mqtt"]["Interval"]) ? $ahoy_data["mqtt"]["Interval"] : 0, 
+		"retain"	=> isset($ahoy_data["mqtt"]["Retain"])   ? $ahoy_data["mqtt"]["Retain"] : ""
+	],
 	"ntp" => [
 		"addr" => trim(shell_exec("timedatectl show-timesync -p SystemNTPServers --value")) . "  - cannot be changed",
 		"port" => "123",
-		"interval" => "720"],
+		"interval" => "720"
+	],
 	"sun" => [
-		"lat" => $ahoy_data["sunset"]["latitude"],
-		"lon" => $ahoy_data["sunset"]["longitude"],
-		"offsSr" => $ahoy_data["sunset"]["sunOffsSr"],
-		"offsSs" => $ahoy_data["sunset"]["sunOffsSs"]],
+		"lat"    => isset($ahoy_data["sunset"]["latitude"])  ? $ahoy_data["sunset"]["latitude"]  : "",
+		"lon"    => isset($ahoy_data["sunset"]["longitude"]) ? $ahoy_data["sunset"]["longitude"] : "",
+		"offsSr" => isset($ahoy_data["sunset"]["sunOffsSr"]) ? $ahoy_data["sunset"]["sunOffsSr"] : "",
+		"offsSs" => isset($ahoy_data["sunset"]["sunOffsSs"]) ? $ahoy_data["sunset"]["sunOffsSs"] : ""
+	],
 	"pinout" => [
-		"cs" => 5,
-		"ce" => 4,
-		"irq" => 15,
-		"sclk" => 18,
-		"mosi" => 23,
-		"miso" => 19,
-		"led0" => isset($ahoy_data["ledpin"]["pinLed0"]) ? $ahoy_data["ledpin"]["pinLed0"] : 255,
-		"led1" => isset($ahoy_data["ledpin"]["pinLed1"]) ? $ahoy_data["ledpin"]["pinLed1"] : 255,
-		"led2" => isset($ahoy_data["ledpin"]["pinLed2"]) ? $ahoy_data["ledpin"]["pinLed2"] : 255,
+		"cs"   => isset($ahoy_data["nrf"]["pinCs"])   ? $ahoy_data["nrf"]["pinCs"]   : 0xff,
+		"ce"   => isset($ahoy_data["nrf"]["pinCe"])   ? $ahoy_data["nrf"]["pinCe"]   : 0xff,
+		"irq"  => isset($ahoy_data["nrf"]["pinIrq"])  ? $ahoy_data["nrf"]["pinIrq"]  : 0xff,
+		"sclk" => isset($ahoy_data["nrf"]["pinSclk"]) ? $ahoy_data["nrf"]["pinSclk"] : 0xff,
+		"mosi" => isset($ahoy_data["nrf"]["pinMosi"]) ? $ahoy_data["nrf"]["pinMosi"] : 0xff,
+		"miso" => isset($ahoy_data["nrf"]["pinMiso"]) ? $ahoy_data["nrf"]["pinMiso"] : 0xff,
+		"led0" => isset($ahoy_data["ledpin"]["pinLed0"]) ? $ahoy_data["ledpin"]["pinLed0"] : 0xff,
+		"led1" => isset($ahoy_data["ledpin"]["pinLed1"]) ? $ahoy_data["ledpin"]["pinLed1"] : 0xff,
+		"led2" => isset($ahoy_data["ledpin"]["pinLed2"]) ? $ahoy_data["ledpin"]["pinLed2"] : 0xff,
 		"led_high_active" => isset($ahoy_data["ledpin"]["pinLedHighActive"]) ? $ahoy_data["ledpin"]["pinLedHighActive"] : false,
-		"led_lum" => isset($ahoy_data["ledpin"]["pinLedLum"]) ? $ahoy_data["ledpin"]["pinLedLum"] : 255],
+		"led_lum" => isset($ahoy_data["ledpin"]["pinLedLum"]) ? $ahoy_data["ledpin"]["pinLedLum"] : 0
+	],
 	"radioCmt" => [
-		"sclk" => 14,
-		"sdio" => 12,
-		"csb" => 15,
-		"fcsb" => 26,
-		"gpio3" => 23,
-		"en" => $ahoy_data["cmt"]["enabled"],
+		"en"    => $ahoy_data["cmt"]["enabled"],
+		"sclk"  => isset($ahoy_data["cmt"]["pinCmtSclk"]) ? $ahoy_data["cmt"]["pinCmtSclk"] : 0xff,
+		"sdio"  => isset($ahoy_data["cmt"]["pinSdio"])    ? $ahoy_data["cmt"]["pinSdio"]    : 0xff,
+		"csb"   => isset($ahoy_data["cmt"]["pinCsb"])     ? $ahoy_data["cmt"]["pinCsb"]     : 0xff,
+		"fcsb"  => isset($ahoy_data["cmt"]["pinFcsb"])    ? $ahoy_data["cmt"]["pinFcsb"]    : 0xff,
+		"gpio3" => isset($ahoy_data["cmt"]["pinGpio3"])   ? $ahoy_data["cmt"]["pinGpio3"]   : 0xff,
 		"freq_min" => 860,
-		"freq_max" => 870],
+		"freq_max" => 870
+	],
 	"eth" => [
 		"en"    => $net_wired,
-		"cs"    => 0xff,
-		"sclk"  => 0xff,
-		"miso"  => 0xff,
-		"mosi"  => 0xff,
-		"irq"   => 0xff,
-		"reset" => 0xff],
+		"cs"    => isset($ahoy_data["eth"]["ethCs"])   ? $ahoy_data["eth"]["ethCs"]   : 0xff,
+		"sclk"  => isset($ahoy_data["eth"]["ethSclk"]) ? $ahoy_data["eth"]["ethSclk"] : 0xff,
+		"miso"  => isset($ahoy_data["eth"]["ethMiso"]) ? $ahoy_data["eth"]["ethMiso"] : 0xff,
+		"mosi"  => isset($ahoy_data["eth"]["ethMosi"]) ? $ahoy_data["eth"]["ethMosi"] : 0xff,
+		"irq"   => isset($ahoy_data["eth"]["ethIrq"])  ? $ahoy_data["eth"]["ethIrq"]  : 0xff,
+		"reset" => isset($ahoy_data["eth"]["ethRst"])  ? $ahoy_data["eth"]["ethRst"]  : 0xff
+	],
 	"radioNrf" => [
 		"en" => $ahoy_data["nrf"]["enabled"]],
 	"serial" => [
-		"show_live_data" => $ahoy_data["logging"]["serial"]["serEn"],		# serEn
-		"debug"          => $ahoy_data["logging"]["serial"]["serDbg"],		# serDbg
-		"priv"           => $ahoy_data["logging"]["serial"]["priv"],		# priv
-		"wholeTrace"     => $ahoy_data["logging"]["serial"]["wholeTrace"],	# wholeTrace
-		"log2mqtt"       => $ahoy_data["logging"]["serial"]["log2mqtt"]],	# log2mqtt
+		"show_live_data" => isset($ahoy_data["logging"]["serial"]["serEn"])      ? $ahoy_data["logging"]["serial"]["serEn"] : false,
+		"debug"          => isset($ahoy_data["logging"]["serial"]["serDbg"])     ? $ahoy_data["logging"]["serial"]["serDbg"] : false,
+		"priv"           => isset($ahoy_data["logging"]["serial"]["priv"])       ? $ahoy_data["logging"]["serial"]["priv"] : false,
+		"wholeTrace"     => isset($ahoy_data["logging"]["serial"]["wholeTrace"]) ? $ahoy_data["logging"]["serial"]["wholeTrace"] : false,
+		"log2mqtt"       => isset($ahoy_data["logging"]["serial"]["log2mqtt"])   ? $ahoy_data["logging"]["serial"]["log2mqtt"] : false
+	],
 	"static_ip" => [
 		"ip"      => $net_ip,    # 
 		"mask"    => $net_mask,  #
