@@ -151,7 +151,7 @@ class SunsetHandler:
     """
     def __init__(self, sunset_config):
         self.suntimes = None
-        if sunset_config and sunset_config.get('disabled', True) == False:
+        if sunset_config and sunset_config.get('enabled', False) == True:
             latitude = sunset_config.get('latitude')
             longitude = sunset_config.get('longitude')
             altitude = sunset_config.get('altitude')
@@ -221,7 +221,7 @@ def main_loop(ahoy_config):
 
     # get parameter from config-file
     inverters = [inverter for inverter in ahoy_config.get('inverters', [])
-                 if not inverter.get('disabled', False)]
+                 if not inverter.get('enabled', True)]
 
     # check all inverter names and serial numbers in config-file
     for inverter in inverters:
@@ -571,14 +571,14 @@ if __name__ == '__main__':
     # create WebServer client object
     web_server = None
     webserver_config = ahoy_config.get('WebServer', None)
-    if webserver_config and not webserver_config.get('disabled', False):
+    if webserver_config and webserver_config.get('enabled', False):
        # init WebServices
        web_server = WebServer(webserver_config)
 
     # create INFLUX client object
     influx_client = None
     influx_config = ahoy_config.get('influxdb', None)
-    if influx_config and not influx_config.get('disabled', False):
+    if influx_config and influx_config.get('enabled', False):
         from .outputs import InfluxOutputPlugin
         influx_client = InfluxOutputPlugin(
                 influx_config.get('url'),
@@ -590,7 +590,7 @@ if __name__ == '__main__':
     # create VOLKSZAEHLER client object
     volkszaehler_client = None
     volkszaehler_config = ahoy_config.get('volkszaehler', {})
-    if volkszaehler_config and not volkszaehler_config.get('disabled', False):
+    if volkszaehler_config and volkszaehler_config.get('enabled', False):
         from .outputs import VolkszaehlerOutputPlugin
         volkszaehler_client = VolkszaehlerOutputPlugin(volkszaehler_config)
 

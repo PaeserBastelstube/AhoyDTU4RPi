@@ -291,12 +291,28 @@ function showSave($my_post){
 		}	
 	}
 
-	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on")
-		$ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
+	# "pinLed0":"255","pinLed1":"255","pinLed2":"255","pinLedHighActive":"0","pinLedLum":"255",
+	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] == "255")
+		unset($ahoy_data["ledpin"]["pinLed0"]);
+	else $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
+	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] == "255")
+		unset($ahoy_data["ledpin"]["pinLed1"]);
+	else $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
+	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] == "255")
+		unset($ahoy_data["ledpin"]["pinLed2"]);
+	else $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
+	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] == "0")
+		unset($ahoy_data["ledpin"]["pinLedHighActive"]);
+	else $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
+	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] == "255")
+		unset($ahoy_data["ledpin"]["pinLedLum"]);
+	else $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
+	
+
+	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
 	else $ahoy_data["nrf"]["enabled"] = false;
 
-	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on")
-		$ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
+	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
 	else $ahoy_data["cmt"]["enabled"] = false;
 
 	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
