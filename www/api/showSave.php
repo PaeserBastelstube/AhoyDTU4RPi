@@ -32,8 +32,9 @@ function showSave($my_post){
 		unlink ('../html/colors.css');
 		symlink ('../html/colorBright.css', '../html/colors.css');
 	}
-	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]      = $my_post["region"];
-	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]    = $my_post["timezone"] -12;
+
+	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]     = $my_post["region"];
+	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]   = $my_post["timezone"] -12;
 
 	# custom link
 	if (isset($my_post["cstLnk"]))		$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
@@ -52,6 +53,7 @@ function showSave($my_post){
 	else unset($ahoy_data["logging"]["serial"]["wholeTrace"]);
 	if (isset($my_post["log2mqtt"]))	$ahoy_data["logging"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
 	else unset($ahoy_data["logging"]["serial"]["log2mqtt"]);
+	if (isset($ahoy_data["logging"]["serial"]) and count($ahoy_data["logging"]["serial"]) == 0) unset($ahoy_data["logging"]["serial"]);
 
 	# Network configuration # from web.h - line 500
 	## [ap_pwd] => esp_8266          #Standard in AhoyDTU
@@ -94,41 +96,45 @@ function showSave($my_post){
 	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $prot_mask += 2**6;
 	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $prot_mask += 2**7;
 	if ($prot_mask > 0) $ahoy_data["WebServer"]["system"]["prot_mask"] = $prot_mask;
+	else unset($ahoy_data["WebServer"]["system"]["prot_mask"]);
 
+	if (isset($ahoy_data["WebServer"]["system"]) and count($ahoy_data["WebServer"]["system"]) == 0) unset($ahoy_data["WebServer"]["system"]);
 
 	# Inverter configuration # from web.h - line 512
 	## [invInterval invRstMid invRstComStart invRstComStop invRstNotAvail invRstMaxMid strtWthtTm rdGrid
 
-	if (isset($my_post["invInterval"]) and $ahoy_data["interval"] != $my_post["invInterval"])
-		$ahoy_data["interval"]  = $my_post["invInterval"];
+	# Interval [s]
+	$ahoy_data["interval"] = $my_post["invInterval"] ?? 15;
 
 	# Reset values and YieldDay at midnight
-	if (isset($my_post["invRstMid"])) $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = $my_post["invRstMid"];
-	else                              $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;
+	if (isset($my_post["AtMidnight"])) $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = $my_post["AtMidnight"];
+	else unset($ahoy_data["WebServer"]["InverterReset"]["AtMidnight"]);
 
 	# Reset values at sunrise
 	if (isset($my_post["invRstComStart"])) $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = $my_post["invRstComStart"];
-	else                                   $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = false;
+	else unset($ahoy_data["WebServer"]["InverterReset"]["AtSunrise"]);
 
 	# Reset values at sunset
 	if (isset($my_post["invRstComStop"])) $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = $my_post["invRstComStop"];
-	else								  $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = false;
+	else unset($ahoy_data["WebServer"]["InverterReset"]["AtSunset"]);
 
 	# Reset values when inverter status is 'not available'
 	if (isset($my_post["invRstNotAvail"]))	$ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = $my_post["invRstNotAvail"];
-	else									$ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = false;
+	else unset($ahoy_data["WebServer"]["InverterReset"]["NotAvailable"]);
 
 	# Include reset 'max' values
 	if (isset($my_post["invRstMaxMid"]))	$ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = $my_post["invRstMaxMid"];
-	else									$ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = false;
+	else unset($ahoy_data["WebServer"]["InverterReset"]["MaxValues"]);
 
 	# Start without time sync (useful in AP-Only-Mode)
 	if (isset($my_post["strtWthtTm"]))	$ahoy_data["WebServer"]["strtWthtTm"] = $my_post["strtWthtTm"];
-	else								$ahoy_data["WebServer"]["strtWthtTm"] = false;
+	else unset($ahoy_data["WebServer"]["strtWthtTm"]);
 
 	# Read Grid Profile
 	if (isset($my_post["rdGrid"]))	$ahoy_data["WebServer"]["rdGrid"] = $my_post["rdGrid"];
-	else							$ahoy_data["WebServer"]["rdGrid"] = false;
+	else unset($ahoy_data["WebServer"]["rdGrid"]);
+
+	if (isset($ahoy_data["WebServer"]["InverterReset"]) and count($ahoy_data["WebServer"]["InverterReset"]) == 0) unset($ahoy_data["WebServer"]["InverterReset"]);
 
 	# NTP Server configuration # from web.h - line 566
 	## ntpAddr  => wird im Betriebssystem verwaltet - nicht änderbar
@@ -138,19 +144,22 @@ function showSave($my_post){
 
 	# Sunrise & Sunset configuration # from web.h - line 573
 	## sunLat - sunLon - sunOffsSr - sunOffsSs
-	if (isset($my_post["sunLat"]))	$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
+	if (isset($my_post["sunLat"]) and $my_post["sunLat"] != "")	$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
 	else unset($ahoy_data["sunset"]["latitude"]);
-	if (isset($my_post["sunLon"]))	$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
+	if (isset($my_post["sunLon"]) and $my_post["sunLon"] != "")	$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
 	else unset($ahoy_data["sunset"]["longitude"]);
 	if (isset($my_post["sunOffsSr"]))	$ahoy_data["sunset"]["sunOffsSr"] = 60 * $my_post["sunOffsSr"];
 	else unset($ahoy_data["sunset"]["sunOffsSr"]);
 	if (isset($my_post["sunOffsSs"]))	$ahoy_data["sunset"]["sunOffsSs"] = 60 * $my_post["sunOffsSs"];
 	else unset($ahoy_data["sunset"]["sunOffsSs"]);
+
 	if (isset($ahoy_data["sunset"]["latitude"]) and $ahoy_data["sunset"]["latitude"] != "" and
 		isset($ahoy_data["sunset"]["longitude"]) and $ahoy_data["sunset"]["longitude"] != "") {
 		$ahoy_data["sunset"]["enabled"] = true;
 	} else {
 		$ahoy_data["sunset"]["enabled"] = false;
+		if (isset($my_post["sunOffsSr"])) unset($ahoy_data["sunset"]["sunOffsSr"]);
+		if (isset($my_post["sunOffsSs"])) unset($ahoy_data["sunset"]["sunOffsSs"]);
 	}
 
 	# MQTT configuration # from web.h - line 586

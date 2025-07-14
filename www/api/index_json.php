@@ -1,23 +1,31 @@
 <?php
 include'generic_json.php';
 
+##################################################################################
+# test with ?? ==> konditionaler Operator mit NULL-Prüfung
+#                  null coalescing operator 
+##################################################################################
 # set default values, when empty value
-if (!isset($ahoy_data["sunset"]["latitude"])  or !is_numeric($ahoy_data["sunset"]["latitude"]))  $ahoy_data["sunset"]["latitude"] = 0;
-if (!isset($ahoy_data["sunset"]["longitude"]) or !is_numeric($ahoy_data["sunset"]["longitude"])) $ahoy_data["sunset"]["longitude"] = 0;
-if (!isset($ahoy_data["sunset"]["sunOffsSr"]) or !is_numeric($ahoy_data["sunset"]["sunOffsSr"])) $ahoy_data["sunset"]["sunOffsSr"] = 0;
-if (!isset($ahoy_data["sunset"]["sunOffsSs"]) or !is_numeric($ahoy_data["sunset"]["sunOffsSs"])) $ahoy_data["sunset"]["sunOffsSs"] = 0;
+$ahoy_data["sunset"]["latitude"]  = $ahoy_data["sunset"]["latitude"]  ?? "";
+$ahoy_data["sunset"]["longitude"] = $ahoy_data["sunset"]["longitude"] ?? "";
 
-$sun_info = date_sun_info(time(), $ahoy_data["sunset"]["latitude"], $ahoy_data["sunset"]["longitude"]);
+if (is_numeric($ahoy_data["sunset"]["latitude"]) and is_numeric($ahoy_data["sunset"]["longitude"]) and
+	$ahoy_data["sunset"]["enabled"] ?? false) 
+{
+	$sun_info = date_sun_info(time(), $ahoy_data["sunset"]["latitude"], $ahoy_data["sunset"]["longitude"]);
+} else {
+	$ahoy_data["sunset"]["enabled"] = false;
+}
 
 # create JSON Array
 $index_json = $generic_json + [
 	"ts_now"     => time(),
-	"ts_sunrise" => $ahoy_data["sunset"]["enabled"] ? $sun_info["sunrise"] : 0,	# timestamp of sunrise
-	"ts_sunset"  => $ahoy_data["sunset"]["enabled"] ? $sun_info["sunset"]  : 0,	# timestamp of sunset
-	"ts_offsSr"  => $ahoy_data["sunset"]["sunOffsSr"],							# offset in sec
-	"ts_offsSs"  => $ahoy_data["sunset"]["sunOffsSs"],							# offset in sec
+	"ts_sunrise" => $sun_info["sunrise"] ?? 0,				# timestamp of sunrise
+	"ts_sunset"  => $sun_info["sunset"]  ?? 0,				# timestamp of sunset
+	"ts_offsSr"  => $ahoy_data["sunset"]["sunOffsSr"] ?? 0,	# offset in sec
+	"ts_offsSs"  => $ahoy_data["sunset"]["sunOffsSs"] ?? 0,	# offset in sec
 	"disNightComm" => $ahoy_data["sunset"]["enabled"],
-	"warnings"	=> []											# Anzahl von Meldungen des Inverters
+	"warnings"	=> []										# Anzahl von Meldungen des Inverters
 ];
 
 function readFileContent($myFN) {

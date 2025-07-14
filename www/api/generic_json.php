@@ -60,26 +60,19 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["influxdb"]["enabled"] = false;
 
   $ahoy_data["WebServer"]["filepath"] = "/tmp";
-  $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;        # Reset values and YieldDay at midnight
-  $ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = false;      # Reset values when inverter status is 'not available'
-  $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = false;         # Reset values at sunrise
-  $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = false;          # Reset values at sunset
-  $ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = false;         # Include reset 'max' values
-  $ahoy_data["WebServer"]["strtWthtTm"] = false;                         # Start without time sync
-  $ahoy_data["WebServer"]["rdGrid"] = false;                             # Read Grid Profile
+#  $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;        # Reset values and YieldDay at midnight
+#  $ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = false;      # Reset values when inverter status is 'not available'
+#  $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = false;         # Reset values at sunrise
+#  $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = false;          # Reset values at sunset
+#  $ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = false;         # Include reset 'max' values
+#  $ahoy_data["WebServer"]["strtWthtTm"] = false;                         # Start without time sync
+#  $ahoy_data["WebServer"]["rdGrid"] = false;                             # Read Grid Profile
 }
 
-if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["lnk"])) {$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = "";}
-if (!isset($ahoy_data["WebServer"]["generic"]["cst"]["txt"])) {$ahoy_data["WebServer"]["generic"]["cst"]["txt"] = "";}
-
-if (!isset($ahoy_data["WebServer"]["generic"]["region"]))	{$ahoy_data["WebServer"]["generic"]["region"] = 0;}
-if (!isset($ahoy_data["WebServer"]["generic"]["timezone"])) {$ahoy_data["WebServer"]["generic"]["timezone"] = 1;}
-
-$menu_mask   = isset($ahoy_data["WebServer"]["system"]["prot_mask"]) ? $ahoy_data["WebServer"]["system"]["prot_mask"] : 0;
+$menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
 $menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
 $menu_prot   = $menu_protEn and $prot_mask > 0 ? true : false;
 	
-
 # create "ahoy-generic-data"
 $generic_json = [
 	"generic" => [
@@ -94,10 +87,10 @@ $generic_json = [
 		"menu_prot"   => $menu_prot,										# Switch, if prot=set - true=locked - false=unlocked
 		"menu_mask"   => $menu_mask,										# exp-sum of 7 switches
 		"menu_protEn" => $menu_protEn,										# check, if prot-PW != "\0"
-		"cst_lnk"     => $ahoy_data["WebServer"]["generic"]["cst"]["lnk"],	# custom 
-		"cst_lnk_txt" => $ahoy_data["WebServer"]["generic"]["cst"]["txt"],
-		"region"      => $ahoy_data["WebServer"]["generic"]["region"],		# wo wird das benötigt
-		"timezone"    => $ahoy_data["WebServer"]["generic"]["timezone"], 	# wo wird das benötigt
+		"cst_lnk"     => $ahoy_data["WebServer"]["generic"]["cst"]["lnk"] ?? "",	# custom 
+		"cst_lnk_txt" => $ahoy_data["WebServer"]["generic"]["cst"]["txt"] ?? "",
+		"region"      => $ahoy_data["WebServer"]["generic"]["region"] ?? 0,			# wo wird das benötigt
+		"timezone"    => $ahoy_data["WebServer"]["generic"]["timezone"] ?? 1,	 	# wo wird das benötigt
 		"esp_type"    => "RASPI"
 	]
 ];

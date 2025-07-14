@@ -1,8 +1,8 @@
 <?PHP
 include 'generic_json.php';
 
-$requestScheme = isset($_SERVER['REQUEST_SCHEME']) ? $_SERVER['REQUEST_SCHEME'] : "http";
-$httpHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : trim(shell_exec("hostname -A | awk '{print $1}'"));
+$requestScheme = $_SERVER['REQUEST_SCHEME'] ?? "http";
+$httpHost = $_SERVER['HTTP_HOST'] ?? trim(shell_exec("hostname -A | awk '{print $1}'"));
 $my_uri = $requestScheme . "://" . $httpHost;
 
 

@@ -201,13 +201,13 @@ if (isset($ahoy_data["inverters"]) and count($ahoy_data["inverters"]) > 0) {
 $inverter_list_json += [
 	"interval"    => $ahoy_data["interval"],
 	"max_num_inverters" => 16,
-	"rstMid"      => $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"],	# Reset values and YieldDay at midnight
-	"rstNotAvail" => $ahoy_data["WebServer"]["InverterReset"]["NotAvailable"],	# Reset values when inverter status is 'not available'
-	"rstComStop"  => $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"],		# Reset values at sunrise
-	"rstComStart" => $ahoy_data["WebServer"]["InverterReset"]["AtSunset"],		# Reset values at sunset
-	"rstMaxMid"   => $ahoy_data["WebServer"]["InverterReset"]["MaxValues"],		# Include reset 'max' values
-	"strtWthtTm"  => $ahoy_data["WebServer"]["strtWthtTm"],						# Start without time sync
-	"rdGrid"      => $ahoy_data["WebServer"]["rdGrid"],							# Read Grid Profile
+	"rstMid"      => $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] ?? false,	# Reset values and YieldDay at midnight
+	"rstNotAvail" => $ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] ?? false,	# Reset values when inverter status is 'not available'
+	"rstComStop"  => $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] ?? false,	# Reset values at sunrise
+	"rstComStart" => $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] ?? false,		# Reset values at sunset
+	"rstMaxMid"   => $ahoy_data["WebServer"]["InverterReset"]["MaxValues"] ?? false,	# Include reset 'max' values
+	"strtWthtTm"  => $ahoy_data["WebServer"]["strtWthtTm"] ?? false,					# Start without time sync
+	"rdGrid"      => $ahoy_data["WebServer"]["rdGrid"] ?? false,						# Read Grid Profile
 ];
 
 $inverter_version = "inverter_version_" . $inverter_id . "_json";

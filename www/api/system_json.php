@@ -28,7 +28,7 @@ if (end($matches[0]) == 0) {
 	$net_hidd = ($matches[2][1] < 0 and $net_ssid == "") ? true : false;
 } else {
 	# no WiFi - wired ethernet
-	$generic_rssi_str = "LAN connected"; 		# RSSI
+	$generic_rssi_str = "LAN connected";
 	$net_wifi_channel = "";
 	$net_ssid = "";
 	$net_hidd = false;
@@ -50,27 +50,25 @@ $app    = preg_split("/\s+/", shell_exec('df -k /run | tail -1 '));
 $spiffs = preg_split("/\s+/", shell_exec('df -k /boot/firmware | tail -1 '));
 $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 
-if (!isset($ahoy_data["WebServer"]["system"]["sched_reboot"]))	$ahoy_data["WebServer"]["system"]["sched_reboot"] = false;
-
 $system_json = [
 	"device_name"  => $generic_json["generic"]["host"] . "  (cannot be changed)",
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
-	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"],
+	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"] ?? false,
 	"pwd_set"      => $generic_json["generic"]["menu_protEn"],
 	"prot_mask"    => $generic_json["generic"]["menu_mask"]
 	]
     + $generic_json + [
 	"radioNrf" => [
-		"en"   => $ahoy_data["nrf"]["enabled"]
+		"en"   => $ahoy_data["nrf"]["enabled"] ?? false
 	],
 	"radioCmt" => [
-		"en"          => $ahoy_data["cmt"]["enabled"],
+		"en"          => $ahoy_data["cmt"]["enabled"] ?? false,
 		"isconnected" => false,
 		"sn"          => "",
 		"irqOk"       => false
 	],
 	"mqtt" => [
-		"enabled"   => $ahoy_data["mqtt"]["enabled"],
+		"enabled"   => $ahoy_data["mqtt"]["enabled"] ?? false,
 		"connected" => false,
 		"tx_cnt"    => 0,
 		"rx_cnt"    => 0,
