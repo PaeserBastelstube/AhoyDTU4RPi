@@ -10,6 +10,7 @@ __pycache__/
 
 # log-files
 *.log
+*.org
 
 # Python lib
 pyRF24/
@@ -17,3 +18,5 @@ pyRF24/
 # yaml config
 *.yml
 
+# gitignore
+.gitignore

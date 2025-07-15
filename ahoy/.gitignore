@@ -13,3 +13,5 @@ venv/
 
 # config files
 *.yml
+*.yml_*
+AhoyDTU*.*
