@@ -306,12 +306,14 @@ Todo
 ----
 
 - Ability to talk to multiple inverters - implemented - please test
-- MQTT gateway
+- MQTT gateway - implemented
 - understand channel hopping
 - ~~configurable polling interval~~ done: interval ist configurable in ahoy.yml
 - commands
 - picture of setup!
-- python module
+- python module - documented
+- connect with `Volkszaehler` describe
+- NGINX Webserver
 - ...
 
 
@@ -321,6 +323,4 @@ References
 - [1] https://www.mikrocontroller.net/topic/525778
 - [2] https://tutorials-raspberrypi.de/funkkommunikation-zwischen-raspberry-pis-und-arduinos-2-4-ghz/
 - [3] https://nrf24.github.io/RF24/index.html
-- [4] https://nrf24.github.io/RF24/md_docs_linux_install.html
-- [5] https://nrf24.github.io/RF24/md_docs_python_wrapper.html
 - [6] https://github.com/nRF24/pyRF24

@@ -22,7 +22,7 @@
         <a id="nav3" class="hide" href="/live?v=0.8.155">Live</a>
         <a id="nav12" href="#" class="hide" target="_blank">Custom Link</a>
         <span class="separator"></span>
-        <a id="nav4" class="hide" href="/serial?v=0.8.155">Webserial</a>
+        <a id="nav4" class="hide" href="/serial?v=0.8.155">Web Console</a>
         <a id="nav5" class="hide" href="/setup?v=0.8.155">Settings</a>
         <a id="nav7" class="hide" href="/system?v=0.8.155">System</a>
         <span class="separator"></span>
@@ -339,11 +339,11 @@
             </div>
         </div>
 <div id="footer">
-        <div class="left">
+    <div class="left">
 		<ul>
-          <li><a href="https://ahoydtu.de" target="_blank">this is a copy from ahoy(lumapu)&copy; 2025</a></li>
-          <li><a href="https://discord.gg/WzhxEY62mB" target="_blank">original ahoy on Discord</a></li>
-          <li><a href="https://github.com/lumapu/ahoy" target="_blank">original ahoy on github</a></li>
+            <li><a href="https://ahoydtu.de" target="_blank">this project is a copy from ahoy(lumapu)&copy; 2025</a></li>
+            <li><a href="https://discord.gg/WzhxEY62mB" target="_blank">original ahoy on Discord</a></li>
+            <li><a href="https://github.com/lumapu/ahoy" target="_blank">original ahoy on github</a></li>
 		</ul>
     </div>
     <div class="right">
@@ -387,6 +387,37 @@
                 [35, "GPIO35 (in only)"],
                 [36, "VP (GPIO36, in only)"],
                 [39, "VN (GPIO39, in only)"]
+            ];
+            var raspipins = [
+                [255, "off / default"],
+				[0,  "GPIO0 (EEPROM I2C-SD)"],
+				[1,  "GPIO1 (EEPROM I2C-CLK)"],
+				[2,  "GPIO2 (I2C: Serial Data)"],
+				[3,  "GPIO3 (I2C: Serial Clock)"],
+				[4,  "GPIO4"], 
+				[5,  "GPIO5"],
+				[6,  "GPIO6"],
+				[7,  "GPIO7 (SPI0-CE1)"],
+				[8,  "GPIO8 (SPI0-CE0)"],
+				[9,  "GPIO9 (SPI0-MISO)"],
+				[10, "GPIO10 (SPI0-MOSI)"],
+				[11, "GPIO11 (SPI0-SCLK)"],
+				[12, "GPIO12 (PWM)"],
+				[13, "GPIO13 (PWM)"],
+				[14, "GPIO14 (UART: TX)"],
+				[15, "GPIO15 (UART: RX)"],
+				[16, "GPIO16 (SPI1-CE2)"],
+                [17, "GPIO17 (SPI1-CE1)"],
+				[18, "GPIO18 (SPI1-CE0, PWM) DONT USE - USB-)"],
+				[19, "GPIO19 (SPI1-MISO, PWM) (DONT USE - USB+)"],
+				[20, "GPIO20 (SPI1-MOSI)"],
+				[21, "GPIO21 (SPI1-SCLK)"],
+				[22, "GPIO22"],
+				[23, "GPIO23"],
+				[24, "GPIO24"],
+				[25, "GPIO25"],
+				[26, "GPIO26"],
+				[27, "GPIO27"],
             ];
             var nrfPa = [
                 [0, "MIN (recommended)"],
@@ -551,7 +582,7 @@
                 if(!obj.pwd_set)
                     e.value = "";
                 var d = document.getElementById("prot_mask");
-                var a = ["Index", "Live", "Webserial", "Settings", "Update", "System", "History"];
+                var a = ["Index", "Live", "Web Console", "Settings", "Update", "System", "History"];
                 var el = [];
                 for(var i = 0; i < 7; i++) {
                     var chk = ((obj.prot_mask & (1 << i)) == (1 << i));
@@ -866,6 +897,7 @@
             function parsePinout(obj) {
                 var e = document.getElementById("pinout");
                 var pinList = esp32pins;
+                pinList = raspipins;
                 pins = [['led0', 'pinLed0', 'At least one inverter is producing'], ['led1', 'pinLed1', 'MqTT connected'], ['led2', 'pinLed2', 'Night time']];
                 for(p of pins) {
                     e.append(
@@ -897,6 +929,7 @@
                 en.checked = obj["en"];
 
                 var pinList = esp32pins;
+                pinList = raspipins;
 
                 e.replaceChildren (
                     ml("div", {class: "row mb-3"}, [
@@ -922,6 +955,7 @@
                 var e = document.getElementById("cmt");
                 var en = inp("cmtEnable", null, null, ["cb"], "cmtEnable", "checkbox");
                 var pinList = esp32pins;
+                pinList = raspipins;
 
                 en.checked = obj["en"];
                 e.replaceChildren (
@@ -953,6 +987,7 @@
                 var e = document.getElementById("eth");
                 var en = inp("ethEn", null, null, ["cb"], "ethEn", "checkbox");
                 var pinList = esp32pins;
+                pinList = raspipins;
 
                 en.checked = obj["en"];
                 e.replaceChildren (
