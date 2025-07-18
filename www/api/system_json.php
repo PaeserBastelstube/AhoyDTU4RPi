@@ -2,24 +2,28 @@
 #
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
 #
+# important to learn about "preg_match_all"
+# https://www.phpliveregex.com/#tab-preg-match-all
+#
 include 'generic_json.php';
 
-$ip_route = explode(" ", shell_exec('ip route | grep default'));
-$net_gw   = $ip_route[2];
-$net_hw   = $ip_route[4];
-$net_ip   = $ip_route[8];
-$net_mac  = trim(shell_exec("ifconfig $net_hw | awk '/ether/ {print $2}'"));
-$net_mask = trim(shell_exec("ifconfig $net_hw | awk '/netmask/ {print $4}'"));
+preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ip_route);
+$net_gw		= $ip_route[1][0]; # my router IP-Adress = Gateway-Address
+$net_hw		= $ip_route[2][0]; # eth0
+$net_proto	= $ip_route[3][0]; # dhcp
+$net_ip		= $ip_route[4][0]; # my Raspi-IP-Address
 
-$net_wired= str_starts_with($net_hw, 'eth') ? true : false;
-$net_ap_pwd = "esp_8266";  # standard PW
+preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $net_hw")), $ifconfig);
+$net_mask  = $ifconfig[1][0];	# net_mask
+$net_mac = $ifconfig[2][1];		# net_mac
 
 $iwconfig_including_status = trim(shell_exec("iwconfig $net_hw 2>&1; echo $?"));
-$iwlist_including_status = trim(shell_exec("iwlist $net_hw frequency 2>&1; echo $?"));
-
-# https://www.phpliveregex.com/#tab-preg-match-all
 preg_match_all('/ESSID:"(.+)"|Signal level=([-\d]+)|^(\d+)$/m', $iwconfig_including_status, $matches);
+
+$iwlist_including_status = trim(shell_exec("iwlist $net_hw frequency 2>&1; echo $?"));
 preg_match_all('/\(Channel (\d+)\)|^(\d+)$/m', $iwlist_including_status, $match_list);
+
+$net_wired= str_starts_with($net_hw, 'eth') ? true : false;
 
 if (end($matches[0]) == 0) {
 	$generic_json["generic"]["wifi_rssi"] = $matches[2][1] . " dBm";
@@ -51,21 +55,25 @@ $spiffs = preg_split("/\s+/", shell_exec('df -k /boot/firmware | tail -1 '));
 $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 
 $system_json = [
-	"device_name"  => $generic_json["generic"]["host"] . "  (cannot be changed)",
+	"device_name"  => $generic_json["generic"]["host"],
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
 	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"] ?? false,
 	"pwd_set"      => $generic_json["generic"]["menu_protEn"],
 	"prot_mask"    => $generic_json["generic"]["menu_mask"]
 	]
     + $generic_json + [
-	"radioNrf" => [
-		"en"   => $ahoy_data["nrf"]["enabled"] ?? false
+	"radioNrf"	=> [
+		"en"			=> $ahoy_data["nrf"]["enabled"] ?? false,
+		"isconnected"	=> 0,
+		"dataRate"		=> $ahoy_data["nrf"]["spiSpeed"] ?? 1000000,
+		"irqOk"			=> isset($ahoy_data["nrf"]["spiIrq"]) ? 1 : 2,
+		"sn"			=> $ahoy_data["dtu"]["serial"] ?? 0
 	],
 	"radioCmt" => [
 		"en"          => $ahoy_data["cmt"]["enabled"] ?? false,
-		"isconnected" => false,
-		"sn"          => "",
-		"irqOk"       => false
+		"isconnected" => 1,
+		"sn"          => $ahoy_data["cmt"]["serial"] ?? "",
+		"irqOk"       => $ahoy_data["cmt"]["cmtIrqOk"] ?? 2
 	],
 	"mqtt" => [
 		"enabled"   => $ahoy_data["mqtt"]["enabled"] ?? false,
@@ -77,7 +85,7 @@ $system_json = [
 	"network" => [
 		"wifi_channel" => $net_wifi_channel,			# RestApi.h:807
 		"wired"        => $net_wired,
-		"ap_pwd"       => $net_ap_pwd,
+		"ap_pwd"       => "esp_8266",		# Standard PW
 		"ssid"         => $net_ssid,
 		"hidd"         => $net_hidd,
 		"mac"          => $net_mac,

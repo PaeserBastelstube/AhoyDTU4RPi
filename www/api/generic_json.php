@@ -71,7 +71,7 @@ if (count($ahoy_data) > 0) {
 
 $menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
 $menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
-$menu_prot   = $menu_protEn and $prot_mask > 0 ? true : false;
+$menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
 	
 # create "ahoy-generic-data"
 $generic_json = [

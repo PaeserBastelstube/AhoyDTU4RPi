@@ -390,34 +390,34 @@
             ];
             var raspipins = [
                 [255, "off / default"],
-				[0,  "GPIO0 (EEPROM I2C-SD)"],
-				[1,  "GPIO1 (EEPROM I2C-CLK)"],
-				[2,  "GPIO2 (I2C: Serial Data)"],
-				[3,  "GPIO3 (I2C: Serial Clock)"],
-				[4,  "GPIO4"], 
-				[5,  "GPIO5"],
-				[6,  "GPIO6"],
-				[7,  "GPIO7 (SPI0-CE1)"],
-				[8,  "GPIO8 (SPI0-CE0)"],
-				[9,  "GPIO9 (SPI0-MISO)"],
-				[10, "GPIO10 (SPI0-MOSI)"],
-				[11, "GPIO11 (SPI0-SCLK)"],
-				[12, "GPIO12 (PWM)"],
-				[13, "GPIO13 (PWM)"],
-				[14, "GPIO14 (UART: TX)"],
-				[15, "GPIO15 (UART: RX)"],
-				[16, "GPIO16 (SPI1-CE2)"],
-                [17, "GPIO17 (SPI1-CE1)"],
-				[18, "GPIO18 (SPI1-CE0, PWM) DONT USE - USB-)"],
-				[19, "GPIO19 (SPI1-MISO, PWM) (DONT USE - USB+)"],
-				[20, "GPIO20 (SPI1-MOSI)"],
-				[21, "GPIO21 (SPI1-SCLK)"],
-				[22, "GPIO22"],
-				[23, "GPIO23"],
-				[24, "GPIO24"],
-				[25, "GPIO25"],
-				[26, "GPIO26"],
-				[27, "GPIO27"],
+				[0,  "GPIO0 (EEPROM I2C-SD) - Pin27"],
+				[1,  "GPIO1 (EEPROM I2C-CLK) - Pin28"],
+				[2,  "GPIO2 (I2C: Serial Data) - Pin03"],
+				[3,  "GPIO3 (I2C: Serial Clock) - Pin05"],
+				[4,  "GPIO4 - Pin07"], 
+				[5,  "GPIO5 - Pin29"],
+				[6,  "GPIO6 - Pin31"],
+				[7,  "GPIO7 (SPI0-CE1) - Pin26"],
+				[8,  "GPIO8 (SPI0-CE0) - Pin24"],
+				[9,  "GPIO9 (SPI0-MISO) - Pin21"],
+				[10, "GPIO10 (SPI0-MOSI) - Pin19"],
+				[11, "GPIO11 (SPI0-SCLK) - Pin23"],
+				[12, "GPIO12 (PWM) - Pin32"],
+				[13, "GPIO13 (PWM) - Pin33"],
+				[14, "GPIO14 (UART: TX) - Pin08"],
+				[15, "GPIO15 (UART: RX) - Pin10"],
+				[16, "GPIO16 (SPI1-CE2) - Pin36"],
+                [17, "GPIO17 (SPI1-CE1) - Pin11"],
+				[18, "GPIO18 (SPI1-CE0, PWM) - Pin12"],
+				[19, "GPIO19 (SPI1-MISO, PWM) - Pin35"],
+				[20, "GPIO20 (SPI1-MOSI) - Pin38"],
+				[21, "GPIO21 (SPI1-SCLK) - Pin40"],
+				[22, "GPIO22 - Pin15"],
+				[23, "GPIO23 - Pin16"],
+				[24, "GPIO24 - Pin18"],
+				[25, "GPIO25 - Pin22"],
+				[26, "GPIO26 - Pin37"],
+				[27, "GPIO27 - Pin13"],
             ];
             var nrfPa = [
                 [0, "MIN (recommended)"],
@@ -923,13 +923,12 @@
                 )
             }
 
-            function parseNrfRadio(obj, objPin) {
+            function parseNrfRadio(obj) {
                 var e = document.getElementById("rf24");
                 var en = inp("nrfEnable", null, null, ["cb"], "nrfEnable", "checkbox");
                 en.checked = obj["en"];
 
                 var pinList = esp32pins;
-                pinList = raspipins;
 
                 e.replaceChildren (
                     ml("div", {class: "row mb-3"}, [
@@ -938,13 +937,19 @@
                     ])
                 );
 
-                var pins = [['cs', 'pinCs'], ['ce', 'pinCe'], ['irq', 'pinIrq'], ['sclk', 'pinSclk'], ['mosi', 'pinMosi'], ['miso', 'pinMiso']];
+                var pins = [['cs', 'spiCs'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['sclk', 'spiSclk'], ['mosi', 'spiMosi'], ['miso', 'spiMiso']];
+                pinList = raspipins;
+				pins = [['spi', 'spiCSN'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['spi-speed', 'spiSpeed']];
+				pL = pinList;
                 for(p of pins) {
+					if (p[0] == 'spi') {pinList = obj['spi'];}
+					else if (p[0] == 'spi-speed') {pinList = [[600000, '600 kHz'],[1000000, '1 mHz'],[2000000, '2 mHz'],[10000000, '10 mHz']];}
+					else pinList = pL;
                     e.append(
                         ml("div", {class: "row mb-3"}, [
                             ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
                             ml("div", {class: "col-12 col-sm-9"},
-                                sel(p[1], pinList, objPin[p[0]])
+                                sel(p[1], pinList, obj[p[0]])
                             )
                         ])
                     );
@@ -993,10 +998,11 @@
                 e.replaceChildren (
                     ml("div", {class: "row mb-3"}, [
                         ml("div", {class: "col-8 col-sm-3 my-2"}, "Ethernet enable"),
-                        ml("div", {class: "col-4 col-sm-9"}, en)
+                        ml("div", {class: "col-8 col-sm-3 my-2"}, "OS managed")
                     ])
                 );
                 pins = [['cs', 'ethCs'], ['sclk', 'ethSclk'], ['miso', 'ethMiso'], ['mosi', 'ethMosi'], ['irq', 'ethIrq'], ['reset', 'ethRst']];
+                pins = [];
                 for(p of pins) {
                     e.append(
                         ml("div", {class: "row mb-3"}, [
@@ -1038,7 +1044,7 @@
                     parseNtp(root.ntp);
                     parseSun(root.sun);
                     parsePinout(root.pinout);
-                    parseNrfRadio(root.radioNrf, root.pinout);
+                    parseNrfRadio(root.radioNrf);
                     parseCmtRadio(root.radioCmt);
                     parseEth(root.eth)
                     parseSerial(root.serial);

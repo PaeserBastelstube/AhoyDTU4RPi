@@ -120,7 +120,7 @@
                     lines = [
                         tr("NRF24L01", badge(obj.radioNrf.isconnected, ((obj.radioNrf.isconnected) ? "" : "not ") + "connected")),
                         tr("Interrupt Pin working", irqBadge(obj.radioNrf.irqOk)),
-                        tr("NRF24 Data Rate", dr[obj.radioNrf.dataRate] + "bps"),
+                        tr("NRF24 Data Rate", obj.radioNrf.dataRate + " bps"),
                         tr("DTU Radio ID", obj.radioNrf.sn)
                     ];
                 } else

@@ -187,63 +187,69 @@ function showSave($my_post){
 
 	# Pinout Configuration
 	# "pinLed0":"255","pinLed1":"255","pinLed2":"255","pinLedHighActive":"0","pinLedLum":"255",
-	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] == "255") unset($ahoy_data["ledpin"]["pinLed0"]);
-	else $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
-	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] == "255") unset($ahoy_data["ledpin"]["pinLed1"]);
-	else $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
-	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] == "255") unset($ahoy_data["ledpin"]["pinLed2"]);
-	else $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
-	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] == "0") unset($ahoy_data["ledpin"]["pinLedHighActive"]);
-	else $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
-	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] == "0") unset($ahoy_data["ledpin"]["pinLedLum"]);
-	else $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
+	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] != "255") $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
+	else unset($ahoy_data["ledpin"]["pinLed0"]);
+	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] != "255") $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
+	else unset($ahoy_data["ledpin"]["pinLed1"]);
+	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] != "255") $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
+	else unset($ahoy_data["ledpin"]["pinLed2"]);
+	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] != "0") $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
+	else unset($ahoy_data["ledpin"]["pinLedHighActive"]);
+	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] != "0") $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
+	else unset($ahoy_data["ledpin"]["pinLedLum"]);
 	if (isset($ahoy_data["ledpin"]) and count($ahoy_data["ledpin"]) == 0) unset($ahoy_data["ledpin"]);
 	
 	# "pinCs":"255","pinCe":"255","pinIrq":"255","pinSclk":"255","pinMosi":"255","pinMiso":"255"
 	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
 	else $ahoy_data["nrf"]["enabled"] = false;
-	if (isset($my_post["pinCs"])    and $my_post["pinCs"]   == "255") unset($ahoy_data["nrf"]["pinCs"]);
-	else $ahoy_data["nrf"]["pinCs"]   = $my_post["pinCs"];
-	if (isset($my_post["pinCe"])    and $my_post["pinCe"]   == "255") unset($ahoy_data["nrf"]["pinCe"]);
-	else $ahoy_data["nrf"]["pinCe"]   = $my_post["pinCe"];
-	if (isset($my_post["pinIrq"])   and $my_post["pinIrq"]  == "255") unset($ahoy_data["nrf"]["pinIrq"]);
-	else $ahoy_data["nrf"]["pinIrq"]  = $my_post["pinIrq"];
-	if (isset($my_post["pinSclk"])  and $my_post["pinSclk"] == "255") unset($ahoy_data["nrf"]["pinSclk"]);
-	else $ahoy_data["nrf"]["pinSclk"] = $my_post["pinSclk"];
-	if (isset($my_post["pinMosi"])  and $my_post["pinMosi"] == "255") unset($ahoy_data["nrf"]["pinMosi"]);
-	else $ahoy_data["nrf"]["pinMosi"] = $my_post["pinMosi"];
-	if (isset($my_post["pinMiso"])  and $my_post["pinMiso"] == "255") unset($ahoy_data["nrf"]["pinMiso"]);
-	else $ahoy_data["nrf"]["pinMiso"] = $my_post["pinMiso"];
+	if (isset($my_post["spiCSN"])	and $ahoy_data["nrf"]["enabled"]) $ahoy_data["nrf"]["spiCSN"]  = $my_post["spiCSN"];
+	else unset($ahoy_data["nrf"]["spiCSN"]);
+	if (isset($my_post["spiSpeed"]) and $my_post["spiSpeed"]!= "255") $ahoy_data["nrf"]["spiSpeed"]= $my_post["spiSpeed"];
+	else unset($ahoy_data["nrf"]["spiSpeed"]);
+	if (isset($my_post["spiCe"])    and $my_post["spiCe"]   != "255") $ahoy_data["nrf"]["spiCe"]   = $my_post["spiCe"];
+	else unset($ahoy_data["nrf"]["spiCe"]);
+
+	if (isset($my_post["spiCs"])    and $my_post["spiCs"]   != "255") $ahoy_data["nrf"]["spiCs"]   = $my_post["spiCs"];
+	else unset($ahoy_data["nrf"]["spiCs"]);
+	if (isset($my_post["spiIrq"])   and $my_post["spiIrq"]  != "255") $ahoy_data["nrf"]["spiIrq"]  = $my_post["spiIrq"];
+	else unset($ahoy_data["nrf"]["spiIrq"]);
+	if (isset($my_post["spiSclk"])  and $my_post["spiSclk"] != "255") $ahoy_data["nrf"]["spiSclk"] = $my_post["spiSclk"];
+	else unset($ahoy_data["nrf"]["spiSclk"]);
+	if (isset($my_post["spiMosi"])  and $my_post["spiMosi"] != "255") $ahoy_data["nrf"]["spiMosi"] = $my_post["spiMosi"];
+	else unset($ahoy_data["nrf"]["spiMosi"]);
+	if (isset($my_post["spiMiso"])  and $my_post["spiMiso"] != "255") $ahoy_data["nrf"]["spiMiso"] = $my_post["spiMiso"];
+	else unset($ahoy_data["nrf"]["spiMiso"]);
 
 	# "cmtEnable":"on","pinCmtSclk":"255","pinSdio":"255","pinCsb":"255","pinFcsb":"255","pinGpio3":"255"
 	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
 	else $ahoy_data["cmt"]["enabled"] = false;
-	if (isset($my_post["pinCmtSclk"])  and $my_post["pinCmtSclk"] == "255") unset($ahoy_data["cmt"]["pinCmtSclk"]);
-	else $ahoy_data["cmt"]["pinCmtSclk"] = $my_post["pinCmtSclk"];
-	if (isset($my_post["pinSdio"])     and $my_post["pinSdio"]    == "255") unset($ahoy_data["cmt"]["pinSdio"]);
-	else $ahoy_data["cmt"]["pinSdio"]    = $my_post["pinSdio"];
-	if (isset($my_post["pinCsb"])      and $my_post["pinCsb"]     == "255") unset($ahoy_data["cmt"]["pinCsb"]);
-	else $ahoy_data["cmt"]["pinCsb"]     = $my_post["pinCsb"];
-	if (isset($my_post["pinFcsb"])     and $my_post["pinFcsb"]    == "255") unset($ahoy_data["cmt"]["pinFcsb"]);
-	else $ahoy_data["cmt"]["pinFcsb"]    = $my_post["pinFcsb"];
-	if (isset($my_post["pinGpio3"])    and $my_post["pinGpio3"]   == "255") unset($ahoy_data["cmt"]["pinGpio3"]);
-	else $ahoy_data["cmt"]["pinGpio3"]   = $my_post["pinGpio3"];
+	if (isset($my_post["pinCmtSclk"])  and $my_post["pinCmtSclk"] != "255") $ahoy_data["cmt"]["pinCmtSclk"] = $my_post["pinCmtSclk"];
+	else unset($ahoy_data["cmt"]["pinCmtSclk"]);
+	if (isset($my_post["pinSdio"])     and $my_post["pinSdio"]    != "255") $ahoy_data["cmt"]["pinSdio"]    = $my_post["pinSdio"];
+	else unset($ahoy_data["cmt"]["pinSdio"]);
+	if (isset($my_post["pinCsb"])      and $my_post["pinCsb"]     != "255") $ahoy_data["cmt"]["pinCsb"]     = $my_post["pinCsb"];
+	else unset($ahoy_data["cmt"]["pinCsb"]);
+	if (isset($my_post["pinFcsb"])     and $my_post["pinFcsb"]    != "255") $ahoy_data["cmt"]["pinFcsb"]    = $my_post["pinFcsb"];
+	else unset($ahoy_data["cmt"]["pinFcsb"]);
+	if (isset($my_post["pinGpio3"])    and $my_post["pinGpio3"]   != "255") $ahoy_data["cmt"]["pinGpio3"]   = $my_post["pinGpio3"];
+	else unset($ahoy_data["cmt"]["pinGpio3"]);
 
 	# "ethEn":"on","ethCs":"255","ethSclk":"255","ethMiso":"255","ethMosi":"255","ethIrq":"255","ethRst":"255"
-	if (isset($my_post["ethEn"])    and $my_post["ethEn"]   != "on") unset($ahoy_data["eth"]["ethEn"]);
-	else $ahoy_data["eth"]["ethEn"]   = $my_post["ethEn"];
-	if (isset($my_post["ethCs"])    and $my_post["ethCs"]   == "255") unset($ahoy_data["eth"]["ethCs"]);
-	else $ahoy_data["eth"]["ethCs"]   = $my_post["ethCs"];
-	if (isset($my_post["ethSclk"])  and $my_post["ethSclk"] == "255") unset($ahoy_data["eth"]["ethSclk"]);
-	else $ahoy_data["eth"]["ethSclk"] = $my_post["ethSclk"];
-	if (isset($my_post["ethMiso"])  and $my_post["ethMiso"] == "255") unset($ahoy_data["eth"]["ethMiso"]);
-	else $ahoy_data["eth"]["ethMiso"] = $my_post["ethMiso"];
-	if (isset($my_post["ethMosi"])  and $my_post["ethMosi"] == "255") unset($ahoy_data["eth"]["ethMosi"]);
-	else $ahoy_data["eth"]["ethMosi"] = $my_post["ethMosi"];
-	if (isset($my_post["ethIrq"])   and $my_post["ethIrq"]  == "255") unset($ahoy_data["eth"]["ethIrq"]);
-	else $ahoy_data["eth"]["ethIrq"]  = $my_post["ethIrq"];
-	if (isset($my_post["ethRst"])   and $my_post["ethRst"]  == "255") unset($ahoy_data["eth"]["ethRst"]);
-	else $ahoy_data["eth"]["ethRst"]  = $my_post["ethRst"];
+	if (isset($my_post["ethEn"])    and $my_post["ethEn"]   == "on")  $ahoy_data["eth"]["ethEn"]   = $my_post["ethEn"];
+	else unset($ahoy_data["eth"]["ethEn"]);
+	if (isset($my_post["ethCs"])    and $my_post["ethCs"]   != "255") $ahoy_data["eth"]["ethCs"]   = $my_post["ethCs"];
+	else unset($ahoy_data["eth"]["ethCs"]);
+	if (isset($my_post["ethSclk"])  and $my_post["ethSclk"] != "255") $ahoy_data["eth"]["ethSclk"] = $my_post["ethSclk"];
+	else unset($ahoy_data["eth"]["ethSclk"]);
+	if (isset($my_post["ethMiso"])  and $my_post["ethMiso"] != "255") $ahoy_data["eth"]["ethMiso"] = $my_post["ethMiso"];
+	else unset($ahoy_data["eth"]["ethMiso"]);
+	if (isset($my_post["ethMosi"])  and $my_post["ethMosi"] != "255") $ahoy_data["eth"]["ethMosi"] = $my_post["ethMosi"];
+	else unset($ahoy_data["eth"]["ethMosi"]);
+	if (isset($my_post["ethIrq"])   and $my_post["ethIrq"]  != "255") $ahoy_data["eth"]["ethIrq"]  = $my_post["ethIrq"];
+	else unset($ahoy_data["eth"]["ethIrq"]);
+	if (isset($my_post["ethRst"])   and $my_post["ethRst"]  != "255") $ahoy_data["eth"]["ethRst"]  = $my_post["ethRst"];
+	else unset($ahoy_data["eth"]["ethRst"]);
+	if (isset($ahoy_data["eth"])	and count($ahoy_data["eth"]) == 0) unset($ahoy_data["eth"]);
 	
 
 	# aus Display Config
