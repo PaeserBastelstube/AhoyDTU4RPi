@@ -206,36 +206,35 @@ def main_loop(ahoy_config):
     loop_interval = int(ahoy_config.get('interval', 15))
     logging.info(f"AHOY-MAIN: loop interval : {loop_interval} sec.")
     if (loop_interval <= 0):
-        logging.critical("Parameter 'loop_interval' must grater 0 - please check ahoy.yml.")
-        # print console message too
-        print("Parameter 'loop_interval' must be >0 - please check ahoy.yml - STOP(0)")
-        sys.exit(0)
+        logging.critical("Parameter 'loop_interval' must grater 0 - STOP(999)")
+        sys.exit(999)
 
     # check 'transmit_retries' parameter in config-file
     transmit_retries = ahoy_config.get('transmit_retries', 5)
     if (transmit_retries <= 0):
-        logging.critical("Parameter 'transmit_retries' must grater 0 - please check ahoy.yml.")
-        # print console message too
-        print("Parameter 'transmit_retries' must be >0 - please check ahoy.yml - STOP(0)")
-        sys.exit(0)
+        logging.critical("Parameter 'transmit_retries' must grater 0 - STOP(998)")
+        sys.exit(998)
 
-    # get parameter from config-file
+    # get inverter from config-file
     inverters = [inverter for inverter in ahoy_config.get('inverters', [])
-                 if not inverter.get('enabled', True)]
+                 if inverter.get('enabled', True)]
+    if len(inverters) == 0:
+        logging.critical("no inverters configured - STOP(997)")
+        sys.exit(997)
 
     # check all inverter names and serial numbers in config-file
     for inverter in inverters:
         if not 'name' in inverter:
            inverter['name'] = 'hoymiles'
         if not 'serial' in inverter:
-           logging.error("No inverter serial number found in ahoy.yml - exit")
-           sys.exit(999)
+           logging.error("No inverter serial number found in ahoy.yml - STOP(996)")
+           sys.exit(996)
 
     # init Sunset-Handler object
     sunset = SunsetHandler(ahoy_config.get('sunset'))
 
     if not hoymiles.HOYMILES_VERBOSE_LOGGING and not hoymiles.HOYMILES_TRANSACTION_LOGGING:
-       logging.info(f"MAIN LOOP starts now without any output")
+       logging.info(f"MAIN LOOP starts now without console output")
 
     try:
         do_init = True
@@ -576,6 +575,8 @@ if __name__ == '__main__':
     if webserver_config and webserver_config.get('enabled', False):
        # init WebServices
        web_server = WebServer(webserver_config)
+       if (None != web_server):
+          logging.info(f"WebServer init successfull!")
 
     # create INFLUX client object
     influx_client = None

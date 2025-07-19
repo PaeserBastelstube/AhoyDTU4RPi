@@ -1,15 +1,19 @@
 <?PHP
 header('Content-Type: application/json; charset=utf-8');
 
-function showSave($my_post){
-	include 'generic_json.php';    # to load AhoyDTU configuration
 
+function saveDebug($my_post, $ahoy_data){
 	file_put_contents("/tmp/AhoyDTU_asdf", "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
 	file_put_contents("/tmp/AhoyDTU_asdf", "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents("/tmp/AhoyDTU_asdf", "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents("/tmp/AhoyDTU_asdf", "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents("/tmp/AhoyDTU_asdf", "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents("/tmp/AhoyDTU_asdf", "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
+}
+
+function saveSettings($my_post){
+	include 'generic_json.php';    # to load AhoyDTU configuration
+	saveDebug($my_post, $ahoy_data);
 
 	## System Config # from web.h - line 465
 	## [device] =>  $(hostname)	# wird im Betriebssystem verwaltet - nicht änderbar
@@ -144,9 +148,9 @@ function showSave($my_post){
 
 	# Sunrise & Sunset configuration # from web.h - line 573
 	## sunLat - sunLon - sunOffsSr - sunOffsSs
-	if (isset($my_post["sunLat"]) and $my_post["sunLat"] != "")	$ahoy_data["sunset"]["latitude"] = $my_post["sunLat"];
+	if (isset($my_post["sunLat"]) and $my_post["sunLat"] != "")	$ahoy_data["sunset"]["latitude"] = floatval($my_post["sunLat"]);
 	else unset($ahoy_data["sunset"]["latitude"]);
-	if (isset($my_post["sunLon"]) and $my_post["sunLon"] != "")	$ahoy_data["sunset"]["longitude"] = $my_post["sunLon"];
+	if (isset($my_post["sunLon"]) and $my_post["sunLon"] != "")	$ahoy_data["sunset"]["longitude"] = floatval($my_post["sunLon"]);
 	else unset($ahoy_data["sunset"]["longitude"]);
 	if (isset($my_post["sunOffsSr"]))	$ahoy_data["sunset"]["sunOffsSr"] = 60 * $my_post["sunOffsSr"];
 	else unset($ahoy_data["sunset"]["sunOffsSr"]);
@@ -271,7 +275,12 @@ function showSave($my_post){
 ## bool saveSettings() { # .../src/config/settings.h - Zeile 382
 ##        void loadDefaults(bool keepWifi = false) {
 
+	saveToFile($ahoy_data, $ahoy_config);
+}
 
+
+function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
+	include 'generic_json.php';    # to load AhoyDTU configuration
 
 	if (isset($_SERVER["QUERY_STRING"]) and $_SERVER["QUERY_STRING"] == "upload") {
 		# file content
@@ -279,6 +288,9 @@ function showSave($my_post){
 		$fileContentArray  = json_decode($fileContentString, true);  ## WICHTIG: ",true" - sonst JSON und kein ARRAY
 		$ahoy_data = $fileContentArray["ahoy"];
 	}
+	saveDebug($my_post, $ahoy_data);
+	saveToFile($ahoy_data, $ahoy_config);
+}
 
 
 # {"cmd":"save_iv","token":"*","id":1,"ser":142929835590,"name":"qwert","en":true,
@@ -286,6 +298,10 @@ function showSave($my_post){
 #       {"pwr":"","name":"","yld":""},{"pwr":"","name":"","yld":""},
 #       {"pwr":"","name":"","yld":""},{"pwr":"","name":"","yld":""}],
 # "pa":"0","freq":"12","disnightcom":false}
+
+function saveInverter($my_post){
+	include 'generic_json.php';    # to load AhoyDTU configuration
+	saveDebug($my_post, $ahoy_data);
 
 	# add new / delete inverter ## see setup.html:736
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "save_iv") {  ## detect inverter commands
@@ -306,7 +322,7 @@ function showSave($my_post){
 				"name"		=> $my_post["name"],
 				"enabled"	=> $my_post["en"],
 				"serial"	=> base_convert($my_post["ser"], 10, 16),  #!! Kodierung dec2hex
-				"txpower"	=> $my_post["pa"],
+				"txpower"	=> $txpower,
 				"strings"	=> [],
 				"disnightcom" => $my_post["disnightcom"]
 			];
@@ -314,8 +330,8 @@ function showSave($my_post){
 				if (isset($channel["name"]) and $channel["name"] != "") 
 				$inverter["strings"][$ii] = array(
 					"s_name"     => $channel["name"],
-					"s_maxpower" => $channel["pwr"],
-					"s_yield"    => $channel["yld"]
+					"s_maxpower" => intval($channel["pwr"]),
+					"s_yield"    => floatval($channel["yld"])
 				);
 	 		}
   			#file_put_contents("/tmp/AhoyDTU_asdf", "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
@@ -323,7 +339,10 @@ function showSave($my_post){
 			$ahoy_data["inverters"][$my_post["id"]] = $inverter;
 		}	
 	}
+	saveToFile($ahoy_data, $ahoy_config);
+}
 
+function saveToFile($ahoy_data, $ahoy_config) {
 	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file

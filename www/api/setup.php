@@ -1,22 +1,25 @@
 <?php
 if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=utf-8');
 
+# SAVE-Button in "setup.html"
 if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") {
 	include 'showSave.php';
+
+	# SAVE-Button in "setup.html" - except "New Inverter"
 	if (isset($_POST) and count($_POST) > 0) {
-		showSave(json_encode($_POST));
+		_saveSettings(json_encode($_POST));		# <-- ACHTUNG wird anscheint nicht gerufen
 	} else {
 		# https://stackoverflow.com/questions/57632438/post-is-empty-on-nginx
 		# $json_string_data = json_decode(file_get_contents('php://input'), true);
 		# showSave($json_string_data);
 
-		showSave(json_decode(file_get_contents('php://input'), true));
+		# SAVE-Button in "New Inverter"
+		saveInverter(json_decode(file_get_contents('php://input'), true));
 	}
 } else {
   include 'setup_json.php';
 
   $arrKeys = array_keys($_GET);
-
   if (count($arrKeys) > 0) {
     $inv_id = htmlspecialchars($_GET[$arrKeys[0]]);
     $var_name = "setup_" . $arrKeys[0] . "_json";
