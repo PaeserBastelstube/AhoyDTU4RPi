@@ -12,7 +12,8 @@ $ls_spi_incl_status = trim(shell_exec("ls /dev/spi* 2>&1; echo $?"));
 preg_match_all('/spidev(\d+?)\.(\d+?)|^(\d+)$/m', $ls_spi_incl_status, $ls_spi);
 if (end($ls_spi[0]) == 0)  							# test for return-code $?
 	for ($ii=0; $ii < count($ls_spi[1])-1; $ii++) 	# loop over spi-controller
-		$spi_csn[$ii] = [$ii, "BUS: " . strval($ls_spi[1][$ii]) . " CSN: " . strval($ls_spi[2][$ii])];
+		$spi_csn[$ii] = [$ls_spi[1][$ii] * 10 + $ls_spi[2][$ii], 
+			"BUS: " . strval($ls_spi[1][$ii]) . " CSN: " . strval($ls_spi[2][$ii])];
 
 $setup_json = $generic_json + [
 	"system" => $system_json, 
