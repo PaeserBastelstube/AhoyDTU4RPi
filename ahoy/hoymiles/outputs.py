@@ -222,9 +222,9 @@ class MqttOutputPlugin(OutputPluginFactory):
            logging.info("flags.session_present")
         if reason_code == 0:                                   # success connect
            if HOYMILES_VERBOSE_LOGGING:
-              logging.info(f"MQTT: Connected to Broker: {self.client.host}:{self.client.port} as user {self.client.username}")
+              logging.info(f"MQTT: connect to Broker established: {self.client.host}:{self.client.port} as user {self.client.username}")
         if reason_code > 0:                                    # error processing
-           logging.error(f'Connect failed: {reason_code}')     # error message
+           logging.error(f'MQTT connect to broker failed: {reason_code}')
 
 
     def disco(self, **params):

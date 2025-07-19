@@ -12,7 +12,7 @@ $ls_spi_incl_status = trim(shell_exec("ls /dev/spi* 2>&1; echo $?"));
 preg_match_all('/spidev(\d+?)\.(\d+?)|^(\d+)$/m', $ls_spi_incl_status, $ls_spi);
 if (end($ls_spi[0]) == 0)  							# test for return-code $?
 	for ($ii=0; $ii < count($ls_spi[1])-1; $ii++) 	# loop over spi-controller
-		$spi_CE[$ii] = [$ii, "BUS: " . strval($ls_spi[1][$ii]) . " CSN: " . strval($ls_spi[2][$ii])];
+		$spi_csn[$ii] = [$ii, "BUS: " . strval($ls_spi[1][$ii]) . " CSN: " . strval($ls_spi[2][$ii])];
 
 $setup_json = $generic_json + [
 	"system" => $system_json, 
@@ -60,13 +60,15 @@ $setup_json = $generic_json + [
 	],
 	"radioNrf" => [
 		"en" => $ahoy_data["nrf"]["enabled"],
-		"spi"  => $spi_CE,
+		"csn"  => $spi_csn,		# array with available spi-bus-csn interfaces
+		"spi"  => $ahoy_data["nrf"]["spiCSN"]  ?? 0,	# selected SPI-CSN-Interface
+		"speed"=> $ahoy_data["nrf"]["spiSpeed"]?? 1000000,
 		"cs"   => $ahoy_data["nrf"]["spiCs"]   ?? 0xff,
 		"irq"  => $ahoy_data["nrf"]["spiIrq"]  ?? 0xff,
-		"ce"   => $ahoy_data["nrf"]["spiCe"]   ?? 0xff, # on Raspi, dependent on SPI_CE
-		"sclk" => $ahoy_data["nrf"]["spiSclk"] ?? 0xff, # on Raspi, dependent on SPI_CE
-		"mosi" => $ahoy_data["nrf"]["spiMosi"] ?? 0xff, # on Raspi, dependent on SPI_CE
-		"miso" => $ahoy_data["nrf"]["spiMiso"] ?? 0xff  # on Raspi, dependent on SPI_CE
+		"ce"   => $ahoy_data["nrf"]["spiCe"]   ?? 0xff, # on Raspi, dependent on SPI_csn
+		"sclk" => $ahoy_data["nrf"]["spiSclk"] ?? 0xff, # on Raspi, dependent on SPI_csn
+		"mosi" => $ahoy_data["nrf"]["spiMosi"] ?? 0xff, # on Raspi, dependent on SPI_csn
+		"miso" => $ahoy_data["nrf"]["spiMiso"] ?? 0xff  # on Raspi, dependent on SPI_csn
 	],
 	"radioCmt" => [
 		"en"    => $ahoy_data["cmt"]["enabled"],

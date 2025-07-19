@@ -208,7 +208,6 @@ function showSave($my_post){
 	else unset($ahoy_data["nrf"]["spiSpeed"]);
 	if (isset($my_post["spiCe"])    and $my_post["spiCe"]   != "255") $ahoy_data["nrf"]["spiCe"]   = $my_post["spiCe"];
 	else unset($ahoy_data["nrf"]["spiCe"]);
-
 	if (isset($my_post["spiCs"])    and $my_post["spiCs"]   != "255") $ahoy_data["nrf"]["spiCs"]   = $my_post["spiCs"];
 	else unset($ahoy_data["nrf"]["spiCs"]);
 	if (isset($my_post["spiIrq"])   and $my_post["spiIrq"]  != "255") $ahoy_data["nrf"]["spiIrq"]  = $my_post["spiIrq"];

@@ -151,10 +151,10 @@ class SunsetHandler:
     """
     def __init__(self, sunset_config):
         self.suntimes = None
-        if sunset_config and sunset_config.get('enabled', False) == True:
-            latitude = sunset_config.get('latitude')
-            longitude = sunset_config.get('longitude')
-            altitude = sunset_config.get('altitude')
+        if sunset_config and sunset_config.get('enabled', False):
+            latitude = float(sunset_config.get('latitude',0))
+            longitude = float(sunset_config.get('longitude',0))
+            altitude = float(sunset_config.get('altitude',0))
             self.suntimes = SunTimes(longitude=longitude, latitude=latitude, altitude=altitude)
             self.nextSunset = self.suntimes.setutc(datetime.utcnow())
             logging.info (f'Sunset today at: {self.nextSunset} UTC')
@@ -203,7 +203,7 @@ class SunsetHandler:
 def main_loop(ahoy_config):
     """ Main loop """
     # check 'interval' parameter in config-file
-    loop_interval = ahoy_config.get('interval', 15)
+    loop_interval = int(ahoy_config.get('interval', 15))
     logging.info(f"AHOY-MAIN: loop interval : {loop_interval} sec.")
     if (loop_interval <= 0):
         logging.critical("Parameter 'loop_interval' must grater 0 - please check ahoy.yml.")
@@ -536,9 +536,10 @@ if __name__ == '__main__':
     # init and prepare logging
     init_logging(ahoy_config)
 
-    # Prepare for multiple transceivers (radio modules), makes them configurable
-    for radio_config in ahoy_config.get('nrf', [{}]):
-        hmradio = hoymiles.HoymilesNRF(**radio_config)
+    # only one NRF24L01+ radio transceivers allowed
+    # for radio_config in ahoy_config.get('nrf', [{}]):
+    radio_config = ahoy_config.get('nrf', [{}])
+    hmradio = hoymiles.HoymilesNRF(**radio_config)
 
     # create MQTT client object
       # if: mqtt-disabled is "true" - only
@@ -554,7 +555,8 @@ if __name__ == '__main__':
     if mqtt_topic:                                   # add topic to array
        mqtt_topic_array.append((mqtt_topic, mqtt_config.get('QoS',0)))
 
-    if mqtt_config and (not mqtt_config.get('disabled', False) or mqtt_topic):
+    #if mqtt_config and (mqtt_config.get('enabled', False) or mqtt_topic):
+    if mqtt_config and (mqtt_config.get('enabled', False)):
        from .outputs import MqttOutputPlugin
 
        # create MQTT(PAHO) client object with own callback funtion
@@ -565,7 +567,7 @@ if __name__ == '__main__':
            print("but broker is not available--> exit(31)")
            exit(31)
 
-       if mqtt_c_obj and not mqtt_config.get('disabled', False):
+       if mqtt_c_obj and not mqtt_config.get('enabled', False):
           mqtt_client = mqtt_c_obj   # dupp. MQTT-Object for tranmitting data
 
     # create WebServer client object

@@ -413,13 +413,13 @@ class HoymilesNRF(HoymilesFactory):
         :param NRF24 device: instance of NRF24
         """
         radio = RF24(
-                radio_config.get('ce_pin', 22),
-                radio_config.get('cs_pin', 0),
-                radio_config.get('spispeed', 1000000))
+                int(radio_config.get('spiCe', 22)),
+                int(radio_config.get('spiCSN', 0)),
+                int(radio_config.get('spiSpeed', 1000000)))
 
         if not radio.begin():
             # raise RuntimeError('Can\'t open radio')
-            logging.error(f"RuntimeError: Can\'t open radio")
+            logging.error(f"RuntimeError: Can\'t open radio {radio_config}")
             exit()
 
         

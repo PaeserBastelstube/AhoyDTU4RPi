@@ -939,11 +939,11 @@
 
                 var pins = [['cs', 'spiCs'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['sclk', 'spiSclk'], ['mosi', 'spiMosi'], ['miso', 'spiMiso']];
                 pinList = raspipins;
-				pins = [['spi', 'spiCSN'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['spi-speed', 'spiSpeed']];
+				pins = [['spi', 'spiCSN'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['speed', 'spiSpeed']];
 				pL = pinList;
                 for(p of pins) {
-					if (p[0] == 'spi') {pinList = obj['spi'];}
-					else if (p[0] == 'spi-speed') {pinList = [[600000, '600 kHz'],[1000000, '1 mHz'],[2000000, '2 mHz'],[10000000, '10 mHz']];}
+					if (p[0] == 'spi') {pinList = obj['csn'];}
+					else if (p[0] == 'speed') {pinList = [[600000, '600 kHz'],[1000000, '1 mHz'],[2000000, '2 mHz'],[10000000, '10 mHz']];}
 					else pinList = pL;
                     e.append(
                         ml("div", {class: "row mb-3"}, [
