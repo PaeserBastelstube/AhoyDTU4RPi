@@ -10,18 +10,9 @@ include 'system_json.php';
 # search for SPI Interface with Chip-Enabled and CMD-Status
 $ls_spi_incl_status = trim(shell_exec("ls /dev/spi* 2>&1; echo $?"));
 preg_match_all('/spidev(\d+?)\.(\d+?)|^(\d+)$/m', $ls_spi_incl_status, $ls_spi);
-
-$jj = 0;
-if (end($ls_spi[0]) == 0) { 							# test for return-code $?
-	for ($ii=1; $ii < count($ls_spi)-1; $ii++) {		# loop over spi-controller
-		$spi_CE[$jj] = [$jj, "BUS: " . strval($ls_spi[$ii][0]) . " CSN: " . strval($ls_spi[$ii][1])];
-		$jj++;
-	}
-}
-
-#print_r($ls_spi);
-#print_r($spi_CE);
-#exit;
+if (end($ls_spi[0]) == 0)  							# test for return-code $?
+	for ($ii=0; $ii < count($ls_spi[1])-1; $ii++) 	# loop over spi-controller
+		$spi_CE[$ii] = [$ii, "BUS: " . strval($ls_spi[1][$ii]) . " CSN: " . strval($ls_spi[2][$ii])];
 
 $setup_json = $generic_json + [
 	"system" => $system_json, 
