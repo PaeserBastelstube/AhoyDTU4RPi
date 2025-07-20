@@ -142,7 +142,7 @@ if (isset($status_data_yaml["yield_total"])) {
 	$frequency,                                 # F_AC [Hz]
 	$status_data_yaml["powerfactor"],           # Pf_AC
 	$status_data_yaml["temperature"],           # Temp [°C]
-	$status_data_yaml["yield_total"],           # Pmax-total [kW]
+	$status_data_yaml["yield_total"] / 1000,    # Pmax-total [kW]
 	$status_data_yaml["yield_today"],           # Pmax-today [kW]
 	$DCpower,                                   # P_DC [W]
 	$status_data_yaml["efficiency"],            # [%]
@@ -159,7 +159,7 @@ if (isset($status_data_yaml["strings"])){
 	  $status_data_yaml["strings"][$ii]["current"],      # I_DC [A]
 	  $status_data_yaml["strings"][$ii]["power"],        # P_DC [W]
 	  $status_data_yaml["strings"][$ii]["energy_daily"], # YieldDay [Wh]
-	  $status_data_yaml["strings"][$ii]["energy_total"], # YieldTotal [kWh]
+	  $status_data_yaml["strings"][$ii]["energy_total"] / 1000, # YieldTotal [kWh]
 	  $status_data_yaml["strings"][$ii]["irradiation"],  # Irradiation [%]
 	  $status_data_yaml["max_data"]["strings"][$ii]      # MaxPower [W]
     ];
