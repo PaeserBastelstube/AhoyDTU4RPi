@@ -3,6 +3,11 @@ include 'generic_json.php'; # incl. reading ahoy.yml
 
 
 # read Info-Files in {filepath} with current inverter data
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
+	$argv[0] == "inverter_json.php") {
+	$inverter_id = 0; # for test only
+}
+
 if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 	$filepath = $ahoy_data["WebServer"]["filepath"];
 	$pre_fn = $filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"];
@@ -12,7 +17,6 @@ if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 } else {
 	$inverter_id = 0;
 }
-
 if (isset($hw_data_yaml)) {
   $fw_date = $hw_data_yaml["FW_build_dd"] . "." . $hw_data_yaml["FW_build_mm"] . "." . $hw_data_yaml["FW_build_yy"];  #"0-00-00"
   $fw_time = $hw_data_yaml["FW_build_HH"] . ":" . $hw_data_yaml["FW_build_MM"];                                       #"00:00"
@@ -287,7 +291,8 @@ $inverter_alarm_0_json = [
 ];
 
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
+if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
+	$argv[0] == "inverter_json.php") {
 	# header('Content-Type: application/json; charset=utf-8');
 	# print json_encode($_SERVER, JSON_PRETTY_PRINT);
 

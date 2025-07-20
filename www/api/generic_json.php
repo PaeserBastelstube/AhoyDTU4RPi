@@ -8,14 +8,14 @@ date_default_timezone_set('Europe/Berlin');
 if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=utf-8');
 
 $AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));					# hostname of raspberry
-$dtu_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));		# MAC of network interface
-$dtu_serial = $dtu_array[0] * $dtu_array[1] * $dtu_array[2] * $dtu_array[3];	# def DTU-Serial from MAC
+$MAC_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));		# get MAC of network interface
+$dtu_serial = $MAC_array[0] * $MAC_array[1] * $MAC_array[2] * $MAC_array[3];	# def DTU-Serial from MAC
 
 $generic_uptime_str   = @file_get_contents('/proc/uptime');						# tbd
 $generic_uptime_array = explode(' ', $generic_uptime_str);						# 
 
 $Environment = shell_exec("lsb_release -d 2>/dev/null | awk -F: '{print $2}'");
-$Environment = trim($Environment); # Die Funktion entfernt Whitespaces am Anfang und Ende von string
+$Environment = trim($Environment); # "trim" entfernt Whitespaces am Anfang und Ende von string
 
 # load ahoy config
 $ahoy_config["filename"] = '../../ahoy/AhoyDTU.yml';

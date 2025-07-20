@@ -34,8 +34,7 @@ Description=AhoyDTU as Service
 After=network.target local-fs.target time-sync.target
 
 [Service]
-ExecStart=/bin/bash -c '\
-	/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config AhoyDTU.yml
+ExecStart=/bin/bash -c '/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config AhoyDTU.yml'
 RestartSec=30
 Restart=on-failure
 Type=simple

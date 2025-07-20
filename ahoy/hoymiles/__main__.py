@@ -572,10 +572,10 @@ if __name__ == '__main__':
     # create WebServer client object
     web_server = None
     webserver_config = ahoy_config.get('WebServer', None)
-    if webserver_config and webserver_config.get('enabled', False):
+    #if webserver_config and webserver_config.get('enabled', False):
        # init WebServices
-       web_server = WebServer(webserver_config)
-       if (None != web_server):
+    web_server = WebServer(webserver_config)
+    if (None != web_server):
           logging.info(f"WebServer init successfull!")
 
     # create INFLUX client object

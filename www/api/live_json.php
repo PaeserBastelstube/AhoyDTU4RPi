@@ -1,5 +1,6 @@
 <?php
-include'generic_json.php';
+# include'generic_json.php';
+include'inverter_json.php';
 
 $live_json = $generic_json + [
 	"refresh" => $ahoy_data["interval"],
@@ -13,10 +14,10 @@ $live_json = $generic_json + [
 
 # loop over inverters
 if (isset($ahoy_data["inverters"])) {
-  for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
-	# "iv" => [true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
-    array_push($live_json["iv"], ! $ahoy_data["inverters"][$ii]["enabled"]);
-  }
+	for ($ii = 0; $ii < $inverter_list_json["max_num_inverters"]; $ii++) {
+		# "iv" => [true,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
+		array_push($live_json["iv"], $ahoy_data["inverters"][$ii]["enabled"] ?? false);
+	}
 }
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm" and

@@ -1,8 +1,6 @@
 <?php
-include 'inverter_json.php';			# load inverter data
-if (! isset($_SERVER["TERM"]) ) {
+if (! isset($_SERVER["TERM"]))
 	header('Content-Type: application/json; charset=utf-8');
-}
 
 $arrKeys = array_keys($_GET);  # array of keys from superglobal variable _GET
 
@@ -14,6 +12,7 @@ if (count($arrKeys) > 0) {                          # _GET ist filled
     $inverter_var_name = "inverter_" . $arrKeys[0] . "_" . $inverter_id . "_json"; # define name of variable
   }
 }
+include 'inverter_json.php';			# load inverter data - need variable $inverter_id!!
 
 if (isset ($$inverter_var_name)) {
   print json_encode($$inverter_var_name);
