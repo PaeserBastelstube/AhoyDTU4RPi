@@ -1,9 +1,0 @@
-○ ahoy.service - AhoyDTU as Service
-     Loaded: [0;1;31mbad-setting[0m (Reason: Unit ahoy.service has a bad unit file setting.)
-     Active: inactive (dead)
-
-Jul 15 12:55:16 RPi-2b systemd[758]: [0;1;31m[0;1;39m[0;1;31m]8;;file://RPi-2b/home/pi/.config/systemd/user/ahoy.service/home/pi/.config/systemd/user/ahoy.service]8;;:35: Unbalanced quoting, ignoring: "/bin/bash -c '   /home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config AhoyDTU.yml"[0m
-Jul 15 12:55:16 RPi-2b systemd[758]: [0;1;39m[0;1;31m[0;1;39mahoy.service: Unit configuration has fatal error, unit will not be started.[0m
-Jul 15 12:55:16 RPi-2b systemd[758]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mahoy.service: Cannot add dependency job, ignoring: Unit ahoy.service has a bad unit file setting.[0m
-Jul 20 11:07:42 RPi-2b systemd[758]: [0;1;31m[0;1;39m[0;1;31m]8;;file://RPi-2b/home/pi/.config/systemd/user/ahoy.service/home/pi/.config/systemd/user/ahoy.service]8;;:35: Unbalanced quoting, ignoring: "/bin/bash -c '   /home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config AhoyDTU.yml"[0m
-Jul 20 11:07:42 RPi-2b systemd[758]: [0;1;39m[0;1;31m[0;1;39mahoy.service: Unit configuration has fatal error, unit will not be started.[0m
