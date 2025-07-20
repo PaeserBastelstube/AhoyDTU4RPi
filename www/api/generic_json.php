@@ -72,11 +72,15 @@ if (count($ahoy_data) > 0) {
 $menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
 $menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
 $menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
-	
+
+$wifi_rssi = 0;
+$nmcli_incl_status = explode("\n", trim(shell_exec("nmcli -f type d 2>&1; echo $?")));
+if (end($nmcli_incl_status) == 0) $wifi_rssi = trim($nmcli_incl_status[1]) ?? 0;
+
 # create "ahoy-generic-data"
 $generic_json = [
 	"generic" => [
-		"wifi_rssi"   => 0,										# WIFI-RSSI or LAN
+		"wifi_rssi"   => $wifi_rssi,							# WIFI-RSSI or LAN
 		"ts_uptime"   => intval($generic_uptime_array[0]),		# system uptime
 		"ts_now"      => time(),								# current time
 		"version"     => "0.8.155",
