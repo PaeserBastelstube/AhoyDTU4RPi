@@ -15,3 +15,5 @@ venv/
 *.yml
 *.yml_*
 AhoyDTU*.*
+.gitignore
+archiv/
