@@ -244,13 +244,40 @@ class UnknownResponse(Response):
 
 
 class EventsResponse(UnknownResponse):
-    """ Hoymiles micro-inverter event log decode helper """
+    """ Hoymiles micro-inverter event log decode helper
+        vergl. "src\hm\hmInverter.h:685"
+    """
 
     alarm_codes = {
             # HM Error Codes
-            1: 'Inverter start',                       # 0x01
-            2: 'DTU command failed',                   # 0x02
+              1: 'Inverter start',                     # 0x01
+              2: 'Time calibration',                   # 0x02
+              3: 'EEPROM reading and writing error during operation',
+              4: 'Offline',                            # 
+             11: 'Grid voltage surge',                 #
+             12: 'Grid voltage sharp drop',            #
+             13: 'Grid frequency mutation',            #
+             14: 'Grid phase mutation',                #
+             15: 'Grid transient fluctuation',         #
+             36: 'INV overvoltage or overcurrent',     #
+             46: 'FB overvoltage',                     #
+             47: 'FB overcurrent',                     #
+             48: 'FB clamp overvoltage',               #
+             49: 'FB clamp overvoltage',               #
+             61: 'Calibration parameter error',        #
+             62: 'System configuration parameter error',
+             63: 'Abnormal power generation data',     #
+             71: 'Grid overvoltage load reduction (VW) function enable',
+             72: 'Power grid over-frequency load reduction (FW) function enable',
+             73: 'Over-temperature load reduction (TW) function enable',
+             95: 'PV-1: Module in suspected shadow',   #
+             96: 'PV-2: Module in suspected shadow',   #
+             97: 'PV-3: Module in suspected shadow',   #
+             98: 'Module in suspected shadow',         #
             121: 'Over temperature protection',        # 0x79
+            122: 'Microinverter is suspected of being stolen',
+            123: 'Locked by remote control',
+            124: 'Shut down by remote control',
             125: 'Grid configuration parameter error', # 0x7D
             126: 'Software error code 126',            # 0x7E
             127: 'Firmware error',                     # 0x7F
@@ -266,6 +293,10 @@ class EventsResponse(UnknownResponse):
             147: 'Power grid outage',                  # 0x93
             148: 'Grid disconnection',                 # 0x94
             149: 'Island detected',                    # 0x95
+            150: 'DCI exceeded',                       # 0x
+            171: 'Grid: Abnormal phase difference between phase to phase',
+            181: 'Abnormal insulation impedance',      #
+            182: 'Abnormal grounding',                 #
             205: 'Input port 1 & 2 overvoltage',       # 0xCD
             206: 'Input port 3 & 4 overvoltage',       # 0xCE
             207: 'Input port 1 & 2 undervoltage',      # 0xCF
@@ -322,6 +353,7 @@ class EventsResponse(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
 
+        logging.debug(f'AlarmData: {self.response} {len(self.response)}')
         crc_valid = self.validate_crc_m()
         if crc_valid:
             #logging.debug(' payload has valid modbus crc')
@@ -351,22 +383,57 @@ class EventsResponse(UnknownResponse):
 
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
-
         data = super().__dict__()
+
+        # logging.debug(f'AlarmData: {struct.unpack(">HIHHHHH", self.response[0:16])}')
         data['inv_stat_num'] = self.status
         data['inv_stat_txt'] = self.a_text
         return data
 
-class HardwareInfoResponse(UnknownResponse):
+
+class Response_InverterDevInform_Simple(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
         """
+        vergl. "src\hm\hmDefines.h:160"
+        const byteAssign_t SimpleInfoAssignment[] = {
+            { FLD_PART_NUM,             UNIT_NONE,   CH0,  2, 4, 1 },
+            { FLD_HW_VERSION,           UNIT_NONE,   CH0,  6, 2, 1 },
+            { FLD_GRID_PROFILE_CODE,    UNIT_NONE,   CH0,  8, 2, 1 },
+            { FLD_GRID_PROFILE_VERSION, UNIT_NONE,   CH0, 10, 2, 1 }
+        };
+        """
+
+    def __dict__(self):
+        """ Base values, availabe in each __dict__ call 
+        """
+        data = super().__dict__()
+
+        if (len(self.response) != 16):
+            logging.error(f'Response_InverterDevInform_Simple: data length should be 16 bytes - measured {len(self.response)} bytes')
+            logging.error(f'Response_InverterDevInform_Simple: data: {self.response}')
+            return data
+
+        logging.debug(f'Response_InverterDevInform_Simple: {struct.unpack(">HIHHHHH", self.response[0:16])}')
+
+        fld_part_num, fld_hw_version, fld_grid_profile_code, fld_grid_profile_version = struct.unpack('>IHHH', self.response[2:12])
+        data['FLD_PART_NUM'] = fld_part_num
+        data['FLD_HW_VERSION'] = fld_hw_version
+        data['FLD_GRID_PROFILE_CODE'] = fld_grid_profile_code
+        data['FLD_GRID_PROFILE_VERSION'] = fld_grid_profile_version
+        return data
+
+class Response_InverterDevInform_All(UnknownResponse):
+    def __init__(self, *args, **params):
+        super().__init__(*args, **params)
+        """
+        vergl. "src\hm\hmDefines.h:150"
         const byteAssign_t InfoAssignment[] = {
             { FLD_FW_VERSION,           UNIT_NONE,   CH0,  0, 2, 1 },
             { FLD_FW_BUILD_YEAR,        UNIT_NONE,   CH0,  2, 2, 1 },
             { FLD_FW_BUILD_MONTH_DAY,   UNIT_NONE,   CH0,  4, 2, 1 },
             { FLD_FW_Build_Hour_Minute, UNIT_NONE,   CH0,  6, 2, 1 },
-            { FLD_HW_ID,                UNIT_NONE,   CH0,  8, 2, 1 },
+            { FLD_BOOTLOADER_VER,       UNIT_NONE,   CH0,  8, 2, 1 },
             { FLD_unknown,              UNIT_NONE,   CH0, 10, 2, 1 },
             { FLD_unknown,              UNIT_NONE,   CH0, 12, 2, 1 },
             { FLD_CRC-M,                UNIT_NONE,   CH0, 14, 2, 1 }
@@ -380,31 +447,34 @@ class HardwareInfoResponse(UnknownResponse):
         data = super().__dict__()
 
         if (len(self.response) != 16):
-            logging.error(f'HardwareInfoResponse: data length should be 16 bytes - measured {len(self.response)} bytes')
-            logging.error(f'HardwareInfoResponse: data: {self.response}')
+            logging.error(f'Response_InverterDevInform_All: data length should be 16 bytes - measured {len(self.response)} bytes')
+            logging.error(f'Response_InverterDevInform_All: data: {self.response}')
             return data
 
-        logging.debug(f'HardwareInfoResponse: {struct.unpack(">HHHHHHHH", self.response[0:16])}')
-        fw_version, fw_build_yyyy, fw_build_mmdd, fw_build_hhmm, hw_id = struct.unpack('>HHHHH', self.response[0:10])
+        logging.debug(f'Response_InverterDevInform_All: {struct.unpack(">HHHHHHHH", self.response[0:16])}')
+        fw_version, fw_build_yyyy, fw_build_mmdd, fw_build_hhmm, bootloader_ver = struct.unpack('>HHHHH', self.response[0:10])
+        #data = struct.unpack('>HHHHH', self.response[0:10])
 
-        fw_version_maj = int((fw_version / 10000))
-        fw_version_min = int((fw_version % 10000) / 100)
-        fw_version_pat = int((fw_version %   100))
-        fw_build_mm = int(fw_build_mmdd / 100)
-        fw_build_dd = int(fw_build_mmdd % 100)
-        fw_build_HH = int(fw_build_hhmm / 100)
-        fw_build_MM = int(fw_build_hhmm % 100)
-
-        data['FW_ver_maj'] = fw_version_maj
-        data['FW_ver_min'] = fw_version_min
-        data['FW_ver_pat'] = fw_version_pat
+        data['FW_ver_maj'] = int((fw_version / 10000))
+        data['FW_ver_min'] = int((fw_version % 10000) / 100)
+        data['FW_ver_pat'] = int((fw_version %   100))
         data['FW_build_yy'] = fw_build_yyyy
-        data['FW_build_mm'] = fw_build_mm
-        data['FW_build_dd'] = fw_build_dd
-        data['FW_build_HH'] = fw_build_HH
-        data['FW_build_MM'] = fw_build_MM
-        data['FW_HW_ID'] = hw_id
+        data['FW_build_mm'] = int(fw_build_mmdd / 100)
+        data['FW_build_dd'] = int(fw_build_mmdd % 100)
+        data['FW_build_HH'] = int(fw_build_hhmm / 100)
+        data['FW_build_MM'] = int(fw_build_hhmm % 100)
+        data['BL_VER'] = bootloader_ver
         return data
+
+class SystemConfigPara(UnknownResponse):
+    def __init__(self, *args, **params):
+        super().__init__(*args, **params)
+        """
+        """
+
+    def __dict__(self):
+        """ Base values, availabe in each __dict__ call """
+        data = super().__dict__()
 
 class DebugDecodeAny(UnknownResponse):
     """Default decoder"""
@@ -455,11 +525,17 @@ class DebugDecodeAny(UnknownResponse):
         return data
 
 # 1121-Series Intervers, 1 MPPT, 1 Phase
-class Hm300Decode01(HardwareInfoResponse):
+class Hm300Decode00(Response_InverterDevInform_Simple):
+    """ 1121-series Inverter """
+
+class Hm300Decode01(Response_InverterDevInform_All):
     """ 1121-series Firmware version / date """
 
 class Hm300Decode02(EventsResponse):
     """ 1121-series Inverter generic events log """
+
+class Hm300Decode05(SystemConfigPara):
+    """ 1121-series Inverter """
 
 class Hm300Decode0B(StatusResponse):
     """ 1121-series mirco-inverters status data """
@@ -537,7 +613,10 @@ class Hm300Decode12(EventsResponse):
 
 
 # 1141-Series Inverters, 2 MPPT, 1 Phase
-class Hm600Decode01(HardwareInfoResponse):
+class Hm600Decode00(Response_InverterDevInform_Simple):
+    """ 1141-Series Firmware version / date """
+
+class Hm600Decode01(Response_InverterDevInform_All):
     """ 1141-Series Firmware version / date """
 
 class Hm600Decode02(EventsResponse):
@@ -648,7 +727,10 @@ class Hm600Decode12(EventsResponse):
 
 
 # 1161-Series Inverters, 2 MPPT, 1 Phase
-class Hm1200Decode01(HardwareInfoResponse):
+class Hm1200Decode00(Response_InverterDevInform_Simple):
+    """ 1161-Series Firmware version / date """
+
+class Hm1200Decode01(Response_InverterDevInform_All):
     """ 1161-Series Firmware version / date """
 
 class Hm1200Decode02(EventsResponse):

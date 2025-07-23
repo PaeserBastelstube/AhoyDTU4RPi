@@ -8,7 +8,7 @@ Hoymiles output plugin library
 import socket
 import logging
 from datetime import datetime, timezone
-from hoymiles.decoders import StatusResponse, HardwareInfoResponse
+from hoymiles.decoders import StatusResponse, Response_InverterDevInform_All
 from hoymiles import HOYMILES_TRANSACTION_LOGGING, HOYMILES_VERBOSE_LOGGING
 
 class OutputPluginFactory:
@@ -312,20 +312,23 @@ class MqttOutputPlugin(OutputPluginFactory):
             if data['efficiency'] is not None:
                 self.client.publish(f'{topic}/Efficiency', data['efficiency'], self.qos, self.ret)
 
+        elif isinstance(response, Response_InverterDevInform_All):
+            logging.debug(f"send to mqtt brocker: Firmware version {data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}, "
+                f"build at {data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T"
+                f"{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}, "
+                f"Bootloader version {data['BL_VER']}")
 
-        # elif isinstance(response, HardwareInfoResponse):
-        elif 'FW_ver_maj' in data and 'FW_ver_min' in data and 'FW_ver_pat' in data:
-            payload = f'{data["FW_ver_maj"]}.{data["FW_ver_min"]}.{data["FW_ver_pat"]}'
+            payload = f'{FW_ver_maj}.{FW_ver_min}.{FW_ver_pat}'
             self.client.publish(f'{topic}/Firmware/Version', payload , self.qos, self.ret)
 
-            payload = f'{data["FW_build_dd"]}/{data["FW_build_mm"]}/{data["FW_build_yy"]}T{data["FW_build_HH"]}:{data["FW_build_MM"]}'
+            payload = f'{FW_build_dd}/{FW_build_mm}/{FW_build_yy}T{FW_build_HH}:{FW_build_MM}'
             self.client.publish(f'{topic}/Firmware/Build_at', payload, self.qos, self.ret)
 
-            payload = f'{data["FW_HW_ID"]}'
-            self.client.publish(f'{topic}/Firmware/Build_at', payload, self.qos, self.ret)
+            payload = f'{BL_VER}'
+            self.client.publish(f'{topic}/bootloader-version', payload, self.qos, self.ret)
 
         else:
-             raise ValueError('Data needs to be instance of StatusResponse or a instance of HardwareInfoResponse')
+             raise ValueError('Data needs to be instance of StatusResponse or a instance of Response_InverterDevInform_All')
 
 class VzInverterOutput:
     def __init__(self, vz_inverter_config, session):

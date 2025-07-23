@@ -64,7 +64,7 @@ $system_json = [
     + $generic_json + [
 	"radioNrf"	=> [
 		"en"			=> $ahoy_data["nrf"]["enabled"] ?? false,
-		"isconnected"	=> 0,
+		"isconnected"	=> 1,
 		"dataRate"		=> $ahoy_data["nrf"]["spiSpeed"] ?? 1000000,
 		"irqOk"			=> isset($ahoy_data["nrf"]["spiIrq"]) ? 1 : 2,
 		"sn"			=> $ahoy_data["dtu"]["serial"] ?? 0

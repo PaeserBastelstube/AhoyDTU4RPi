@@ -68,12 +68,15 @@ class WebServer:
   save data to yaml file for Web-Services
   """
   def __init__(self, web_config):
+    self.dataToFile = {}
     self.filepath = web_config.get('filepath', '/tmp')
+
     self.AtMidnight = False
     self.AtSunrise = False
     self.AtSunset = False
     self.NotAvailable = False
     self.MaxValues = False
+
     if web_config.get('InverterReset', None):
        reset_config = web_config.get('InverterReset')
        if reset_config.get('AtMidnight', False) == True:
@@ -86,60 +89,69 @@ class WebServer:
           self.NotAvailable = True
        if reset_config.get('MaxValues', False) == True:
           self.MaxValues = True
-    self.max_value = {'temp':0,'temp_ts':0,'power':0,'power_ts':0, 'strings':[]}
-    # reset_max_value()
+    self.reset_max_values()
 
-  def reset_max_value(self):
-      if self.max_value:
-         del self.max_value
-      self.max_value = {'temp':0,'temp_ts':0,'power':0,'power_ts':0, 'strings':[]}
-     
-  def SaveToYaml (self, inv_ser, DTU_result):
-    data = DTU_result.__dict__()              # convert result into python-dict
-    save_switch = ""
-    if isinstance(DTU_result, hoymiles.decoders.StatusResponse):
-        save_switch = "StatusResponse"
+  def reset_max_values(self):
+      self.max_values = {'max_temp':0,'max_temp_ts':0,'max_power':0,'max_power_ts':0, 'strings':[]}
+ 
+  def getMaxValues (self, data):
+      # calulate max values
+      if (self.max_values['max_temp'] < data['temperature']):
+          self.max_values['max_temp']    = data['temperature']
+          self.max_values['max_temp_ts'] = data['time'].timestamp()
 
-        # calulate max values
-        if (self.max_value['temp'] < data['temperature']):
-          self.max_value['temp'] = data['temperature']
-          self.max_value['temp_ts'] = data['time'].timestamp()
-
-        if 'phases' in data:
-          phase_power = 0
+      if 'phases' in data:
+          all_phase_power = 0
           for phase in data['phases']:
-              phase_power += phase['power']
-          if (self.max_value['power'] < phase_power):
-              self.max_value['power'] = phase_power
-              self.max_value['power_ts'] = data['time'].timestamp()
+              all_phase_power += phase['power']            # add power of all phases
+          if (self.max_values['max_power'] < all_phase_power):
+              self.max_values['max_power'] = all_phase_power
+              self.max_values['max_power_ts'] = data['time'].timestamp()
 
-        if 'strings' in data:
+      if 'strings' in data:
           for ii, string in enumerate(data['strings']):
-            # print (f"{ii=} {self.max_value['strings']=} {string['power']=}")
-            if ii not in range(len(self.max_value['strings'])):
-               self.max_value['strings'].append(string['power'])
+            # print (f"{ii=} {self.max_values['strings']=} {string['power']=}")
+            if ii not in range(len(self.max_values['strings'])):
+               self.max_values['strings'].append(string['power'])
             else:
-              if (self.max_value['strings'][ii] < string['power']):
-                self.max_value['strings'][ii] = string['power']
+              if (self.max_values['strings'][ii] < string['power']):
+                self.max_values['strings'][ii] = string['power']
+      self.dataToFile["MaxValues"] = self.max_values
+      #logging.debug(f"SaveToYaml(MaxValues): {self.dataToFile["MaxValues"]=}")
    
-    elif isinstance(DTU_result, hoymiles.decoders.HardwareInfoResponse):
-        save_switch = "HardwareInfoResponse"
-    elif isinstance(DTU_result, hoymiles.decoders.EventsResponse):
-        save_switch = "EventsResponse"
-    elif isinstance(DTU_result, hoymiles.decoders.DebugDecodeAny):
-        save_switch = "DebugDecodeAny"
+    
+  def SaveToYaml (self, inv_ser, DTU_result):
+    instanceName = type(DTU_result).__name__   # get class (type) name
+    if instanceName == "DebugDecodeAny":
+        self.InfoCommand = instanceName
     else:
-        logging.debug(f"no data found for {inv_ser} - nothing to save")
-        return  # no valid instance found - nothing is saved
+        InfoCommand_num  = int("0x" + type(DTU_result).__name__[-2:], 16)
+        self.InfoCommand = hoymiles.InfoCommands(InfoCommand_num).name
 
-    fn = self.filepath + "/AhoyDTU_" + str(inv_ser) + "_" + save_switch + ".yml"
+    data = DTU_result.__dict__()              # convert result into python-dict
+
+    if (self.InfoCommand == "AlarmData"):     # AlarmData == 18 (0x12)
+        self.dataToFile[self.InfoCommand] = {0 : data}
+    elif (self.InfoCommand == "RealTimeRunData_Debug"):      # RealTimeRunData_Debug == 11 (0x0B)
+        self.getMaxValues(data)
+        self.dataToFile[self.InfoCommand] = data
+    else:
+        self.dataToFile[self.InfoCommand] = data
+
+    fn = self.filepath + "/AhoyDTU_" + str(inv_ser) + ".yml"
     logging.debug(f"SaveToYaml: save data to {fn}")
+    #logging.debug(f"SaveToYaml: {self.dataToFile=}")
     with open(fn, 'w') as yaml_file:
-        # logging.debug(f"SaveToYaml: {data=}")
-        yaml.dump(data, yaml_file)
-        if isinstance(DTU_result, hoymiles.decoders.StatusResponse):
-           logging.debug(f"SaveToYaml: {self.max_value=}")
-           yaml.dump({'max_data':self.max_value}, yaml_file)
+        yaml.dump(self.dataToFile, yaml_file)
+
+  def checkOutput(self):
+    if "DebugDecodeAny" in self.dataToFile and \
+       "InverterDevInform_Simple" in self.dataToFile and \
+       "InverterDevInform_All" in self.dataToFile:
+       return False
+    else:
+       logging.debug(f"SaveToYaml: {self.dataToFile=}")
+       return True
 
 class SunsetHandler:
     """ Sunset class
@@ -249,6 +261,11 @@ def main_loop(ahoy_config):
                 poll_inverter(inverter, do_init, transmit_retries)
             do_init = False
 
+            logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
+            if (int(time.strftime("%M"),10) % 5 == 0):
+               if web_server:
+                   do_init = web_server.checkOutput()
+
             # calc time to pause main-loop
             time_to_sleep = loop_interval - (time.time() - t_loop_start)
             if time_to_sleep > 0:
@@ -275,13 +292,13 @@ def poll_inverter(inverter, do_init, retries):
 
     # Queue at least status data request
     if do_init:
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple)) # 00
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 00
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 01
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))        # 02
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))           # 03
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))    # 04
-      ##command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))         # 05
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))  # 0c
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))          # 02
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 03
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 04
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 05
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0c
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))          # 11
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))        # 12
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))         # 13
@@ -335,7 +352,7 @@ def poll_inverter(inverter, do_init, retries):
                     strings=inverter_strings
                     )
 
-            result = decoder.decode()                          # call decoder object
+            result = decoder.decode()                          # decode response from inverter
             if web_server:
                web_server.SaveToYaml (inverter_ser, result)    # save for using in NGINX
 
@@ -359,6 +376,16 @@ def poll_inverter(inverter, do_init, retries):
                        # add AlarmData-command to queue 
                        command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData, alarm_id=event_message_index[inv_str]))
 
+                # when 'event_count' is changed, add AlarmUpdate-command to queue
+                if data is not None and 'event_count' in data:
+                    # if event_message_index[inv_str] < data['event_count']:
+                    if event_message_index[inv_str] != data['event_count']:
+                       event_message_index[inv_str]  = data['event_count']
+                       if hoymiles.HOYMILES_VERBOSE_LOGGING:
+                          logging.info(f"event_count changed to {data['event_count']} --> AlarmUpdate requested")
+                       # add AlarmUpdate-command to queue 
+                       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_str]))
+
                 # sent outputs
                 if mqtt_client:
                    mqtt_client.store_status(data)
@@ -371,12 +398,16 @@ def poll_inverter(inverter, do_init, retries):
                    volkszaehler_client.store_status(data)
 
             # check decoder object for different data types
-            if isinstance(result, hoymiles.decoders.HardwareInfoResponse):
+            if isinstance(result, hoymiles.decoders.Response_InverterDevInform_Simple):
+               if hoymiles.HOYMILES_VERBOSE_LOGGING:
+                  logging.info(f"HW Part Number {data['FLD_PART_NUM']}, "
+                               f"HW Version {data['FLD_HW_VERSION']}")
+            if isinstance(result, hoymiles.decoders.Response_InverterDevInform_All):
                if hoymiles.HOYMILES_VERBOSE_LOGGING:
                   logging.info(f"Firmware version {data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}, "
                                f"build at {data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T"
                                f"{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}, "
-                               f"HW revision {data['FW_HW_ID']}")
+                               f"Bootloader version {data['BL_VER']}")
                if mqtt_client:
                   mqtt_client.store_status(data)
 

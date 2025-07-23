@@ -20,8 +20,8 @@ $avail_endpoints = array("avail_endpoints" => [
 ]);
 
 for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
-	$avail_endpoints["avail_endpoints"] += ["inverter/id/" . $ii		 => $my_uri . "/api/inverter/id/" . $ii];
-	$avail_endpoints["avail_endpoints"] += ["inverter/alarm/" . $ii	 => $my_uri . "/api/inverter/id/" . $ii];
+	$avail_endpoints["avail_endpoints"] += ["inverter/id/"      . $ii => $my_uri . "/api/inverter/id/"      . $ii];
+	$avail_endpoints["avail_endpoints"] += ["inverter/alarm/"   . $ii => $my_uri . "/api/inverter/alarm/"   . $ii];
 	$avail_endpoints["avail_endpoints"] += ["inverter/version/" . $ii => $my_uri . "/api/inverter/version/" . $ii];
 }
 

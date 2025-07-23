@@ -21,7 +21,7 @@ function saveSettings() {
 
 $filename = date('Y-m-d_H-i-s') . "_v" . $generic_json["generic"]["version"];
 
-$mySwitch = "no_get";
+$mySwitch = NULL;
 if (isset($_GET)) {
   $getKeys = array_keys($_GET);
   $mySwitch = count($getKeys) > 0 ? htmlspecialchars($getKeys[0]) : "local";

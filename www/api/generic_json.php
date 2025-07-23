@@ -7,17 +7,10 @@
 date_default_timezone_set('Europe/Berlin');
 if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=utf-8');
 
-$AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));					# hostname of raspberry
-$MAC_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));		# get MAC of network interface
-$dtu_serial = $MAC_array[0] * $MAC_array[1] * $MAC_array[2] * $MAC_array[3];	# def DTU-Serial from MAC
+# Name of DTU
+$AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));	# hostname of raspberry ==> Name of DTU
 
-$generic_uptime_str   = @file_get_contents('/proc/uptime');						# tbd
-$generic_uptime_array = explode(' ', $generic_uptime_str);						# 
-
-$Environment = shell_exec("lsb_release -d 2>/dev/null | awk -F: '{print $2}'");
-$Environment = trim($Environment); # "trim" entfernt Whitespaces am Anfang und Ende von string
-
-# load ahoy config
+# load new ahoy config
 $ahoy_config["filename"] = '../../ahoy/AhoyDTU.yml';
 $ahoy_config["filetime"] = 0;
 $ahoy_data = array();
@@ -47,8 +40,15 @@ if (count($ahoy_data) > 0) {
   }
   $ahoy_data["interval"] = 14;
   $ahoy_data["transmit_retries"] = 4;
-  $ahoy_data["dtu"] = ["serial" => $dtu_serial, "name" => $AhoyHost];
 
+	# from "src/hm/Radio.h:133"
+	## // the first digit is an 8 for DTU production year 2022, the rest is filled with the ESP chipID in decimal
+	# mDtuSn |= 0x80000000; 
+	$IP_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));			# get IP of network interface
+	$dtu_serial = intval(0x80000000 + $IP_array[1] * $IP_array[2] * $IP_array[3]);	# def DTU-Serial from IP-Address
+	$ahoy_data["dtu"] = ["serial" => dechex($dtu_serial), "name" => $AhoyHost];
+
+  $ahoy_data["WebServer"]["filepath"] = "/tmp";
   $ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval($dtu_serial) . ".log", 
 			 "level" => "INFO", "max_log_filesize" => 1000000, "max_log_files" => 1];
 
@@ -58,39 +58,38 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["mqtt"]["enabled"] = false;
   $ahoy_data["volkszaehler"]["enabled"] = false;
   $ahoy_data["influxdb"]["enabled"] = false;
-
-  $ahoy_data["WebServer"]["filepath"] = "/tmp";
-#  $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = false;        # Reset values and YieldDay at midnight
-#  $ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = false;      # Reset values when inverter status is 'not available'
-#  $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = false;         # Reset values at sunrise
-#  $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = false;          # Reset values at sunset
-#  $ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = false;         # Include reset 'max' values
-#  $ahoy_data["WebServer"]["strtWthtTm"] = false;                         # Start without time sync
-#  $ahoy_data["WebServer"]["rdGrid"] = false;                             # Read Grid Profile
 }
-
-$menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
-$menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
-$menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
 
 $wifi_rssi = 0;
 $nmcli_incl_status = explode("\n", trim(shell_exec("nmcli -f type d 2>&1; echo $?")));
 if (end($nmcli_incl_status) == 0) $wifi_rssi = trim($nmcli_incl_status[1]) ?? 0;
 
+# System Uptime
+$uptime_array = explode(' ', @file_get_contents('/proc/uptime'));		# 
+
+# string of system environment
+$Environment = shell_exec("lsb_release -d 2>/dev/null | awk -F: '{print $2}'");
+$Environment = trim($Environment); # "trim" entfernt Whitespaces am Anfang und Ende von string
+
+# DTU Protection
+$menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
+$menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
+$menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
+
 # create "ahoy-generic-data"
 $generic_json = [
 	"generic" => [
-		"wifi_rssi"   => $wifi_rssi,							# WIFI-RSSI or LAN
-		"ts_uptime"   => intval($generic_uptime_array[0]),		# system uptime
-		"ts_now"      => time(),								# current time
+		"wifi_rssi"   => $wifi_rssi,					# WIFI-RSSI or LAN
+		"ts_uptime"   => intval($uptime_array[0]),		# system uptime
+		"ts_now"      => time(),						# current time
 		"version"     => "0.8.155",
-		"modules"     => trim(shell_exec("uname -m")),			# "MDH-de",
+		"modules"     => trim(shell_exec("uname -m")),	# "MDH-de",
 		"build"       => "5feb293",
-		"env"         => $Environment,							# "esp32-wroom32-de",
-		"host"        => $AhoyHost,								# hostname
-		"menu_prot"   => $menu_prot,										# Switch, if prot=set - true=locked - false=unlocked
-		"menu_mask"   => $menu_mask,										# exp-sum of 7 switches
-		"menu_protEn" => $menu_protEn,										# check, if prot-PW != "\0"
+		"env"         => $Environment,					# "esp32-wroom32-de",
+		"host"        => $AhoyHost,						# hostname
+		"menu_prot"   => $menu_prot,					# Switch, if prot=set - true=locked - false=unlocked
+		"menu_mask"   => $menu_mask,					# exp-sum of 7 switches
+		"menu_protEn" => $menu_protEn,					# check, if prot-PW != "\0"
 		"cst_lnk"     => $ahoy_data["WebServer"]["generic"]["cst"]["lnk"] ?? "",	# custom 
 		"cst_lnk_txt" => $ahoy_data["WebServer"]["generic"]["cst"]["txt"] ?? "",
 		"region"      => $ahoy_data["WebServer"]["generic"]["region"] ?? 0,			# wo wird das benötigt

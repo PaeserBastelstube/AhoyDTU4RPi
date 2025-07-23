@@ -40,10 +40,8 @@ function readFileContent($myFN) {
 
 if (isset($ahoy_data["inverters"])) {
 	foreach ($ahoy_data["inverters"] as $ii => $inv) {			# loop over all inverters and search for status files
-    	$pre_fn = $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_" . $inv["serial"];
-		#$hw_data_yaml[$ii]     = @yaml_parse_file($pre_fn . '_HardwareInfoResponse.yml');
-		#$event_data_yaml[$ii]  = @yaml_parse_file($pre_fn . '_EventsResponse.yml');
-		$status_data_yaml		= readFileContent($pre_fn . '_StatusResponse.yml');
+    	$fn = $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_" . $inv["serial"] . '.yml';
+		$data_yaml = readFileContent($fn);
 
 		$index_json["inverter"][$ii] = [	# fill array with current inverter data from $filepath (/tmp)
 			"id" => $ii,					# id nummer of Inverter
@@ -51,12 +49,15 @@ if (isset($ahoy_data["inverters"])) {
 			"name" => $inv["name"]			# inverter name
 		];
 	
-		if (isset($status_data_yaml) and $status_data_yaml["tsLastSuccess"] != NULL) {
+		if (isset($data_yaml) and $data_yaml["tsLastSuccess"] != NULL) {
+			if (isset($data_yaml["data"]["RealTimeRunData_Debug"])) $rt_data = $data_yaml["data"]["RealTimeRunData_Debug"];
+			else $rt_data = array();
+
 			$index_json["inverter"][$ii] += array(
-				"cur_pwr" => $status_data_yaml["data"]["phases"][0]["power"],			# current inverter power
-				"is_avail" => true,														# check, if inverter online
-				"is_producing" => $index_json["ts_now"] - $status_data_yaml["tsLastSuccess"] < 60,	# check, if last data message not older then 60 sec
-				"ts_last_success" => $status_data_yaml["tsLastSuccess"]);				# Timestamp of last data file
+				"cur_pwr" => $rt_data["phases"][0]["power"] ?? 0,				# current inverter power
+				"is_avail" => true,												# check, if inverter online
+				"is_producing" => $index_json["ts_now"] - $data_yaml["tsLastSuccess"] < 60,	# check, if last data message not older then 60 sec
+				"ts_last_success" => $data_yaml["tsLastSuccess"]);				# Timestamp of last data file
 		} else {
 			$index_json["inverter"][$ii] += [
 				"cur_pwr" => 0,					# current inverter power

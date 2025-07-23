@@ -8,46 +8,41 @@ if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
 	$inverter_id = 0; # for test only
 }
 
+# load (read) AhoyDTU-data-file
 if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 	$filepath = $ahoy_data["WebServer"]["filepath"];
-	$pre_fn = $filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"];
-	$hw_data_yaml     = @yaml_parse_file($pre_fn . '_HardwareInfoResponse.yml');
-	$status_data_yaml = @yaml_parse_file($pre_fn . '_StatusResponse.yml');
-	$event_data_yaml  = @yaml_parse_file($pre_fn . '_EventsResponse.yml');
+	$data_yaml = @yaml_parse_file($filepath . "/AhoyDTU_" . $ahoy_data["inverters"][$inverter_id]["serial"] . ".yml");
 } else {
 	$inverter_id = 0;
 }
-if (isset($hw_data_yaml)) {
-  $fw_date = $hw_data_yaml["FW_build_dd"] . "." . $hw_data_yaml["FW_build_mm"] . "." . $hw_data_yaml["FW_build_yy"];  #"0-00-00"
-  $fw_time = $hw_data_yaml["FW_build_HH"] . ":" . $hw_data_yaml["FW_build_MM"];                                       #"00:00"
-  $fw_ver  = $hw_data_yaml["FW_ver_maj"]  . "." . $hw_data_yaml["FW_ver_min"]  . "." . $hw_data_yaml["FW_ver_pat"];   #"0.00.00"
+
+if (isset($data_yaml["InverterDevInform_Simple"])) $hw_data_simple = $data_yaml["InverterDevInform_Simple"];
+else $hw_data_simple = array();
+if (isset($data_yaml["InverterDevInform_All"])) $hw_data_all = $data_yaml["InverterDevInform_All"];
+else $hw_data_all = array();
+if (isset($data_yaml["RealTimeRunData_Debug"])) $status_data_yaml = $data_yaml["RealTimeRunData_Debug"];
+else $status_data_yaml = array();
+if (isset($data_yaml["AlarmData"])) $alarm_data = $data_yaml["AlarmData"];
+else $alarm_data = array();
+if (! isset($data_yaml["RealTimeRunData_Debug"]["time"])) $status_data_yaml['time'] = 0;
+
+if (isset($data_yaml["InverterDevInform_All"])) {
+  $hw_data = $data_yaml["InverterDevInform_All"];
+  $fw_date = $hw_data["FW_build_dd"] . "." . $hw_data["FW_build_mm"] . "." . $hw_data["FW_build_yy"];  #"0-00-00"
+  $fw_time = $hw_data["FW_build_HH"] . ":" . $hw_data["FW_build_MM"];                                  #"00:00"
+  $fw_ver  = $hw_data["FW_ver_maj"]  . "." . $hw_data["FW_ver_min"]  . "." . $hw_data["FW_ver_pat"];   #"0.00.00"
 } else {
   $fw_date = "0-00-00";
   $fw_time = "00:00";
   $fw_ver  = "0.00.00";
 }
 
-if (! isset($hw_data_yaml["inverter_ser"])) {
-	$hw_data_yaml["inverter_ser"] = "";
-	$hw_data_yaml["inverter_name"] = "";
-	$hw_data_yaml["FW_HW_ID"] = "";
-}
-
-if (! isset($status_data_yaml["inverter_name"])) {
-	$status_data_yaml["inverter_name"] = "";
-	$status_data_yaml["inverter_ser"]  = "";
-	$status_data_yaml['time'] = 0;
-	$status_data_yaml["event_count"] = 0;
-	$status_data_yaml["max_data"]["temp_ts"] = 0;
-}
-
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 # 1141-Series Inverters, 2 MPPT, 1 Phase
 # 1161-Series Inverters, 2 MPPT, 1 Phase
-# print (substr($hw_data_yaml["inverter_ser"], 0,4));
 $max_pwr = 0;
-if (isset($hw_data_yaml["inverter_ser"])) {
-  switch (substr($hw_data_yaml["inverter_ser"], 0,4)) {
+if (isset($status_data_yaml["inverter_ser"])) {
+  switch (substr($status_data_yaml["inverter_ser"], 0,4)) {
     case 1121:
 	  $max_pwr = 400; break;
     case 1141:
@@ -85,31 +80,31 @@ if (isset($ahoy_data["inverters"][$inverter_id]["name"])) {
 
 $inverter_var_id = "inverter_id_" . $inverter_id . "_json";
 $$inverter_var_id = [
-	"id" => $inverter_id,
-	"enabled" => "true",
-	"name"    => $status_data_yaml["inverter_name"],
-	"serial"  => $status_data_yaml["inverter_ser"],
-	"version" => "0",
+	"id"			=> $inverter_id,
+	"enabled"		=> $ahoy_data["inverters"][$inverter_id]["enable"] ?? false,
+	"name"			=> $ahoy_data["inverters"][$inverter_id]["name"] ?? "",
+	"serial"		=> $ahoy_data["inverters"][$inverter_id]["serial"] ?? "",
+	"version"		=> "0",
 	"power_limit_read" => 100,
 	"power_limit_ack" => false,
-	"max_pwr" => $max_pwr,
+	"max_pwr"		=> $max_pwr,
 	"ts_last_success" => strtotime($status_data_yaml['time'].'CEST'),
-	"generation" => 2,
-	"status" => (time() - strtotime($status_data_yaml["time"].'CEST')) > 60 ? 0 : 1,
-	"alarm_cnt" => $status_data_yaml["event_count"],
-	"rssi" => 0,
-	"ts_max_ac_pwr" => $status_data_yaml["max_data"]["temp_ts"],
-	"ts_max_temp" => $status_data_yaml["max_data"]["temp_ts"],
+	"generation"	=> 1,
+	"status"		=> (time() - strtotime($status_data_yaml["time"].'CEST')) > 60 ? 0 : 1,
+	"alarm_cnt"		=> $status_data_yaml["event_count"] ?? 0,
+	"rssi"	=> 0,
+	"ts_max_ac_pwr"	=> $data_yaml["MaxValues"]["max_power_ts"] ?? 0,
+	"ts_max_temp"	=> $data_yaml["MaxValues"]["max_temp_ts"] ?? 0,
     # V   ,A   ,W   ,Hz  ,""   , °C ,   kWh    ,  Wh    ,W   ,   %      ,var ,W       ,  °C
     # U_AC,I_AC,P_AC,F_AC,PF_AC,Temp,YieldTotal,YieldDay,P_DC,Efficiency,Q_AC,MaxPower,MaxTemp
-	"ch" => [],
-	"ch_name" => ["AC"],
-	"ch_max_pwr" => [null]
+	"ch"			=> [],
+	"ch_name"		=> ["AC"],
+	"ch_max_pwr"	=> [null]
 ];
 
-$ACvoltage = isset($status_data_yaml["phases"][0]["voltage"]) ? $status_data_yaml["phases"][0]["voltage"] : 0;
-$ACcurrent = isset($status_data_yaml["phases"][0]["current"]) ? $status_data_yaml["phases"][0]["current"] : 0;
-$ACpower   = isset($status_data_yaml["phases"][0]["power"]) ? $status_data_yaml["phases"][0]["power"] : 0;
+$ACvoltage = isset($status_data_yaml["phases"][0]["voltage"])   ? $status_data_yaml["phases"][0]["voltage"] : 0;
+$ACcurrent = isset($status_data_yaml["phases"][0]["current"])   ? $status_data_yaml["phases"][0]["current"] : 0;
+$ACpower   = isset($status_data_yaml["phases"][0]["power"])     ? $status_data_yaml["phases"][0]["power"] : 0;
 $frequency = isset($status_data_yaml["phases"][0]["frequency"]) ? $status_data_yaml["phases"][0]["frequency"] : 0;
 $ACQpower  = isset($status_data_yaml["phases"][0]["reactive_power"]) ? $status_data_yaml["phases"][0]["reactive_power"] : 0;
 
@@ -147,8 +142,8 @@ if (isset($status_data_yaml["yield_total"])) {
 	$DCpower,                                   # P_DC [W]
 	$status_data_yaml["efficiency"],            # [%]
 	$ACQpower,                                  # Q [var]
-	$status_data_yaml["max_data"]["power"],     # MaxPower [W]
-	$status_data_yaml["max_data"]["temp"]       # MaxTemp [°C]
+	$data_yaml["MaxValues"]["max_power"],     # MaxPower [W]
+	$data_yaml["MaxValues"]["max_temp"]       # MaxTemp [°C]
   ]);
 }
 
@@ -161,7 +156,7 @@ if (isset($status_data_yaml["strings"])){
 	  $status_data_yaml["strings"][$ii]["energy_daily"], # YieldDay [Wh]
 	  $status_data_yaml["strings"][$ii]["energy_total"] / 1000, # YieldTotal [kWh]
 	  $status_data_yaml["strings"][$ii]["irradiation"],  # Irradiation [%]
-	  $status_data_yaml["max_data"]["strings"][$ii]      # MaxPower [W]
+	  $data_yaml["MaxValues"]["strings"][$ii]      # MaxPower [W]
     ];
     array_push($$inverter_var_id["ch_name"],    $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_name"]);
     array_push($$inverter_var_id["ch_max_pwr"], $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_maxpower"]);
@@ -214,82 +209,40 @@ $inverter_list_json += [
 	"rdGrid"      => $ahoy_data["WebServer"]["rdGrid"] ?? false,						# Read Grid Profile
 ];
 
+#vergl. RestApi.h - zeile 695
+$prod_year = (intval($status_data_yaml["inverter_ser"][4]) + 2014) ?? 2088;
+$prod_cw   = ($status_data_yaml["inverter_ser"][5] * 10 + $status_data_yaml["inverter_ser"][6]) ?? 88;
 $inverter_version = "inverter_version_" . $inverter_id . "_json";
 $$inverter_version = [
 	"id" => $inverter_id,
-	"name" => $hw_data_yaml["inverter_name"],
-	"serial" => $hw_data_yaml["inverter_ser"],
+	"name" => $status_data_yaml["inverter_name"] ?? "",
+	"serial" => $status_data_yaml["inverter_ser"] ?? "",
 	"generation" => 1,
 	"max_pwr" => $max_pwr,
-	"part_num" => 0,
-	"hw_ver" => $hw_data_yaml["FW_HW_ID"], #0,
-	"prod_cw" => 18,
-	"prod_year" => 2022,
+	"part_num" => $hw_data_simple["FLD_PART_NUM"] ?? 0,
+	"hw_ver" => $hw_data_simple["FLD_HW_VERSION"] ?? 0,
+	"prod_cw" => $prod_cw,
+	"prod_year" => $prod_year,
 	"fw_date" => $fw_date, # "0-00-00",
 	"fw_time" => $fw_time, # "00:00",
 	"fw_ver" =>  $fw_ver,  # "0.00.00",
-	"boot_ver" => 0 
+	"boot_ver" => $hw_data_all["BL_VER"] ?? 0 
 ];
 
-$inverter_alarm_0_json = [
-	"iv_id" => 0,
-	"iv_name" => $hw_data_yaml["inverter_name"],
+# $inverter_alarm_0_json = [
+$inverter_alarm = "inverter_alarm_" . $inverter_id . "_json";
+$$inverter_alarm = [
+	"iv_id" => $inverter_id,
+	"iv_name" => $status_data_yaml["inverter_name"] ?? "",
 	"cnt" => 0,
-	"last_id" => 0,
-	"alarm" => [
-		["code" => 1,"str" => "Inverter start","start" => 11101,"end" => 11101],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0],
-		["code" => 0,"str" => "Unknown","start" => 0,"end" => 0]
-	]
+	"last_id" => count($alarm_data),
+	"alarm" => []
 ];
-
+for ($ii = 0; $ii < 50; $ii++) {
+	if (isset($alarm_data[$ii])) array_push($$inverter_alarm["alarm"], 
+		["code" => $alarm_data[$ii]["inv_stat_num"], "str" => $alarm_data[$ii]["inv_stat_txt"], "start" => 11101, "end" => 11105]);
+	else array_push($$inverter_alarm["alarm"], ["code" => 0, "str" => "Unknown", "start" => 0, "end" => 0]);
+}
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
 	$argv[0] == "inverter_json.php") {
@@ -300,5 +253,6 @@ if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
 	print "/" . $inverter_pwrack . ":\n" . json_encode($$inverter_pwrack) . "\n";
 	print "/" . $inverter_var_id . ":\n" . json_encode($$inverter_var_id) . "\n";
 	print "/" . $inverter_version . ":\n" . json_encode($$inverter_version) . "\n";
+	print "/" . $inverter_alarm . ":\n" . json_encode($$inverter_alarm) . "\n";
 }
 ?>
