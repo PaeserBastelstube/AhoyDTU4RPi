@@ -141,6 +141,8 @@ to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
 cd /home/AhoyDTU
 sudo chown -R www-data:pi www
 sudo chmod -R g+w www
+sudo chown www-data:pi ahoy
+sudo chmod g+w ahoy
 sudo rm /etc/nginx/sites-enabled/default
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
