@@ -139,7 +139,8 @@ To configure NGINX, we need to change the ownership of all files in "www" direct
 to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
 ```code
 cd /home/AhoyDTU
-sudo chown -R www-data www
+sudo chown -R www-data:pi www
+sudo chmod -R g+w www
 sudo rm /etc/nginx/sites-enabled/default
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
