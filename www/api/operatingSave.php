@@ -2,13 +2,15 @@
 header('Content-Type: application/json; charset=utf-8');
 
 
+$debug_fn = "/tmp/AhoyDTU_debug";
 function saveDebug($my_post, $ahoy_data){
-	file_put_contents("/tmp/AhoyDTU_asdf", "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
-	file_put_contents("/tmp/AhoyDTU_asdf", "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/AhoyDTU_asdf", "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/AhoyDTU_asdf", "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/AhoyDTU_asdf", "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents("/tmp/AhoyDTU_asdf", "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
+	global $debug_fn;
+	file_put_contents($debug_fn, "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
+	file_put_contents($debug_fn, "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
 }
 
 function saveSettings($my_post){
@@ -275,21 +277,23 @@ function saveSettings($my_post){
 ## bool saveSettings() { # .../src/config/settings.h - Zeile 382
 ##        void loadDefaults(bool keepWifi = false) {
 
-	saveToFile($ahoy_data, $ahoy_config);
+	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
 }
 
 
 function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
-	include 'generic_json.php';    # to load AhoyDTU configuration
+	include 'generic_json.php';			# to load current AhoyDTU configuration
 
 	if (isset($_SERVER["QUERY_STRING"]) and $_SERVER["QUERY_STRING"] == "upload") {
 		# file content
 		$fileContentString = file_get_contents(htmlspecialchars($_FILES["upload"]["tmp_name"]));
 		$fileContentArray  = json_decode($fileContentString, true);  ## WICHTIG: ",true" - sonst JSON und kein ARRAY
+
+		saveDebug($my_post, ["fileContentString" => $fileContentString, "fileContentArray" => $fileContentArray]);
 		$ahoy_data = $fileContentArray["ahoy"];
 	}
-	saveDebug($my_post, $ahoy_data);
-	saveToFile($ahoy_data, $ahoy_config);
+#	saveDebug($my_post, $ahoy_data);
+	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
 }
 
 
@@ -334,16 +338,18 @@ function saveInverter($my_post){
 					"s_yield"    => floatval($channel["yld"])
 				);
 	 		}
-  			#file_put_contents("/tmp/AhoyDTU_asdf", "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
+			global $debug_fn;
+			#file_put_contents($debug_fn, "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
 			if (! isset($ahoy_data["inverters"])) $ahoy_data["inverters"] = [];
 			$ahoy_data["inverters"][$my_post["id"]] = $inverter;
 		}	
 	}
-	saveToFile($ahoy_data, $ahoy_config);
+	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
 }
 
-function saveToFile($ahoy_data, $ahoy_config) {
-	file_put_contents("/tmp/AhoyDTU_asdf", "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
+function saveToAhoyConfigFile($ahoy_data, $ahoy_config) {
+	global $debug_fn;
+	file_put_contents($debug_fn, "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file
 	$RC = yaml_emit_file($ahoy_config["filename"], ["ahoy" => $ahoy_data]);
@@ -355,7 +361,7 @@ function saveToFile($ahoy_data, $ahoy_config) {
 		##  [reboot] => on - from SAVE button
 		# if (isset($my_post["reboot"])) { reboot in 1 sec.}
 	} else {
-		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $myFilename . "\n");
+		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $ahoy_config["filename"] . "\n");
 		print ("Length: " . count($ahoy_data) . ": " . json_encode($ahoy_data) . "\n");
 	}
 }

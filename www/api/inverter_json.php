@@ -210,8 +210,12 @@ $inverter_list_json += [
 ];
 
 #vergl. RestApi.h - zeile 695
-$prod_year = (intval($status_data_yaml["inverter_ser"][4]) + 2014) ?? 2088;
-$prod_cw   = ($status_data_yaml["inverter_ser"][5] * 10 + $status_data_yaml["inverter_ser"][6]) ?? 88;
+$prod_year = 2088;
+$prod_cw   = 88;
+if (isset($status_data_yaml["inverter_ser"])) {
+	$prod_year = intval($status_data_yaml["inverter_ser"][4]) + 2014;
+	$prod_cw   = intval($status_data_yaml["inverter_ser"][5]) * 10 + intval($status_data_yaml["inverter_ser"][6]);
+}
 $inverter_version = "inverter_version_" . $inverter_id . "_json";
 $$inverter_version = [
 	"id" => $inverter_id,

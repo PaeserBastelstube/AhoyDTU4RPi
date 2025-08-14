@@ -4,7 +4,8 @@ include 'generic_json.php';
 $requestScheme = $_SERVER['REQUEST_SCHEME'] ?? "http";
 $httpHost = $_SERVER['HTTP_HOST'] ?? trim(shell_exec("hostname -A | awk '{print $1}'"));
 $my_uri = $requestScheme . "://" . $httpHost;
-
+$numInverters = 0;
+if (isset($ahoy_data["inverters"])) $numInverters = count($ahoy_data["inverters"]);
 
 $avail_endpoints = array("avail_endpoints" => [
 	"generic"				=> $my_uri . "/api/generic",
@@ -19,7 +20,7 @@ $avail_endpoints = array("avail_endpoints" => [
 	"inverter/list"			=> $my_uri . "/api/inverter/list"
 ]);
 
-for ($ii = 0; $ii < count($ahoy_data["inverters"]); $ii++) {
+for ($ii = 0; $ii < $numInverters; $ii++) {
 	$avail_endpoints["avail_endpoints"] += ["inverter/id/"      . $ii => $my_uri . "/api/inverter/id/"      . $ii];
 	$avail_endpoints["avail_endpoints"] += ["inverter/alarm/"   . $ii => $my_uri . "/api/inverter/alarm/"   . $ii];
 	$avail_endpoints["avail_endpoints"] += ["inverter/version/" . $ii => $my_uri . "/api/inverter/version/" . $ii];

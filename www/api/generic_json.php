@@ -49,7 +49,7 @@ if (count($ahoy_data) > 0) {
 	$ahoy_data["dtu"] = ["serial" => dechex($dtu_serial), "name" => $AhoyHost];
 
   $ahoy_data["WebServer"]["filepath"] = "/tmp";
-  $ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval($dtu_serial) . ".log", 
+  $ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval(dechex($dtu_serial)) . ".log", 
 			 "level" => "INFO", "max_log_filesize" => 1000000, "max_log_files" => 1];
 
   $ahoy_data["sunset"]["enabled"] = false;

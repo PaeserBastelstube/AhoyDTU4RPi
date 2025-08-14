@@ -4,12 +4,9 @@
 server {
 	listen 80 default_server;
 	listen [::]:80 default_server;
-
 	server_name AhoyDTU;
 
 	root /home/AhoyDTU/www/html;
-
-	# Add index.php to the list if you are using PHP
 	index index.html index.htm ; #index.php;
 	default_type application/json;
 
@@ -17,123 +14,115 @@ server {
 	fastcgi_buffering off;
 
 ################################################################################
-#      Aufruf        --> Ziel              --> $uri
-# (1)  /api          --> /api/api.php      --> /api
-# (2)  /api/index    --> /api/index.php    --> /api/index
-# (3)  /api/info.php --> /api/info.php     --> /api/info.php
-# (4)  /api/asdf     --> /api/api.php      --> /api/asdf
-# (5)  /api/asdf.png --> /api/api.php      --> /api/asdf.png
-# (5)  /api/asdf.php --> /api/api.php      --> /api/asdf.php
-# (6)  /api/inverter --> /api/inverter.php --> /api/inverter.php  **
-# (7)  /api/setup    --> /api/setup.php    --> /api/setup.php     **
-################################################################################
+#  GET  Aufruf(=URI)	--> Ziel
+# (G1)  /api			--> /api.php
+#		/api/asdf		--> /api.php
+#		/api/asdf.png	--> /api.php
+#       /api/asdf.php	--> /api.php
+# (G2)  /api/index		--> /index.php
+#		/api/info		--> /info.php
+#       /api/system		--> /system.php
+# (G3)  /api/index.php	--> /index.php
+#		/api/info.php	--> /info.php
+#       /api/system.php	--> /system.php
 
-	#add_header Content-Type text/plain;
-	#return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+# (G5)  /api/inverter	--> /inverter.php
+# (G6)  /api/setup		--> /setup.php
+# (G7)	/api/html		--> /html.php?(save/system)
+###############################################################################
+# POST Aufruf			--> Ziel
+# (P1)	/save			--> 
+###############################################################################
+# /save		--> wird zu "/save.html", diese Datei gibt es und wird angezeigt
+# /asdf		--> wird zu "/asdf.html", falls nicht gefunden, wird auf "/index.html" umgeleitet
+# /asdf.php	--> wird in "/etc/nginx/snippets/fastcgi-php.conf:5" mit =404 abgefangen
+###############################################################################
+
+#	add_header Content-Type text/plain;
+#	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri";
 
 	location ~ ^/events$ {
-		rewrite ^/(events)$ /api/$1.php last;
+		#rewrite ^/(events)$ /api/$1.php last;
+		rewrite ^/(events)$ $scheme://$http_host/api/$1.php last;
 	add_header Content-Type text/plain;
 	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-      
     }
-	location ~ ^/(erase|login|save|upload|updat|get_setup|coredump|factory|reboot)+$ {
+
+	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump)+$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
-		if ($request_method = GET ) {
-			rewrite ^/(login|save|upload|update)$ /$1.html last;
+		if ($uri = /login) {
+			return 301 $scheme://$http_host/$1.html;
 		}
-		rewrite ^/(erase|login|save|upload|update|get_setup|coredump|factory|reboot)+$ /operating.php?$1 last;
+		return 308 $scheme://$http_host/operating.php?$1;
 	add_header Content-Type text/plain;
-	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
 	}
 
-	location ~ ^/api/ctrl$ {
-		limit_except GET POST{ deny all; }
-		root /home/AhoyDTU/www;
-		rewrite ^/api/ctrl$ /api/ctrl.php last;
-	add_header Content-Type text/plain;
-	return 200 "loc:crtl document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-	}
-
-	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)*$ {            #(6)
+	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat)+/?(.*)?$ {	#(G5)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)?$ /api/inverter.php?$1=$2 permanent;
-		#rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat)/?(.*)?$ /api/inverter.php?$1=$2 last;
+        # Problem, while connect via SSH-Tunnel
+        # https://www.ruby-forum.com/t/port-redirection-issue-while-using-ssh-tunnel/235899
+        # add to target: "$scheme://$http_host"
+		return 301 $scheme://$http_host/inverter.php?$1=$2;
 	add_header Content-Type text/plain;
 	return 200 "loc:inverter document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ ^/api/setup/?(getip|networks)?$ {            #(7)
+	location ~ ^/api/setup/?(getip|networks)?$ {					#(G6)
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www;
 		if ($request_method = GET ) {
-			rewrite ^/setup$ /html/setup.html permanent;
+			return 301 $scheme://$http_host/setup.php?$1;
 		}
-
-		# return 307 /setup.php?$1;
-		rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 last;
-		# rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 redirect;
-		# rewrite ^/api/setup/?(getip|networks)?$ /setup.php?$1 permanent;
+		return 308 $scheme://$http_host/setup.php?$1;
 	add_header Content-Type text/plain;
 	return 200 "loc:setup document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ ^/api/system$ {            #(8)
+	location ~* ^/api/html/?(save|system).?$ {
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		# rewrite ^/api/system$ /api/system.php last;
-		rewrite ^/api/system$ /api/system.php permanent;
+		if ($uri ~* "^/api/html/(save|system)+.?$") {
+			return 301 $scheme://$http_host/html.php?$1;			#(G7)
+		}
+		return 301 $scheme://$http_host/api.php;
 	add_header Content-Type text/plain;
-	return 200 "loc:system document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+	return 200 "loc:api/html document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ ^/api/html/(save|system)$ {            #(9)
+	location ~* ^/api.?$|^/api/(.+)$ {
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		# rewrite ^/api/html/(save|system)$ /api/html.php?$1 last;
-		rewrite ^/api/html/(save|system)$ /api/html.php?$1 permanent;
-	add_header Content-Type text/plain;
-	return 200 "loc:html document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
-	}
-
-	location ~ ^/api$|api/(.*)$ {
-		limit_except GET { deny all; }
-		root /home/AhoyDTU/www;
-		fastcgi_index api.php;
-		if ( -f $document_root$uri.php ) {         #(2)
-			rewrite ^/api(/.+)$ $1.php last;       # neustart der Suche mit angehängtem ".php" und wird zu einer (3)
+		if ( -f $document_root$uri ) {								#(G3)
+			return 301 $scheme://$http_host/$1;						# URI ist vollständig, neustart ohne "/api"
 		}
-		if ( -f $document_root$uri ) {             #(3)
-			rewrite ^/api(/.+)$ $1 last;           # neustart der Suche die URI
+		if ( -f $document_root$uri.php ) {							#(G2)
+			return 301 $scheme://$http_host/$1.php;					# anhängen von ".php", neustart ohne "/api"
 		}
-		rewrite ^ /api.php last;                   #(1), (4) und (5) 
+		return 301 $scheme://$http_host/api.php;					#(G1)
 	add_header Content-Type text/plain;
 	return 200 "loc:api document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-
-	location / {
+	location / {												# alles
 		limit_except GET { deny all; }
-		root /home/AhoyDTU/www/html;
 		index index.html;
-		# First attempt to serve request as file, then as directory,
-		# then fall back to displaying a 404.
-		try_files $uri $uri/ $uri.html =404;
-		#try_files $uri $uri/ @extensionless-php;
+		# try_files $uri $uri/ $uri.html =404;
+		# try_files $uri $uri/ @extensionless-php;
+		try_files $uri $uri/ $uri.html /index.html;				# bei unbekannten Aufrufen wird "/index.html" geladen
 #	add_header Content-Type text/plain;
-#	return 200 "loc:root document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+#	return 200 "loc:root document_root:$document_root, request_uri:$request_uri URI:$uri";
 	}
 
-	location ~ \.php$ {
+	location ~* \.php$ {
 	# add_header Content-Type text/plain;
 	# return 200 "loc:php-start document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www/api;
-		index index.php;
-		include /etc/nginx/snippets/fastcgi-php.conf;
-		fastcgi_pass unix:/run/php/php-fpm.sock;
+		include /etc/nginx/snippets/fastcgi-php.conf;			# bei unbekannten Aufrufen wird =404 gesendet
+		fastcgi_pass unix:/run/php/php8.2-fpm-ahoydtu.sock;		# Übergabe an PHP-FPM
 	# add_header Content-Type text/plain;
 	# return 200 "loc:php-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}

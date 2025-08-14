@@ -11,7 +11,7 @@ if (count($arrKeys) > 0) {
   $var_name = "html_" . $arrKeys[0] . "_json";
 }
 
-# print $var_name;
+#print_r (["var_name" => $var_name]);
 # echo "\n";
 
 if (isset ($$var_name)) {
