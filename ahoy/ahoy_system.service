@@ -1,0 +1,49 @@
+######################################################################
+# systemd.service configuration for AhoyDTU
+# copy from "ahoy (lumapu)"
+#
+# users can modify the lines:
+#   Description
+#   ExecStart                (example: name of config file)
+#   WorkingDirectory         (absolute path to your private ahoy dir)
+# To change other config parameter, please consult systemd documentation
+#
+# To activate this service, enable and start ahoy_system.service:
+# - Create folder AhoyDTU in /home/ and set owner to the user that the 
+#   service should be executed for (e.g. pi)
+# - Copy folder contents to new folder
+# - Adjust the user that this service should be executed as, avoid root
+
+# - Execute commands to setup, check and start/stop as wanted
+# $ sudo systemctl enable /home/AhoyDTU/ahoy/ahoy_system.service
+# $ sudo systemctl status ahoy_system.service
+# $ sudo systemctl start ahoy_system.service
+# $ sudo systemctl restart ahoy_system.service
+# $ sudo systemctl stop ahoy_system.service
+# $ sudo systemctl disable ahoy_system.service
+#
+# 2023.01 <PaeserBastelstube>
+# 2023.03 <DM6JM>
+# 2024.01 <PaeserBastelstube>
+# 2025.06 <PaeserBastelstube>
+######################################################################
+
+[Unit]
+ 
+Description=AhoyDTU as Service
+After=network.target local-fs.target time-sync.target
+
+[Service]
+ExecStart=/bin/bash -c '/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config AhoyDTU.yml'
+RestartSec=30
+Restart=on-failure
+Type=simple
+User=pi
+
+# WorkingDirectory must be an absolute path - not relative path
+WorkingDirectory=/home/AhoyDTU/ahoy
+EnvironmentFile=/etc/environment
+
+[Install]
+WantedBy=default.target
+

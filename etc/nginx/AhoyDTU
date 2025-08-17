@@ -48,7 +48,7 @@ server {
 	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
     }
 
-	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump)+$ {
+	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump|AhoyDTU_.+)+$ {
 		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www;
 		if ($uri = /login) {

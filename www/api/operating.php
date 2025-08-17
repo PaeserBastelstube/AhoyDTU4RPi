@@ -36,15 +36,6 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header('Content-Disposition: attachment; filename=' . $filename);
 		print json_encode(["version" => $filename, "ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
 
-	} elseif ($getSwitch == "coredump") {		# coredump	-->SYSTEM --> DOWNLOAD COREDUMP
-		$filename .= "_coredump.json";
-		include 'system_json.php';
-		include 'inverter_json.php';
-		header('Content-Type: application/octet-stream');
-		header('Content-Description: File Transfer');
-		header('Content-Disposition: attachment; filename=' . $filename);
-		print json_encode(["version" => $filename, "coredump" => $ahoy_data, "system" => $system_json, "inverter_list" => $inverter_list_json], JSON_PRETTY_PRINT);
-
 	} elseif ($getSwitch == "factory") {		# factory	-->SYSTEM --> FACTORY RESET
 		$toUnlinkArray  = array($ahoy_config["filename"], "../html/colors.css", "../html/live.html");
 		# array_push($toUnlinkArray, $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_*.log*");
@@ -59,13 +50,24 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 	} elseif ($getSwitch == "reboot") {			# reboot	-->SYSTEM --> REBOOT
 		header('Content-Type: text/plain');
 		print json_encode(["reboot" => "tbd","coredump" => $ahoy_data], JSON_PRETTY_PRINT);
+
+	} elseif ($getSwitch == "coredump") {		# coredump	-->SYSTEM --> DOWNLOAD COREDUMP
+		$filename .= "_coredump.json";
+		include 'system_json.php';
+		include 'inverter_json.php';
+		header('Content-Type: application/octet-stream');
+		header('Content-Description: File Transfer');
+		header('Content-Disposition: attachment; filename=' . $filename);
+		print json_encode(["version" => $filename, "coredump" => $ahoy_data, "system" => $system_json, "inverter_list" => $inverter_list_json], JSON_PRETTY_PRINT);
+
+	} elseif (str_starts_with($getSwitch, "AhoyDTU_")) {		# -->SYSTEM --> AhoyDTU_*
+		$shell_RC = shell_exec("`pwd`/operatingShell.ksh $getSwitch 2>&1");
+		header('Content-Type: text/html');
+		print("<code>shellRC : <br>" . str_replace("\n", "<br>", $shell_RC) . "</code>");
+
+		# https://wiki.selfhtml.org/wiki/HTTP/Header/Refresh
+		header( "Refresh:5; url=index.html");
 	}
-#	print json_encode([
-#                       "POST" => $_POST, "GET" => $_GET, 
-#                       "cmd" => file_get_contents('php://input'), 
-#                       "SERVER" => $_SERVER,
-#                       "version" => $filename, "ahoy" => $ahoy_data
-#           ],JSON_PRETTY_PRINT);
 }
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
