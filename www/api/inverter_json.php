@@ -149,8 +149,13 @@ if (isset($status_data_yaml["yield_total"])) {
   array_push($$inverter_var_id["ch"],[0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
-if (isset($status_data_yaml["strings"])){
-  for ($ii = 0; $ii < count($status_data_yaml["strings"]); $ii++) {
+## tbd knut
+# erst schleife, dann abfrage
+# schleife über config, nicht status-data
+# else zweig mit 0 werten
+for ($ii = 0; $ii < count($ahoy_data["inverters"][$inverter_id]["strings"]); $ii++) {
+  if (isset($status_data_yaml["strings"])){
+  #for ($ii = 0; $ii < count($status_data_yaml["strings"]); $ii++) {
     $$inverter_var_id["ch"][$ii + 1] = [
 	  $status_data_yaml["strings"][$ii]["voltage"],      # U_DC [V]
 	  $status_data_yaml["strings"][$ii]["current"],      # I_DC [A]
@@ -160,9 +165,9 @@ if (isset($status_data_yaml["strings"])){
 	  $status_data_yaml["strings"][$ii]["irradiation"],  # Irradiation [%]
 	  $data_yaml["MaxValues"]["strings"][$ii]      # MaxPower [W]
     ];
-    array_push($$inverter_var_id["ch_name"],    $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_name"]);
-    array_push($$inverter_var_id["ch_max_pwr"], $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_maxpower"]);
-  }
+  } else $$inverter_var_id["ch"][$ii + 1] = [0,0,0,0,0,0,0];
+  array_push($$inverter_var_id["ch_name"],    $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_name"]);
+  array_push($$inverter_var_id["ch_max_pwr"], $ahoy_data["inverters"][$inverter_id]["strings"][$ii]["s_maxpower"]);
 }
 
 $inverter_list_json = ["inverter" => []];
