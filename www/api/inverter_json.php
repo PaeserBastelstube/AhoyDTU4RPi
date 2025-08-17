@@ -145,6 +145,8 @@ if (isset($status_data_yaml["yield_total"])) {
 	$data_yaml["MaxValues"]["max_power"],     # MaxPower [W]
 	$data_yaml["MaxValues"]["max_temp"]       # MaxTemp [°C]
   ]);
+} else {
+  array_push($$inverter_var_id["ch"],[0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
 if (isset($status_data_yaml["strings"])){
