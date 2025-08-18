@@ -60,7 +60,20 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["influxdb"]["enabled"] = false;
 }
 
+preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ahoy_data["iface"]);
+# $ahoy_data["iface"][0][0] = default via 192.168.254.253 dev wlan0 proto dhcp src 192.168.254.55 metric 600
+#                                         |xxxxx 1 xxxxx|     | 2 |       | 3|     |xxxxxx 4 xxx| 
+# $ahoy_data["iface"][1][0] = gateway IP address
+# $ahoy_data["iface"][2][0] = name of network interface
+# $ahoy_data["iface"][3][0] = dhcp
+# $ahoy_data["iface"][4][0] = system IP address (my Raspis IP)
+
+print_r($ahoy_data);
 $wifi_rssi = 0;
+if (str_starts_with($ahoy_data["iface"][2][0],"wlan")) {
+	preg_match_all('/Signal level=(.+)/m', trim(shell_exec('iwconfig $ahoy_data["iface"][2][0]')), $wifi_rssi_array);
+	$wifi_rssi = $wifi_rssi_array[1][0];
+}
 $nmcli_incl_status = explode("\n", trim(shell_exec("nmcli -f type d 2>&1; echo $?")));
 if (end($nmcli_incl_status) == 0) $wifi_rssi = trim($nmcli_incl_status[1]) ?? 0;
 
