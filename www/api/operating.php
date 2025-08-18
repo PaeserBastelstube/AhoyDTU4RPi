@@ -34,6 +34,7 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header('Content-Type: application/octet-stream');
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=' . $filename);
+		unset($ahoy_data["iface"]);
 		print json_encode(["version" => $filename, "ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
 
 	} elseif ($getSwitch == "factory") {		# factory	-->SYSTEM --> FACTORY RESET

@@ -7,38 +7,19 @@
 #
 include 'generic_json.php';
 
-preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ip_route);
-$net_gw		= $ip_route[1][0]; # my router IP-Adress = Gateway-Address
-$net_hw		= $ip_route[2][0]; # eth0
-$net_proto	= $ip_route[3][0]; # dhcp
-$net_ip		= $ip_route[4][0]; # my Raspi-IP-Address
+$iface = $ahoy_data["iface"][2][0];
+preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $iface")), $ifconfig);
+$ahoy_data["iface"]["net_mask"] = $ifconfig[1][0];	# net_mask
+$ahoy_data["iface"]["net_mac"]  = $ifconfig[2][1];	# net_mac
 
-preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $net_hw")), $ifconfig);
-$net_mask  = $ifconfig[1][0];	# net_mask
-$net_mac = $ifconfig[2][1];		# net_mac
-
-$iwconfig_including_status = trim(shell_exec("iwconfig $net_hw 2>&1; echo $?"));
-preg_match_all('/ESSID:"(.+)"|Signal level=([-\d]+)|^(\d+)$/m', $iwconfig_including_status, $matches);
-
-$iwlist_including_status = trim(shell_exec("iwlist $net_hw frequency 2>&1; echo $?"));
-preg_match_all('/\(Channel (\d+)\)|^(\d+)$/m', $iwlist_including_status, $match_list);
-
-$net_wired= str_starts_with($net_hw, 'eth') ? true : false;
-
-if (end($matches[0]) == 0) {
-	$generic_json["generic"]["wifi_rssi"] = $matches[2][1] . " dBm";
-    $net_ssid = $matches[1][0];
-	$net_wifi_channel = $match_list[1][0];
-	$net_hidd = ($matches[2][1] < 0 and $net_ssid == "") ? true : false;
-} else {
-	# no WiFi - wired ethernet
-	$generic_rssi_str = "LAN connected";
+if ($ahoy_data["iface"]["wired"]){		# no WiFi - wired ethernet
 	$net_wifi_channel = "";
-	$net_ssid = "";
-	$net_hidd = false;
+} else {
+	$iwlist_including_status = trim(shell_exec("iwlist $iface frequency 2>&1; echo $?"));
+	preg_match_all('/\(Channel (\d+)\)|^(\d+)$/m', $iwlist_including_status, $channel_list);
+	$net_wifi_channel = $channel_list[1][0];
 }
 
-# list ($net_dns1, $net_dns2) = shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'");
 list ($net_dns1, $net_dns2) = explode("\n", shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'"));
 
 # Chip Temp
@@ -84,12 +65,12 @@ $system_json = [
 	],
 	"network" => [
 		"wifi_channel" => $net_wifi_channel,			# RestApi.h:807
-		"wired"        => $net_wired,
+		"wired"        => $ahoy_data["iface"]["wired"],
 		"ap_pwd"       => "esp_8266",		# Standard PW
-		"ssid"         => $net_ssid,
-		"hidd"         => $net_hidd,
-		"mac"          => $net_mac,
-		"ip"           => $net_ip
+		"ssid"         => $ahoy_data["iface"]["essid"],
+		"hidd"         => ($ahoy_data["iface"]["rssi"] < 0 and $ahoy_data["iface"]["essid"] == "") ? true : false,
+		"mac"          => $ahoy_data["iface"]["net_mac"],
+		"ip"           => $ahoy_data["iface"][4][0]
 	],
 	"chip" => [
 		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),

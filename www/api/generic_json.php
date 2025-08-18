@@ -59,7 +59,6 @@ if (count($ahoy_data) > 0) {
   $ahoy_data["volkszaehler"]["enabled"] = false;
   $ahoy_data["influxdb"]["enabled"] = false;
 }
-
 preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ahoy_data["iface"]);
 # $ahoy_data["iface"][0][0] = default via 192.168.254.253 dev wlan0 proto dhcp src 192.168.254.55 metric 600
 #                                         |xxxxx 1 xxxxx|     | 2 |       | 3|     |xxxxxx 4 xxx| 
@@ -68,14 +67,18 @@ preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(s
 # $ahoy_data["iface"][3][0] = dhcp
 # $ahoy_data["iface"][4][0] = system IP address (my Raspis IP)
 
-print_r($ahoy_data);
-$wifi_rssi = 0;
-if (str_starts_with($ahoy_data["iface"][2][0],"wlan")) {
-	preg_match_all('/Signal level=(.+)/m', trim(shell_exec('iwconfig $ahoy_data["iface"][2][0]')), $wifi_rssi_array);
-	$wifi_rssi = $wifi_rssi_array[1][0];
+$ahoy_data["iface"]["rssi"] = 0;
+$iface = $ahoy_data["iface"][2][0];
+if (str_starts_with($iface, "wlan")) {
+	preg_match_all('/ESSID:"(.+)"|Signal level=(.+) dBm/m', trim(shell_exec('iwconfig $iface 2>&1')), $wifi_rssi_array);
+	$ahoy_data["iface"]["essid"] = trim($wifi_rssi_array[1][0]);
+	$ahoy_data["iface"]["rssi"]  = trim($wifi_rssi_array[2][1]);
+	$ahoy_data["iface"]["wired"] = false;
+} else {
+	$ahoy_data["iface"]["essid"] = "";
+	$ahoy_data["iface"]["rssi"]  = "LAN connected";
+	$ahoy_data["iface"]["wired"] = true;
 }
-$nmcli_incl_status = explode("\n", trim(shell_exec("nmcli -f type d 2>&1; echo $?")));
-if (end($nmcli_incl_status) == 0) $wifi_rssi = trim($nmcli_incl_status[1]) ?? 0;
 
 # System Uptime
 $uptime_array = explode(' ', @file_get_contents('/proc/uptime'));		# 
@@ -92,7 +95,7 @@ $menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
 # create "ahoy-generic-data"
 $generic_json = [
 	"generic" => [
-		"wifi_rssi"   => $wifi_rssi,					# WIFI-RSSI or LAN
+		"wifi_rssi"   => $ahoy_data["iface"]["rssi"],	# WIFI-RSSI or LAN
 		"ts_uptime"   => intval($uptime_array[0]),		# system uptime
 		"ts_now"      => time(),						# current time
 		"version"     => "0.8.155",
