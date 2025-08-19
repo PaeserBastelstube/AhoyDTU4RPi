@@ -21,7 +21,7 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
 
   $arrKeys = array_keys($_GET);
   if (count($arrKeys) > 0) {
-    $inv_id = htmlspecialchars($_GET[$arrKeys[0]]);
+    $inv_id = intval(htmlspecialchars($_GET[$arrKeys[0]]));
     $var_name = "setup_" . $arrKeys[0] . "_json";
   } else {
     $var_name = "setup_json";

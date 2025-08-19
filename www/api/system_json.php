@@ -7,6 +7,7 @@
 #
 include 'generic_json.php';
 
+# additional network configuration
 $iface = $ahoy_data["iface"][2][0];
 preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $iface")), $ifconfig);
 $ahoy_data["iface"]["net_mask"] = $ifconfig[1][0];	# net_mask
@@ -20,6 +21,7 @@ if ($ahoy_data["iface"]["wired"]){		# no WiFi - wired ethernet
 	$net_wifi_channel = $channel_list[1][0];
 }
 
+# DNS / Nameserver
 list ($net_dns1, $net_dns2) = explode("\n", shell_exec("cat /etc/resolv.conf | awk '/nameserver/ {print $2}'"));
 
 # Chip Temp
@@ -27,14 +29,17 @@ $chip_temp = trim(@file_get_contents('/sys/class/thermal/thermal_zone0/temp'));
 $chip_temp = intval($chip_temp,10);
 $chip_temp /= 1000;
 
+# CPU Information
 $lscpu = json_decode(shell_exec("lscpu -J"), true);
 # print_r(intval($lscpu["lscpu"]));
 
+# Memory Information
 $heap   = preg_split("/\s+/", shell_exec('df -k / | tail -1 '));
 $app    = preg_split("/\s+/", shell_exec('df -k /run | tail -1 '));
 $spiffs = preg_split("/\s+/", shell_exec('df -k /boot/firmware | tail -1 '));
 $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 
+# Define Variable
 $system_json = [
 	"device_name"  => $generic_json["generic"]["host"],
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",

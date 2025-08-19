@@ -9,7 +9,7 @@ $arrKeys = array_keys($_GET);
 # echo "\n";
 
 if (count($arrKeys) > 0) {
-  $inv_id = htmlspecialchars($_GET[$arrKeys[0]]);
+  $inv_id = intval(htmlspecialchars($_GET[$arrKeys[0]]));
   $var_name = "system_" . $arrKeys[0] . "_json";
 } else {
   $var_name = "system_json";

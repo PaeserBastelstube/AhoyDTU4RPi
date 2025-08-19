@@ -11,7 +11,7 @@ if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=u
 $AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));	# hostname of raspberry ==> Name of DTU
 
 # load new ahoy config
-$ahoy_config["filename"] = '../../ahoy/AhoyDTU.yml';
+$ahoy_config["filename"] = '../../ahoy/AhoyDTU.yml';	# /home/AhoyDTU/ahoy/AhoyDTU.yml
 $ahoy_config["filetime"] = 0;
 $ahoy_data = array();
 if (file_exists($ahoy_config["filename"])) {
@@ -33,13 +33,13 @@ if (file_exists($ahoy_config["old_filename"])) {
 
 # check ahoy config: when no data loaded, define default values
 if (count($ahoy_data) > 0) {
-  $ahoy_data = $ahoy_data["ahoy"];
+	$ahoy_data = $ahoy_data["ahoy"];
 } else {
-  if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-    echo ("No AhoyDTU-configuration found - prepare standard config!\n");
-  }
-  $ahoy_data["interval"] = 14;
-  $ahoy_data["transmit_retries"] = 4;
+	if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
+		echo ("No AhoyDTU-configuration found - prepare standard config!\n");
+	}
+	$ahoy_data["interval"] = 14;
+	$ahoy_data["transmit_retries"] = 4;
 
 	# from "src/hm/Radio.h:133"
 	## // the first digit is an 8 for DTU production year 2022, the rest is filled with the ESP chipID in decimal
@@ -48,17 +48,19 @@ if (count($ahoy_data) > 0) {
 	$dtu_serial = intval(0x80000000 + $IP_array[1] * $IP_array[2] * $IP_array[3]);	# def DTU-Serial from IP-Address
 	$ahoy_data["dtu"] = ["serial" => dechex($dtu_serial), "name" => $AhoyHost];
 
-  $ahoy_data["WebServer"]["filepath"] = "/tmp";
-  $ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval(dechex($dtu_serial)) . ".log", 
+	$ahoy_data["WebServer"]["filepath"] = "/tmp";
+	$ahoy_data["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval(dechex($dtu_serial)) . ".log", 
 			 "level" => "INFO", "max_log_filesize" => 1000000, "max_log_files" => 1];
 
-  $ahoy_data["sunset"]["enabled"] = false;
-  $ahoy_data["nrf"]["enabled"] = false;
-  $ahoy_data["cmt"]["enabled"] = false;
-  $ahoy_data["mqtt"]["enabled"] = false;
-  $ahoy_data["volkszaehler"]["enabled"] = false;
-  $ahoy_data["influxdb"]["enabled"] = false;
+	$ahoy_data["sunset"]["enabled"] = false;
+	$ahoy_data["nrf"]["enabled"] = false;
+	$ahoy_data["cmt"]["enabled"] = false;
+	$ahoy_data["mqtt"]["enabled"] = false;
+	$ahoy_data["volkszaehler"]["enabled"] = false;
+	$ahoy_data["influxdb"]["enabled"] = false;
 }
+
+# network configuration
 preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ahoy_data["iface"]);
 # $ahoy_data["iface"][0][0] = default via 192.168.254.253 dev wlan0 proto dhcp src 192.168.254.55 metric 600
 #                                         |xxxxx 1 xxxxx|     | 2 |       | 3|     |xxxxxx 4 xxx| 
@@ -83,7 +85,7 @@ if (str_starts_with($iface, "wlan")) {
 # System Uptime
 $uptime_array = explode(' ', @file_get_contents('/proc/uptime'));		# 
 
-# string of system environment
+# System Release Information
 $Environment = shell_exec("lsb_release -d 2>/dev/null | awk -F: '{print $2}'");
 $Environment = trim($Environment); # "trim" entfernt Whitespaces am Anfang und Ende von string
 
@@ -92,13 +94,13 @@ $menu_mask   = $ahoy_data["WebServer"]["system"]["prot_mask"] ?? 0;
 $menu_protEn = isset($ahoy_data["WebServer"]["system"]["pwd_pwd"]) ? true : false;
 $menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
 
-# create "ahoy-generic-data"
+# Define "ahoy-generic-data" Variable
 $generic_json = [
 	"generic" => [
 		"wifi_rssi"   => $ahoy_data["iface"]["rssi"],	# WIFI-RSSI or LAN
 		"ts_uptime"   => intval($uptime_array[0]),		# system uptime
 		"ts_now"      => time(),						# current time
-		"version"     => "0.8.155",
+		"version"     => "0.8.156",
 		"modules"     => trim(shell_exec("uname -m")),	# "MDH-de",
 		"build"       => "5feb293",
 		"env"         => $Environment,					# "esp32-wroom32-de",

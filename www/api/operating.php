@@ -49,8 +49,11 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header("Location: index.html");
 
 	} elseif ($getSwitch == "reboot") {			# reboot	-->SYSTEM --> REBOOT
+		include 'system_json.php';						# read config
 		header('Content-Type: text/plain');
-		print json_encode(["reboot" => "tbd","coredump" => $ahoy_data], JSON_PRETTY_PRINT);
+		print json_encode(["reboot" => "tbd","ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
+		print"\n";
+		print json_encode(["ahoy_data" => $system_json], JSON_PRETTY_PRINT);
 
 	} elseif ($getSwitch == "coredump") {		# coredump	-->SYSTEM --> DOWNLOAD COREDUMP
 		$filename .= "_coredump.json";

@@ -6,7 +6,7 @@ $arrKeys = array_keys($_GET);  # array of keys from superglobal variable _GET
 
 $inverter_var_name = "inverter_list_json";			# define name of variable --> default="list"
 if (isset($arrKeys) and (count($arrKeys) > 0) and (htmlspecialchars($arrKeys[0]) != "list")) {	# _GET ist filled and not "list"
-	$inverter_id = htmlspecialchars($_GET[$arrKeys[0]]);										# _GET's first key is index number of inverter
+	$inverter_id = intval(htmlspecialchars($_GET[$arrKeys[0]]));					# _GET's first key is index number of inverter
 	$inverter_var_name = "inverter_" . $arrKeys[0] . "_" . $inverter_id . "_json";				# change name of variable
 }
 include 'inverter_json.php';			# load inverter data - need variable $inverter_id if exists!!
