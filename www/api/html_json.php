@@ -15,11 +15,11 @@ $html_system_json = [
 			   <a href=\"/reboot\" class=\"btn\">Ahoy neustarten</a>
 			   <a href=\"/coredump\" class=\"btn\">CoreDump herunterladen</a><br/><br/>
 			   <a href=\"/AhoyDTU_status\" class=\"btn\">AhoyDTU status</a>
-			   <a href=\"/AhoyDTU_restart\" class=\"btn\">AhoyDTU restart</a>
-			   <a href=\"/AhoyDTU_start\" class=\"btn\">AhoyDTU start</a>
-			   <a href=\"/AhoyDTU_stop\" class=\"btn\">AhoyDTU stop</a><br/><br/>
-			   <a href=\"/AhoyDTU_enable\" class=\"btn\">AhoyDTU enable</a>
-			   <a href=\"/AhoyDTU_disable\" class=\"btn\">AhoyDTU disable</a>
+			   <a href=\"/AhoyDTU_restart\" class=\"btn\">restart</a>
+			   <a href=\"/AhoyDTU_start\" class=\"btn\">start</a>
+			   <a href=\"/AhoyDTU_stop\" class=\"btn\">stop</a>
+			   <a href=\"/AhoyDTU_enable\" class=\"btn\">enable</a>
+			   <a href=\"/AhoyDTU_disable\" class=\"btn\">disable</a>
 			  "
 ];
 
