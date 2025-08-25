@@ -65,7 +65,7 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		print json_encode(["version" => $filename, "coredump" => $ahoy_data, "system" => $system_json, "inverter_list" => $inverter_list_json], JSON_PRETTY_PRINT);
 
 	} elseif (str_starts_with($getSwitch, "AhoyDTU_")) {		# -->SYSTEM --> AhoyDTU_*
-		$shell_RC = shell_exec("`pwd`/operatingShell.ksh $getSwitch 2>&1");
+		$shell_RC = shell_exec("/usr/bin/bash operatingShell.sh $getSwitch 2>&1");
 		header('Content-Type: text/html');
 		print("<code>shellRC : <br>" . str_replace("\n", "<br>", $shell_RC) . "</code>");
 
