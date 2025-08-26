@@ -59,7 +59,7 @@ source ahoyenv/bin/activate   ## activate the virtual environment
 
 ## AhoyDTU requires the installation of certain python libraries:
 ```code
-ahoyenv/bin/python3 -m pip install paho-mqtt crcmod suntimes requests pyRF24 ruamel-yaml
+ahoyenv/bin/python3 -m pip install --upgrade paho-mqtt crcmod requests pyRF24 ruamel-yaml SunTimes datetime
 ```
 
 If you have trouble to install `pyRF24`, please use the following workaround:
@@ -97,13 +97,6 @@ tzlocal            5.3.1
 urllib3            2.4.0
 ```
 
-## configure AhoyDTU (marked to delete)
-To configure "AhoyDTU" for your own purposes, you need the "ahoy.yml" file.
-Please create a copy of "ahoy.yml.example", rename it to "ahoy.yml" and edit the necessary statements
-```code
-cp ahoy.yml.example ahoy.yml
-vi ahoy.yml
-```
 
 ## start AhoyDTU manualy (marked to delete)
 ```code
@@ -139,11 +132,8 @@ To configure NGINX, we need to change the ownership of all files in "www" direct
 to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
 ```code
 cd /home/AhoyDTU
-sudo chown -R www-data:pi www
-sudo chmod -R g+w www
-sudo chown www-data:pi ahoy
-sudo chmod g+w ahoy
 sudo rm /etc/nginx/sites-enabled/default
+sudo ln -fs $(pwd)/etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
 sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
 ```
@@ -156,7 +146,7 @@ sudo systemctl restart nginx
 # Test your Web-Server
 Now you can test, if your your WebServer can display your AhoyDTU startpage. Start your prefered browser and load the URL like this example:
 ```code
-http://rpi-zero2wh.fritz.box
+http://Raspberry-PI.fritz.box
 ```
 
 If you have an trouble, have a look on NGINX log files:
