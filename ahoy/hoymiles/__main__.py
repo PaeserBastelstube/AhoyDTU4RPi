@@ -119,19 +119,25 @@ class WebServer:
       self.dataToFile["MaxValues"] = self.max_values
       #logging.debug(f"SaveToYaml(MaxValues): {self.dataToFile["MaxValues"]=}")
    
-    
-  def SaveToYaml (self, inv_ser, DTU_result):
-    instanceName = type(DTU_result).__name__   # get class (type) name
-    if instanceName == "DebugDecodeAny":
-        self.InfoCommand = instanceName
+  def eventArray (self, data):
+	# add data to FiFo-Array (max 50 pos.
+    if "AlarmData" in self.dataToFile:
+        eventArrayCount = len(self.dataToFile.get("AlarmData", [])) 
+        self.dataToFile["AlarmData"].update({eventArrayCount : data})
     else:
-        InfoCommand_num  = int("0x" + type(DTU_result).__name__[-2:], 16)
+        self.dataToFile["AlarmData"] = {0 : data}
+    if (len(self.dataToFile["AlarmData"]) > 50):
+        self.dataToFile["AlarmData"].pop(0)
+    
+  def SaveToYaml (self, inv_ser, typeName, data):
+    if typeName == "DebugDecodeAny":
+        self.InfoCommand = typeName
+    else:
+        InfoCommand_num  = int("0x" + typeName[-2:], 16)
         self.InfoCommand = hoymiles.InfoCommands(InfoCommand_num).name
 
-    data = DTU_result.__dict__()              # convert result into python-dict
-
-    if (self.InfoCommand == "AlarmData"):     # AlarmData == 18 (0x12)
-        self.dataToFile[self.InfoCommand] = {0 : data}
+    if (self.InfoCommand == "AlarmData"):                    # AlarmData == 18 (0x12)
+        self.eventArray(data)                                # FiFo - max 50 pos.
     elif (self.InfoCommand == "RealTimeRunData_Debug"):      # RealTimeRunData_Debug == 11 (0x0B)
         self.getMaxValues(data)
         self.dataToFile[self.InfoCommand] = data
@@ -140,7 +146,6 @@ class WebServer:
 
     fn = self.filepath + "/AhoyDTU_" + str(inv_ser) + ".yml"
     logging.debug(f"SaveToYaml: save data to {fn}")
-    #logging.debug(f"SaveToYaml: {self.dataToFile=}")
     with open(fn, 'w') as yaml_file:
         yaml.dump(self.dataToFile, yaml_file)
 
@@ -150,7 +155,7 @@ class WebServer:
        "InverterDevInform_All" in self.dataToFile:
        return False
     else:
-       logging.debug(f"SaveToYaml: {self.dataToFile=}")
+       logging.debug(f"SaveToYaml - missing elements - restart main-init function")
        return True
 
 class SunsetHandler:
@@ -261,7 +266,7 @@ def main_loop(ahoy_config):
                 poll_inverter(inverter, do_init, transmit_retries)
             do_init = False
 
-            logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
+            # logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
             if (int(time.strftime("%M"),10) % 5 == 0):
                if web_server:
                    do_init = web_server.checkOutput()
@@ -294,7 +299,7 @@ def poll_inverter(inverter, do_init, retries):
     if do_init:
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 00
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 01
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))          # 02
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))          # 02
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 03
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 04
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 05
@@ -353,12 +358,14 @@ def poll_inverter(inverter, do_init, retries):
                     )
 
             result = decoder.decode()                          # decode response from inverter
-            if web_server:
-               web_server.SaveToYaml (inverter_ser, result)    # save for using in NGINX
-
+            typeName = type(result).__name__                   # get class (type) name
             data = result.__dict__()                           # convert result into python-dict
+
             if hoymiles.HOYMILES_TRANSACTION_LOGGING:
                logging.debug(f'Decoded: {data}')
+
+            if web_server:
+               web_server.SaveToYaml (inverter_ser, typeName, data)    # save for using in NGINX
 
             # check result object for output
             if isinstance(result, hoymiles.decoders.StatusResponse):
@@ -368,7 +375,6 @@ def poll_inverter(inverter, do_init, retries):
 
                 # when 'event_count' is changed, add AlarmData-command to queue
                 if data is not None and 'event_count' in data:
-                    # if event_message_index[inv_str] < data['event_count']:
                     if event_message_index[inv_str] != data['event_count']:
                        event_message_index[inv_str]  = data['event_count']
                        if hoymiles.HOYMILES_VERBOSE_LOGGING:
@@ -411,9 +417,9 @@ def poll_inverter(inverter, do_init, retries):
                if mqtt_client:
                   mqtt_client.store_status(data)
 
-            if isinstance(result, hoymiles.decoders.EventsResponse):
+            if isinstance(result, hoymiles.decoders.Response_AlarmEvent):
                if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f"EventsResponse: {data['inv_stat_txt']} ({data['inv_stat_num']})")
+                  logging.info(f"Response_AlarmEvent: {data['inv_alarm_num']}:{data['inv_alarm_txt']} Start:{data['inv_alarm_stm']} End:{data['inv_alarm_etm']}")
 
             if isinstance(result, hoymiles.decoders.DebugDecodeAny):
                if hoymiles.HOYMILES_VERBOSE_LOGGING:

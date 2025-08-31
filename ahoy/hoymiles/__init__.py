@@ -227,8 +227,7 @@ class ResponseDecoder(ResponseDecoderFactory):
             elif command.upper() == "0F":                             ## 15 - 0x0f
                 model_desc = "Real-Time Run Data C Phase "
             elif command.upper() == "11":                             ## 17 - 0x11
-                # model_desc = "Inverter generic events log"
-                model_desc = "AlarmData create EventsResponse"
+                model_desc = "AlarmData create Response_AlarmEvent"
             elif command.upper() == "12":                             ## 18 - 0x12
                 model_desc = "Inverter major events log"
             elif command.upper() == "13":                             ## 19 - 0x13

@@ -16,6 +16,8 @@ if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 	$inverter_id = 0;
 }
 
+if (isset($data_yaml["GridOnProFilePara"])) $grid_data = $data_yaml["GridOnProFilePara"];
+else $data_yaml = array();
 if (isset($data_yaml["InverterDevInform_Simple"])) $hw_data_simple = $data_yaml["InverterDevInform_Simple"];
 else $hw_data_simple = array();
 if (isset($data_yaml["InverterDevInform_All"])) $hw_data_all = $data_yaml["InverterDevInform_All"];
@@ -55,11 +57,10 @@ if (isset($status_data_yaml["inverter_ser"])) {
 $inverter_grid = "inverter_grid_" . $inverter_id . "_json";
 if (isset($ahoy_data["inverters"][$inverter_id]["name"])) {
 	$$inverter_grid = ["name" => $ahoy_data["inverters"][$inverter_id]["name"],
-	"grid" => "03 00 20 01 00 0A 08 FC 07 30 00 1E 0B 3B 00 01 04 0B 00 1E 09 E2 10 00 13 88 12 8E 00 01 14 1E 00 01 20 00 00 01 30 03 02 58 09 E2 07 A3 13 92 12 8E 40 00 07 D0 00 10 50 08 00 01 13 9C 01 90 00 10 13 9C 13 74 70 02 00 01 27 10 80 00 00 00 08 5B 01 2C 08 B7 09 41 09 9D 01 2C 90 00 00 00 00 5F B0 00 00 00 01 F4 00 5F A0 02 00 00 00 00 "];
+	"grid" => $grid_data['gridData']];
  } else {
 	$$inverter_grid = [];
 }
-
 
 $inverter_pwrack = "inverter_pwrack_" . $inverter_id . "_json";
 $$inverter_pwrack = ["ack" => false];
@@ -153,7 +154,7 @@ if (isset($status_data_yaml["yield_total"])) {
 # erst schleife, dann abfrage
 # schleife über config, nicht status-data
 # else zweig mit 0 werten
-for ($ii = 0; $ii < count($ahoy_data["inverters"][$inverter_id]["strings"]); $ii++) {
+for ($ii = 0; $ii < count($ahoy_data["inverters"][$inverter_id]["strings"] ?? []); $ii++) {
   if (isset($status_data_yaml["strings"])){
   #for ($ii = 0; $ii < count($status_data_yaml["strings"]); $ii++) {
     $$inverter_var_id["ch"][$ii + 1] = [
@@ -246,12 +247,21 @@ $$inverter_alarm = [
 	"iv_id" => $inverter_id,
 	"iv_name" => $status_data_yaml["inverter_name"] ?? "",
 	"cnt" => 0,
-	"last_id" => count($alarm_data),
+	"last_id" => count($alarm_data) ?? 0,
 	"alarm" => []
 ];
-for ($ii = 0; $ii < 50; $ii++) {
+# for ($ii = 0; $ii < 50; $ii++) {
+#for ($ii = 0; $ii < $$inverter_alarm["last_id"]; $ii++) {
+for ($ii = $$inverter_alarm["last_id"]; $ii >= 0; $ii--) {
+	if ($alarm_data[$ii]["inv_alarm_num"] == 1) $alarm_data[$ii]["inv_alarm_cnt"] = 1;
 	if (isset($alarm_data[$ii])) array_push($$inverter_alarm["alarm"], 
-		["code" => $alarm_data[$ii]["inv_stat_num"], "str" => $alarm_data[$ii]["inv_stat_txt"], "start" => 11101, "end" => 11105]);
+		[
+		"code" => $alarm_data[$ii]["inv_alarm_cnt"], 
+		"str" => $alarm_data[$ii]["inv_alarm_txt"] , 
+		"start" => $alarm_data[$ii]["inv_alarm_stm"],
+		"end" => $alarm_data[$ii]["inv_alarm_etm"]
+		]
+	);
 	else array_push($$inverter_alarm["alarm"], ["code" => 0, "str" => "Unknown", "start" => 0, "end" => 0]);
 }
 
@@ -264,6 +274,7 @@ if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
 	print "/" . $inverter_pwrack . ":\n" . json_encode($$inverter_pwrack) . "\n";
 	print "/" . $inverter_var_id . ":\n" . json_encode($$inverter_var_id) . "\n";
 	print "/" . $inverter_version . ":\n" . json_encode($$inverter_version) . "\n";
+	print "/" . $inverter_grid . ":\n" . json_encode($$inverter_grid) . "\n";
 	print "/" . $inverter_alarm . ":\n" . json_encode($$inverter_alarm) . "\n";
 }
 ?>

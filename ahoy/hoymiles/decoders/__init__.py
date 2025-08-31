@@ -243,154 +243,6 @@ class UnknownResponse(Response):
         print_table_unpack(*args)
 
 
-class EventsResponse(UnknownResponse):
-    """ Hoymiles micro-inverter event log decode helper
-        vergl. "src\hm\hmInverter.h:685"
-    """
-
-    alarm_codes = {
-            # HM Error Codes
-              1: 'Inverter start',                     # 0x01
-              2: 'Time calibration',                   # 0x02
-              3: 'EEPROM reading and writing error during operation',
-              4: 'Offline',                            # 
-             11: 'Grid voltage surge',                 #
-             12: 'Grid voltage sharp drop',            #
-             13: 'Grid frequency mutation',            #
-             14: 'Grid phase mutation',                #
-             15: 'Grid transient fluctuation',         #
-             36: 'INV overvoltage or overcurrent',     #
-             46: 'FB overvoltage',                     #
-             47: 'FB overcurrent',                     #
-             48: 'FB clamp overvoltage',               #
-             49: 'FB clamp overvoltage',               #
-             61: 'Calibration parameter error',        #
-             62: 'System configuration parameter error',
-             63: 'Abnormal power generation data',     #
-             71: 'Grid overvoltage load reduction (VW) function enable',
-             72: 'Power grid over-frequency load reduction (FW) function enable',
-             73: 'Over-temperature load reduction (TW) function enable',
-             95: 'PV-1: Module in suspected shadow',   #
-             96: 'PV-2: Module in suspected shadow',   #
-             97: 'PV-3: Module in suspected shadow',   #
-             98: 'Module in suspected shadow',         #
-            121: 'Over temperature protection',        # 0x79
-            122: 'Microinverter is suspected of being stolen',
-            123: 'Locked by remote control',
-            124: 'Shut down by remote control',
-            125: 'Grid configuration parameter error', # 0x7D
-            126: 'Software error code 126',            # 0x7E
-            127: 'Firmware error',                     # 0x7F
-            128: 'Software error code 128',            # 0x80
-            129: 'Software error code 129',            # 0x81
-            130: 'Offline',                            # 0x82
-            141: 'Grid overvoltage',                   # 0x8D
-            142: 'Average grid overvoltage',           # 0x8E
-            143: 'Grid undervoltage',                  # 0x8F
-            144: 'Grid overfrequency',                 # 0x90
-            145: 'Grid underfrequency',                # 0x91
-            146: 'Rapid grid frequency change',        # 0x92
-            147: 'Power grid outage',                  # 0x93
-            148: 'Grid disconnection',                 # 0x94
-            149: 'Island detected',                    # 0x95
-            150: 'DCI exceeded',                       # 0x
-            171: 'Grid: Abnormal phase difference between phase to phase',
-            181: 'Abnormal insulation impedance',      #
-            182: 'Abnormal grounding',                 #
-            205: 'Input port 1 & 2 overvoltage',       # 0xCD
-            206: 'Input port 3 & 4 overvoltage',       # 0xCE
-            207: 'Input port 1 & 2 undervoltage',      # 0xCF
-            208: 'Input port 3 & 4 undervoltage',      # 0xD0
-            209: 'Port 1 no input',                    # 0xD1
-            210: 'Port 2 no input',                    # 0xD2
-            211: 'Port 3 no input',                    # 0xD3
-            212: 'Port 4 no input',                    # 0xD4
-            213: 'PV-1 & PV-2 abnormal wiring',        # 0xD5
-            214: 'PV-3 & PV-4 abnormal wiring',        # 0xD6
-            215: 'PV-1 Input overvoltage',             # 0xD7
-            216: 'PV-1 Input undervoltage',            # 0xD8
-            217: 'PV-2 Input overvoltage',             # 0xD9
-            218: 'PV-2 Input undervoltage',            # 0xDA
-            219: 'PV-3 Input overvoltage',             # 0xDB
-            220: 'PV-3 Input undervoltage',            # 0xDC
-            221: 'PV-4 Input overvoltage',             # 0xDD
-            222: 'PV-4 Input undervoltage',            # 0xDE
-            301: 'Hardware error code 301',            # 0x012D
-            302: 'Hardware error code 302',            # 0x012E
-            303: 'Hardware error code 303',            # 0x012F
-            304: 'Hardware error code 304',            # 0x0130
-            305: 'Hardware error code 305',            # 0x0131
-            306: 'Hardware error code 306',            # 0x0132
-            307: 'Hardware error code 307',            # 0x0133
-            308: 'Hardware error code 308',            # 0x0134
-            309: 'Hardware error code 309',            # 0x0135
-            310: 'Hardware error code 310',            # 0x0136
-            311: 'Hardware error code 311',            # 0x0137
-            312: 'Hardware error code 312',            # 0x0138
-            313: 'Hardware error code 313',            # 0x0139
-            314: 'Hardware error code 314',            # 0x013A
-            # MI Error Codes
-            5041: 'Error code-04 Port 1',                # 0x13B1
-            5042: 'Error code-04 Port 2',                # 0x13B2
-            5043: 'Error code-04 Port 3',                # 0x13B3
-            5044: 'Error code-04 Port 4',                # 0x13B4
-            5051: 'PV Input 1 Overvoltage/Undervoltage', # 0x13BB
-            5052: 'PV Input 2 Overvoltage/Undervoltage', # 0x13BC
-            5053: 'PV Input 3 Overvoltage/Undervoltage', # 0x13BD
-            5054: 'PV Input 4 Overvoltage/Undervoltage', # 0x13BE
-            5060: 'Abnormal bias',                       # 0x13C4
-            5070: 'Over temperature protection',         # 0x13CE
-            5080: 'Grid Overvoltage/Undervoltage',       # 0x13D8
-            5090: 'Grid Overfrequency/Underfrequency',   # 0x13E2
-            5100: 'Island detected',                     # 0x13EC
-            5120: 'EEPROM reading and writing error',    # 0x1400
-            5150: '10 min value grid overvoltage',       # 0x141E
-            5200: 'Firmware error',                      # 0x1450
-            8310: 'Shut down',                           # 0x2076
-            9000: 'Microinverter is suspected of being stolen' # 0x2328
-            }
-
-    def __init__(self, *args, **params):
-        super().__init__(*args, **params)
-
-        logging.debug(f'AlarmData: {self.response} {len(self.response)}')
-        crc_valid = self.validate_crc_m()
-        if crc_valid:
-            #logging.debug(' payload has valid modbus crc')
-            self.response = self.response[:-2]
-
-        self.status = struct.unpack('>H', self.response[:2])[0]
-        self.a_text = self.alarm_codes.get(self.status, 'N/A')
-
-        chunk_size = 12
-        for i_chunk in range(2, len(self.response), chunk_size):
-            chunk = self.response[i_chunk:i_chunk+chunk_size]
-
-            logging.debug(' '.join([f'{byte:02x}' for byte in chunk]) + ': ')
-
-            if (len(chunk[0:6]) < 6):
-                logging.error(f'length of chunk must be greater or equal 6 bytes: {chunk}')
-                return
-
-            opcode, a_code, a_count, uptime_sec = struct.unpack('>BBHH', chunk[0:6])
-            a_text = self.alarm_codes.get(a_code, 'N/A')
-            logging.debug(f' uptime={timedelta(seconds=uptime_sec)} a_count={a_count} opcode={opcode} a_code={a_code} a_text={a_text}')
-
-            dbg = ''
-            for fmt in ['BBHHHHH']:
-                dbg += f' {fmt:7}: ' + str(struct.unpack('>' + fmt, chunk))
-            logging.debug(dbg)
-
-    def __dict__(self):
-        """ Base values, availabe in each __dict__ call """
-        data = super().__dict__()
-
-        # logging.debug(f'AlarmData: {struct.unpack(">HIHHHHH", self.response[0:16])}')
-        data['inv_stat_num'] = self.status
-        data['inv_stat_txt'] = self.a_text
-        return data
-
-
 class Response_InverterDevInform_Simple(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
@@ -449,24 +301,23 @@ class Response_InverterDevInform_All(UnknownResponse):
         if (len(self.response) != 16):
             logging.error(f'Response_InverterDevInform_All: data length should be 16 bytes - measured {len(self.response)} bytes')
             logging.error(f'Response_InverterDevInform_All: data: {self.response}')
-            return data
+        else:
+            logging.debug(f'Response_InverterDevInform_All: {struct.unpack(">HHHHHHHH", self.response[0:16])}')
+            fw_version, fw_build_yyyy, fw_build_mmdd, fw_build_hhmm, bootloader_ver = struct.unpack('>HHHHH', self.response[0:10])
+            #data = struct.unpack('>HHHHH', self.response[0:10])
 
-        logging.debug(f'Response_InverterDevInform_All: {struct.unpack(">HHHHHHHH", self.response[0:16])}')
-        fw_version, fw_build_yyyy, fw_build_mmdd, fw_build_hhmm, bootloader_ver = struct.unpack('>HHHHH', self.response[0:10])
-        #data = struct.unpack('>HHHHH', self.response[0:10])
-
-        data['FW_ver_maj'] = int((fw_version / 10000))
-        data['FW_ver_min'] = int((fw_version % 10000) / 100)
-        data['FW_ver_pat'] = int((fw_version %   100))
-        data['FW_build_yy'] = fw_build_yyyy
-        data['FW_build_mm'] = int(fw_build_mmdd / 100)
-        data['FW_build_dd'] = int(fw_build_mmdd % 100)
-        data['FW_build_HH'] = int(fw_build_hhmm / 100)
-        data['FW_build_MM'] = int(fw_build_hhmm % 100)
-        data['BL_VER'] = bootloader_ver
+            data['FW_ver_maj'] = int((fw_version / 10000))
+            data['FW_ver_min'] = int((fw_version % 10000) / 100)
+            data['FW_ver_pat'] = int((fw_version %   100))
+            data['FW_build_yy'] = fw_build_yyyy
+            data['FW_build_mm'] = int(fw_build_mmdd / 100)
+            data['FW_build_dd'] = int(fw_build_mmdd % 100)
+            data['FW_build_HH'] = int(fw_build_hhmm / 100)
+            data['FW_build_MM'] = int(fw_build_hhmm % 100)
+            data['BL_VER'] = bootloader_ver
         return data
 
-class SystemConfigPara(UnknownResponse):
+class Response_GridOnProFilePara(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
         """
@@ -475,6 +326,186 @@ class SystemConfigPara(UnknownResponse):
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
         data = super().__dict__()
+        data['gridData'] = ' '.join([f"{b:02x}" for b in self.response])
+        return data
+
+class Response_SystemConfigPara(UnknownResponse):
+    def __init__(self, *args, **params):
+        super().__init__(*args, **params)
+        """
+        """
+
+    def __dict__(self):
+        """ Base values, availabe in each __dict__ call """
+        data = super().__dict__()
+        return data
+
+class Response_AlarmEvent(UnknownResponse):
+    """ Hoymiles micro-inverter event log decode helper
+        vergl. "src\hm\hmInverter.h:685"
+    """
+
+    alarm_codes = {
+            # HM Error Codes
+              1: 'Inverter start',                     # 0x01
+              2: 'Time calibration',                   # 0x02
+              3: 'EEPROM reading and writing error during operation',
+              4: 'Offline',                            # 
+             11: 'Grid voltage surge',                 #
+             12: 'Grid voltage sharp drop',            #
+             13: 'Grid frequency mutation',            #
+             14: 'Grid phase mutation',                #
+             15: 'Grid transient fluctuation',         #
+             36: 'INV overvoltage or overcurrent',     #
+             46: 'FB overvoltage',                     #
+             47: 'FB overcurrent',                     #
+             48: 'FB clamp overvoltage',               #
+             49: 'FB clamp overvoltage',               #
+             61: 'Calibration parameter error',        #
+             62: 'System configuration parameter error',
+             63: 'Abnormal power generation data',     #
+             71: 'Grid overvoltage load reduction (VW) function enable',
+             72: 'Power grid over-frequency load reduction (FW) function enable',
+             73: 'Over-temperature load reduction (TW) function enable',
+             95: 'PV-1: Module in suspected shadow',   #
+             96: 'PV-2: Module in suspected shadow',   #
+             97: 'PV-3: Module in suspected shadow',   #
+             98: 'Module in suspected shadow',         #
+            121: 'Over temperature protection',        # 0x79
+            122: 'Microinverter is suspected of being stolen',
+            123: 'Locked by remote control',
+            124: 'Shut down by remote control',
+            125: 'Grid configuration parameter error', # 0x7D
+            126: 'Software error code 126',            # 0x7E
+            127: 'Firmware error',                     # 0x7F
+            128: 'Software error code 128',            # 0x80
+            129: 'Software error code 129',            # 0x81
+            130: 'Offline',                            # 0x82
+            141: 'Grid overvoltage',                   # 0x8D
+            142: 'Average grid overvoltage',           # 0x8E
+            143: 'Grid undervoltage',                  # 0x8F
+            144: 'Grid overfrequency',                 # 0x90
+            145: 'Grid underfrequency',                # 0x91
+            146: 'Rapid grid frequency change',        # 0x92
+            147: 'Power grid outage',                  # 0x93
+            148: 'Grid disconnection',                 # 0x94
+            149: 'Island detected',                    # 0x95
+            150: 'DCI exceeded',                       # 0x
+            171: 'Grid: Abnormal phase difference between phase to phase',
+            181: 'Abnormal insulation impedance',      #
+            182: 'Abnormal grounding',                 #
+
+            205: 'Input port 1 & 2 overvoltage',       # 0xCD
+            206: 'Input port 3 & 4 overvoltage',       # 0xCE
+            207: 'Input port 1 & 2 undervoltage',      # 0xCF
+            208: 'Input port 3 & 4 undervoltage',      # 0xD0
+            209: 'Port 1 no input',                    # 0xD1
+            210: 'Port 2 no input',                    # 0xD2
+            211: 'Port 3 no input',                    # 0xD3
+            212: 'Port 4 no input',                    # 0xD4
+            213: 'PV-1 & PV-2 abnormal wiring',        # 0xD5
+            214: 'PV-3 & PV-4 abnormal wiring',        # 0xD6
+            215: 'PV-1 Input overvoltage',             # 0xD7
+            216: 'PV-1 Input undervoltage',            # 0xD8
+            217: 'PV-2 Input overvoltage',             # 0xD9
+            218: 'PV-2 Input undervoltage',            # 0xDA
+            219: 'PV-3 Input overvoltage',             # 0xDB
+            220: 'PV-3 Input undervoltage',            # 0xDC
+            221: 'PV-4 Input overvoltage',             # 0xDD
+            222: 'PV-4 Input undervoltage',            # 0xDE
+
+            301: 'Hardware error code 301',            # 0x012D
+            302: 'Hardware error code 302',            # 0x012E
+            303: 'Hardware error code 303',            # 0x012F
+            304: 'Hardware error code 304',            # 0x0130
+            305: 'Hardware error code 305',            # 0x0131
+            306: 'Hardware error code 306',            # 0x0132
+            307: 'Hardware error code 307',            # 0x0133
+            308: 'Hardware error code 308',            # 0x0134
+            309: 'Hardware error code 309',            # 0x0135
+            310: 'Hardware error code 310',            # 0x0136
+            311: 'Hardware error code 311',            # 0x0137
+            312: 'Hardware error code 312',            # 0x0138
+            313: 'Hardware error code 313',            # 0x0139
+            314: 'Hardware error code 314',            # 0x013A
+            # MI Error Codes
+            5011: 'PV-1: MOSFET overcurrent (II)',       # 0x139C
+            5012: 'PV-2: MOSFET overcurrent (II)',       # 0x139D
+            5013: 'PV-3: MOSFET overcurrent (II)',       # 0x139E
+            5014: 'PV-4: MOSFET overcurrent (II)',       # 0x139F
+            5020: 'H-bridge MOSFET overcurrent or H-bridge overvoltage',  # 0x139C
+            5041: 'Error code-04 Port 1',                # 0x13B1
+            5042: 'Error code-04 Port 2',                # 0x13B2
+            5043: 'Error code-04 Port 3',                # 0x13B3
+            5044: 'Error code-04 Port 4',                # 0x13B4
+            5051: 'PV Input 1 Overvoltage/Undervoltage', # 0x13BB
+            5052: 'PV Input 2 Overvoltage/Undervoltage', # 0x13BC
+            5053: 'PV Input 3 Overvoltage/Undervoltage', # 0x13BD
+            5054: 'PV Input 4 Overvoltage/Undervoltage', # 0x13BE
+            5060: 'Abnormal bias',                       # 0x13C4
+            5070: 'Over temperature protection',         # 0x13CE
+            5080: 'Grid Overvoltage/Undervoltage',       # 0x13D8
+            5090: 'Grid Overfrequency/Underfrequency',   # 0x13E2
+            5100: 'Island detected',                     # 0x13EC
+            5110: 'GFDI',                                # 0x13F6
+            5120: 'EEPROM reading and writing error',    # 0x1400
+            5150: '10 min value grid overvoltage',       # 0x141E
+            5160: 'Grid transient fluctuation',          # 0x1428
+            5200: 'Firmware error',                      # 0x1450
+            8310: 'Shut down',                           # 0x2076
+            8320: 'Locked by remote control',            # 0x2080
+            9000: 'Microinverter is suspected of being stolen' # 0x2328
+            }
+
+    def __init__(self, *args, **params):
+        super().__init__(*args, **params)
+
+        alarmData = ' '.join([f"{b:02x}" for b in self.response])
+        logging.debug(f"AlarmData: len={len(self.response)} data={alarmData}")
+
+        crc_valid = self.validate_crc_m()
+        if crc_valid:
+            #logging.debug(' payload has valid modbus crc')
+            self.response = self.response[:-2]
+
+        self.a_opcode = 0
+        self.a_code = struct.unpack('>H', self.response[:2])[0]
+        self.a_text = self.alarm_codes.get(self.a_code, 'N/A')
+        self.a_count = 0
+        self.startTime = 0
+        self.endTime = 0
+
+        chunk_size = 12
+        for i_chunk in range(2, len(self.response), chunk_size):
+            chunk = self.response[i_chunk:i_chunk+chunk_size]
+
+            if (len(chunk[0:6]) < 6):
+                logging.error(f'f"AlarmData length of chunk must be greater or equal 6 bytes: {chunk}')
+                return
+
+            self.opcode, self.a_code, self.a_count, self.startTime, self.endTime, self.nn, self.mm = struct.unpack('>BBHHHHH', chunk)
+            self.a_text = self.alarm_codes.get(self.a_code, 'N/A')
+
+            dbg = ''
+            for fmt in ['BBHHHHH']:
+                dbg += f'{fmt:7} unpacked:' + str(struct.unpack('>' + fmt, chunk))
+
+            logging.debug(f"AlarmData: code={' '.join([f'{byte:02x}' for byte in chunk])}")
+            logging.debug(f"AlarmData: format={dbg}")
+            logging.debug(f"AlarmData: opcode={self.opcode} a_code={self.a_code} a_text={self.a_text} a_count={self.a_count} "
+                          f"StartTime={timedelta(seconds=self.startTime)} EndTime={timedelta(seconds=self.endTime)}")
+
+    def __dict__(self):
+        """ Base values, availabe in each __dict__ call """
+        data = super().__dict__()
+
+        # logging.debug(f'AlarmData: {struct.unpack(">HIHHHHH", self.response[0:16])}')
+        data['inv_alarm_num'] = self.a_code
+        data['inv_alarm_txt'] = self.a_text
+        data['inv_alarm_cnt'] = self.a_count
+        data['inv_alarm_stm'] = self.startTime
+        data['inv_alarm_etm'] = self.endTime
+        return data
 
 class DebugDecodeAny(UnknownResponse):
     """Default decoder"""
@@ -524,6 +555,7 @@ class DebugDecodeAny(UnknownResponse):
         data['payload'] = self.response
         return data
 
+
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 class Hm300Decode00(Response_InverterDevInform_Simple):
     """ 1121-series Inverter """
@@ -531,10 +563,10 @@ class Hm300Decode00(Response_InverterDevInform_Simple):
 class Hm300Decode01(Response_InverterDevInform_All):
     """ 1121-series Firmware version / date """
 
-class Hm300Decode02(EventsResponse):
+class Hm300Decode02(Response_GridOnProFilePara):
     """ 1121-series Inverter generic events log """
 
-class Hm300Decode05(SystemConfigPara):
+class Hm300Decode05(Response_SystemConfigPara):
     """ 1121-series Inverter """
 
 class Hm300Decode0B(StatusResponse):
@@ -605,10 +637,10 @@ class Hm300Decode0B(StatusResponse):
 class Hm300Decode0C(Hm300Decode0B):
     """ 1121-series mirco-inverters status data """
 
-class Hm300Decode11(EventsResponse):
+class Hm300Decode11(Response_AlarmEvent):
     """ 1121-series Inverter generic events log """
 
-class Hm300Decode12(EventsResponse):
+class Hm300Decode12(Response_AlarmEvent):
     """ 1121-series Inverter major events log """
 
 
@@ -619,8 +651,11 @@ class Hm600Decode00(Response_InverterDevInform_Simple):
 class Hm600Decode01(Response_InverterDevInform_All):
     """ 1141-Series Firmware version / date """
 
-class Hm600Decode02(EventsResponse):
+class Hm600Decode02(Response_GridOnProFilePara):
     """ 1141-Series Inverter generic events log """
+
+class Hm600Decode05(Response_SystemConfigPara):
+    """ 1141-series Inverter """
 
 class Hm600Decode0B(StatusResponse):
     """ 1141-series mirco-inverters status data """
@@ -719,10 +754,10 @@ class Hm600Decode0B(StatusResponse):
 class Hm600Decode0C(Hm600Decode0B):
     """ 1141-series mirco-inverters status data """
 
-class Hm600Decode11(EventsResponse):
+class Hm600Decode11(Response_AlarmEvent):
     """ 1141-Series Inverter generic events log """
 
-class Hm600Decode12(EventsResponse):
+class Hm600Decode12(Response_AlarmEvent):
     """ 1141-Series Inverter major events log """
 
 
@@ -733,8 +768,11 @@ class Hm1200Decode00(Response_InverterDevInform_Simple):
 class Hm1200Decode01(Response_InverterDevInform_All):
     """ 1161-Series Firmware version / date """
 
-class Hm1200Decode02(EventsResponse):
+class Hm1200Decode02(Response_GridOnProFilePara):
     """ 1161-Series Inverter generic events log """
+
+class Hm1200Decode05(Response_SystemConfigPara):
+    """ 1161-series Inverter """
 
 class Hm1200Decode0B(StatusResponse):
     """ 1161-series mirco-inverters status data """
@@ -891,8 +929,8 @@ class Hm1200Decode0B(StatusResponse):
 class Hm1200Decode0C(Hm1200Decode0B):
     """ 1161-series mirco-inverters status data """
 
-class Hm1200Decode11(EventsResponse):
+class Hm1200Decode11(Response_AlarmEvent):
     """ 1161-Series Inverter generic events log """
 
-class Hm1200Decode12(EventsResponse):
+class Hm1200Decode12(Response_AlarmEvent):
     """ 1161-Series Inverter major events log """
