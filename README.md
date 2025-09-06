@@ -10,149 +10,29 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU for Raspberry-Pi with NGINX WebServices
+# AhoyDTU for Raspberry-Pi with WebServices
 
 This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
 ***ahoy (lumapu)*** is licensed under
 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
 
-Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
-Development for Raspberry-PI controllers has been frozen. 
-In this project, the development of AhoyDTU for Raspberry PI processors is continued independently.
-For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted to use it on a Linux system with NGINX Web-Services.
+Since the beginning of 2024, the development of ahoy (lumapu) has focused on programming ESP microcontrollers. Unfortunately, development for Raspberry PI controllers has been frozen.  
+This project continues the development of the AhoyDTU for Raspberry PI controllers independently. For this purpose, ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system with NGINX web services.  
+An MQTT broker is used for interprocess communication between the AhoyDTU (based on Python) and the web services (based on PHP).
 
-The goal is to collect data from one ore more hoymiles microinverters and present the data on a web-server (NGINX).  
-As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume of any power when using a battery.
+The project pursues the following goals:
+* Collect data from one or more hoymiles microinverters and display it on an NGINX web service
+* Permanently store data in a Volkszaehler instance (https://github.com/volkszaehler/volkszaehler.org) and make it available for individual analysis
+* As an additional feature, it is planned to reduce zero feed-in during battery operation. This requires a corresponding sensor on the electricity meter.
 
-## Installation-Requirements
-1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
-2. AhoyDTU based on python and need some python-modules, later more ...
-3. AhoyDTU with NGINX WebServices based on some specific linux packages. You have to install this packages:
-   ```code
-   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio php-yaml nginx php-fpm
-   ```
-4. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or CGI-scripts from a USER-HOME directory.  
-   We prefere to install this project in: `/home/AhoyDTU` :
-   ```code
-   cd /home
-   sudo mkdir AhoyDTU
-   sudo chown pi:pi AhoyDTU/
-   ```
+---
 
-## Download AhoyDTU from github
-```code
-git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
-```
+Seit Anfang 2024 konzentriert sich die Wartung von ahoy (lumapu) auf die Programmierung von ESP-Mikrocontrollern. Die Entwicklung für Raspberry-PI-Controller wurde leider eingestellt.  
+In diesem Projekt wird die Entwicklung der AhoyDTU für Raspberry-PI-Controller unabhängig fortgesetzt. Zu diesem Zweck wurde die ahoy (lumapu) Version v0.8.155 kopiert und für die Nutzung auf einem Linux-System mit NGINX-WebServices angepasst.  
+Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und den WebServices (basierend auf PHP) dient ein MQTT-Broker.
 
-Important: Debian 12 follows the recommendation of [`PEP 668`]
-(https://peps.python.org/pep-0668/)  
-Now, python is configured as "externally-managed-environment" !
-- You have to use a python virtual environment. See: `https://docs.python.org/3/library/venv.html`
-- You can install and manage python libs via `pip` in this virtual environment!
-
-## Create a PYTHON virtual environment
-```code
-cd AhoyDTU
-python3 -m venv ahoyenv       ## create python virtual environment
-source ahoyenv/bin/activate   ## activate the virtual environment
-```
-
-## AhoyDTU requires the installation of certain python libraries:
-```code
-ahoyenv/bin/python3 -m pip install --upgrade paho-mqtt crcmod requests pyRF24 ruamel-yaml SunTimes datetime
-```
-
-If you have trouble to install `pyRF24`, please use the following workaround:
-```code
-git clone --recurse-submodules https://github.com/nRF24/pyRF24.git
-cd pyRF24
-  ahoyenv/bin/python3 -m pip install . -v
-cd ..
-```
-This step takes a while!
-
-
-## Finally, check all installed `python modules`:
-```code
-ahoyenv/bin/python3 -m pip list         ## check: search for pyRF24
-Package            Version
------------------- ---------
-certifi            2025.4.26
-charset-normalizer 3.4.2
-crcmod             1.7
-idna               3.10
-jdcal              1.4.1
-paho-mqtt          2.1.0
-pip                20.3.4
-pkg-resources      0.0.0
-pyrf24             0.5.0
-pytz               2025.2
-requests           2.32.3
-ruamel.yaml        0.18.10
-ruamel.yaml.clib   0.2.12
-setuptools         44.1.1
-suntimes           1.1.2
-typing-extensions  4.14.0
-tzlocal            5.3.1
-urllib3            2.4.0
-```
-
-
-## start AhoyDTU manualy (marked to delete)
-```code
-cd ahoy
-/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml
-```
-
-## start AhoyDTU as user (system) service (marked to delete)
-```code
-systemctl --user enable /home/AhoyDTU/ahoy/ahoy.service  # to register AhoyDTU as (system) service
-systemctl --user status ahoy.service                     # to check status of service
-systemctl --user start ahoy.service                      # start AhoyDTU as (system) service
-
-for maintenance:
-systemctl --user restart ahoy.service
-systemctl --user stop ahoy.service
-systemctl --user disable ahoy.service
-```
-
-
-# Web-Server (NGINX)
-Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
-In this project, we integrate NGINX Web-Services to control AhoyDTU and present the data from the hoymiles inverters.
-To do this, we need the PHP FastCGI Process Manager, too.
-
-## Installation of NGINX Web-Server (allready done)
-```code
-sudo apt-get install -y nginx php-fpm php-yaml
-```
-
-## configure NGINX
-To configure NGINX, we need to change the ownership of all files in "www" directory and have
-to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
-```code
-cd /home/AhoyDTU
-sudo rm /etc/nginx/sites-enabled/default
-sudo ln -fs $(pwd)/etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
-sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
-sudo nginx -t
-```
-
-Finally, we have to restart NGINX Service
-```code
-sudo systemctl restart nginx
-```
-
-# Test your Web-Server
-Now you can test, if your your WebServer can display your AhoyDTU startpage. Start your prefered browser and load the URL like this example:
-```code
-http://Raspberry-PI.fritz.box
-```
-
-If you have an trouble, have a look on NGINX log files:
-```code
-tail /var/log/nginx/access.log /var/log/nginx/error.log
-```
-
-If NGINX works to control AhoyDTU, now we can configure our environment and inverters:
+Folgende Ziele verfolgt das Projekt:
+* Daten von einem oder mehreren hoymiles-Mikrowechselrichtern zu sammeln und auf einem NGINX-WebServices darzustellen
+* Daten in einer Volkszähler-Instanz (https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
+* Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein.
 
