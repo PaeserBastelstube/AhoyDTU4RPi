@@ -38,5 +38,6 @@ Folgende Ziele verfolgt das Projekt:
 
 Additional Informations:
 * [ Installation Instructions ](doc/Install.md)
-* [ Basics and Background (in German language only) ](wiki/Grundlagen-und-Hintergrund)
+* [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+
 
