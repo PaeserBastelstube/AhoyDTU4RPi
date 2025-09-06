@@ -96,11 +96,11 @@ zope.interface     7.2
 The allready known 'Ahoy on ESP8266 or ESP32' includes its own web server for presentation hoymiles inverter data.  
 In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.  
 To do this, we need additional PHP FastCGI Process Manager, too.  
-To interact between AhoyDTU (python) and NGINX-WebService (php and php-fpm), we'll use a 'Mosquitto MQTT-Broker'.
+For data exchange between AhoyDTU (Python) and NGINX WebService (PHP and PHP-FPM) we use a “Mosquitto MQTT broker”.
 
-## Installation of NGINX Web-Server (allready done)
+## Installation of NGINX WebServer, PHP FastCGI Process Manager and Mosquitto
 ```code
-sudo apt-get install -y nginx php-fpm php-yaml
+sudo apt-get install -y nginx php-fpm php-yaml mosquitto mosquitto-clients
 ```
 
 ## configure NGINX
@@ -113,10 +113,14 @@ sudo ln -fs etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
 ```
 Please change the PHP-version-directory if necessary.
+In the standard installation, Mosquitto requires no configuration.
 
-Finally, we have to restart the system-servicesphp8.2-fpm
+Finally, we have to restart the system-services for nginx and php8.2-fpm.  
+If you have any private 'mosquitto' configurations, restart is nessasary.
 ```code
 sudo systemctl restart nginx php8.2-fpm
+or
+sudo systemctl restart nginx php8.2-fpm mosquitto
 ```
 
 # Test your Web-Server
