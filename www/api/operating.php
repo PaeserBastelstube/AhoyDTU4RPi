@@ -11,16 +11,19 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 
 	if (isset($_POST) and count($_POST) > 0) {	# save		-->SETTINGS --> SAVE SETTINGS
 		saveSettings($_POST);
-		sleep(1);
-    	header("Location: index.html");
+   		header("Location: index.html");
+
+    } elseif (isset($_GET['ctrl'])) {			# Active Power Control for inverter
+		# saveDebug(json_decode(file_get_contents('php://input'), true), $ahoy_data);
+		ap_ctrl(json_decode(file_get_contents('php://input'), true));
+   		header("Location: live.html");
+
 	} else {									# upload	-->SETTINGS - IMPORT (UPLOAD)
 		# https://stackoverflow.com/questions/57632438/post-is-empty-on-nginx
-		# $json_string_data = json_decode(file_get_contents('php://input'), true);
-		# operatingSave($json_string_data);
-
 		importSettings(json_decode(file_get_contents('php://input'), true));
-    	header("Location: index.html");
+   		header("Location: index.html");
 	}
+
 } elseif (isset($_GET)) {
 	$getKeys = array_keys($_GET);				# read _GET command line parameter
 	$getSwitch = count($getKeys) > 0 ? htmlspecialchars($getKeys[0]) : "noGetKey";
@@ -75,9 +78,9 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 }
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-	$filename .= "_local.json";
-	print json_encode(["version" => $filename] + ["ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
-	print "\n";
+#	$filename .= "_local.json";
+#	print json_encode(["version" => $filename] + ["ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
+#	print "\n";
 }
 
 EOF:

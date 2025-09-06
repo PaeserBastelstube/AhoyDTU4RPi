@@ -56,8 +56,10 @@ if (isset($status_data_yaml["inverter_ser"])) {
 
 $inverter_grid = "inverter_grid_" . $inverter_id . "_json";
 if (isset($ahoy_data["inverters"][$inverter_id]["name"])) {
-	$$inverter_grid = ["name" => $ahoy_data["inverters"][$inverter_id]["name"],
-	"grid" => $grid_data['gridData']];
+	$$inverter_grid = [
+		"name" => $ahoy_data["inverters"][$inverter_id]["name"],
+		"grid" => $grid_data['gridData'] ?? ""
+	];
  } else {
 	$$inverter_grid = [];
 }
@@ -241,7 +243,7 @@ $$inverter_version = [
 	"boot_ver" => $hw_data_all["BL_VER"] ?? 0 
 ];
 
-# $inverter_alarm_0_json = [
+# $inverter_alarm_0_json 
 $inverter_alarm = "inverter_alarm_" . $inverter_id . "_json";
 $$inverter_alarm = [
 	"iv_id" => $inverter_id,
@@ -250,31 +252,36 @@ $$inverter_alarm = [
 	"last_id" => count($alarm_data) ?? 0,
 	"alarm" => []
 ];
-# for ($ii = 0; $ii < 50; $ii++) {
-#for ($ii = 0; $ii < $$inverter_alarm["last_id"]; $ii++) {
 for ($ii = $$inverter_alarm["last_id"]; $ii >= 0; $ii--) {
-	if ($alarm_data[$ii]["inv_alarm_num"] == 1) $alarm_data[$ii]["inv_alarm_cnt"] = 1;
-	if (isset($alarm_data[$ii])) array_push($$inverter_alarm["alarm"], 
-		[
-		"code" => $alarm_data[$ii]["inv_alarm_cnt"], 
-		"str" => $alarm_data[$ii]["inv_alarm_txt"] , 
-		"start" => $alarm_data[$ii]["inv_alarm_stm"],
-		"end" => $alarm_data[$ii]["inv_alarm_etm"]
-		]
-	);
+	if (isset($alarm_data[$ii])) {
+		if ($alarm_data[$ii]["inv_alarm_num"] == 1) $alarm_data[$ii]["inv_alarm_cnt"] = 1;
+		array_push($$inverter_alarm["alarm"], 
+			[
+			"code" => $alarm_data[$ii]["inv_alarm_cnt"] ?? 0, 
+			"str" => $alarm_data[$ii]["inv_alarm_txt"] ?? "", 
+			"start" => $alarm_data[$ii]["inv_alarm_stm"] ?? 0,
+			"end" => $alarm_data[$ii]["inv_alarm_etm"] ?? 0
+			]
+		);
+	}
 	else array_push($$inverter_alarm["alarm"], ["code" => 0, "str" => "Unknown", "start" => 0, "end" => 0]);
 }
+
+# $inverter_pwrack_0_json 
+$inverter_pwrack = "inverter_pwrack_" . $inverter_id . "_json";
+$$inverter_pwrack = ["ack" => false];
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
 	$argv[0] == "inverter_json.php") {
 	# header('Content-Type: application/json; charset=utf-8');
 	# print json_encode($_SERVER, JSON_PRETTY_PRINT);
 
-	print "/inverter_list_json:\n" . json_encode($inverter_list_json) . "\n";
-	print "/" . $inverter_pwrack . ":\n" . json_encode($$inverter_pwrack) . "\n";
-	print "/" . $inverter_var_id . ":\n" . json_encode($$inverter_var_id) . "\n";
-	print "/" . $inverter_version . ":\n" . json_encode($$inverter_version) . "\n";
-	print "/" . $inverter_grid . ":\n" . json_encode($$inverter_grid) . "\n";
-	print "/" . $inverter_alarm . ":\n" . json_encode($$inverter_alarm) . "\n";
+	print "/inverter_list_json"		. ":\n"	. json_encode($inverter_list_json)	. "\n";
+	print "/" . $inverter_pwrack	. ":\n" . json_encode($$inverter_pwrack)	. "\n";
+	print "/" . $inverter_var_id	. ":\n" . json_encode($$inverter_var_id)	. "\n";
+	print "/" . $inverter_version	. ":\n" . json_encode($$inverter_version)	. "\n";
+	print "/" . $inverter_grid		. ":\n" . json_encode($$inverter_grid)		. "\n";
+	print "/" . $inverter_alarm		. ":\n" . json_encode($$inverter_alarm)		. "\n";
+	print "/" . $inverter_pwrack	. ":\n" . json_encode($$inverter_pwrack)	. "\n";
 }
 ?>

@@ -1,6 +1,18 @@
-##
+################################################################################
 # WebService with NGINX for AhoyDTU
-#
+################################################################################
+
+################################################################################
+##rewrite_log on;
+##error_log   /tmp/AhoyDTU_nginx.log debug;
+
+##log_format postdata escape=json 
+##    '$remote_addr - [$time_local] '
+##    '"$request" $status $bytes_sent ' 
+##    '"$http_referer" "$request_body"';
+##access_log  /tmp/AhoyDTU_access.log  postdata;
+################################################################################
+
 server {
 	listen 80 default_server;
 	listen [::]:80 default_server;
@@ -39,14 +51,28 @@ server {
 ###############################################################################
 
 #	add_header Content-Type text/plain;
-#	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri";
+#	return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri";
 
-	location ~ ^/events$ {
-		#rewrite ^/(events)$ /api/$1.php last;
-		rewrite ^/(events)$ $scheme://$http_host/api/$1.php last;
+	location ~ ^/(events)$ {
+		limit_except GET { deny all; }
+		rewrite ^/(events)$ $scheme://$http_host/$1.php last;
 	add_header Content-Type text/plain;
 	return 200 "loc:events document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
     }
+
+	location ~ ^/api/(ctrl)+$ {
+		limit_except POST{ deny all; }
+		root /home/AhoyDTU/www/api;
+
+		# rewrite ^/api/(ctrl)$ $scheme://$http_host/operating.php?$1 last;
+		return 308 $scheme://$http_host/operating.php?$1;
+
+		#$uri=$scheme://$http_host/operating.php?$1;
+		#include /etc/nginx/snippets/fastcgi-php.conf;			# bei unbekannten Aufrufen wird =404 gesendet
+		#fastcgi_pass unix:/run/php/php8.2-fpm-ahoydtu.sock;		# Übergabe an PHP-FPM
+	add_header Content-Type text/plain;
+	return 200 "loc:ctrl document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
+	}
 
 	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump|AhoyDTU_.+)+$ {
 		limit_except GET POST{ deny all; }
@@ -59,7 +85,7 @@ server {
 	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
 	}
 
-	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat)+/?(.*)?$ {	#(G5)
+	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat|pwrack)+/?(.*)?$ {	#(G5)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
         # Problem, while connect via SSH-Tunnel

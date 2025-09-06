@@ -2,10 +2,10 @@
 header('Content-Type: application/json; charset=utf-8');
 
 
-$debug_fn = "/tmp/AhoyDTU_debug";
-function saveDebug($my_post, $ahoy_data){
+$debug_fn = "/tmp/AhoyDTU_debug.log";
+function saveDebug($my_post, $ahoy_data = ""){
 	global $debug_fn;
-	file_put_contents($debug_fn, "_my_in : " . json_encode($my_post)     . "\n", LOCK_EX);
+	file_put_contents($debug_fn, "_my_post: ". json_encode($my_post)     . "\n", LOCK_EX);
 	file_put_contents($debug_fn, "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents($debug_fn, "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents($debug_fn, "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
@@ -281,6 +281,17 @@ function saveSettings($my_post){
 }
 
 
+function ap_ctrl($my_post){				# Active Power Control for inverter
+	saveDebug($my_post);
+	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"66"}	# relative = in %
+	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_absolute","val":"870"}		# absolute in Watt
+	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_relative","val":"870"}		# persistent = Keep limit over inverter restart = yes
+	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"870"}	# nonpersistent = no
+
+	# Welche Kommandos müssen nun von der AhoyDTU an den WR gesendet werden?
+
+}
+
 function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
 	include 'generic_json.php';			# to load current AhoyDTU configuration
 
@@ -306,6 +317,9 @@ function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
 function saveInverter($my_post){
 	include 'generic_json.php';    # to load AhoyDTU configuration
 	saveDebug($my_post, $ahoy_data);
+
+	if (isset($my_post["cmd"]) and $my_post["cmd"] == "serial_utc_offset")	# call from serial WebConsole
+		$ahoy_data["WebServer"]["TimezoneOffset"] = $my_post["val"];
 
 	# add new / delete inverter ## see setup.html:736
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "save_iv") {  ## detect inverter commands
