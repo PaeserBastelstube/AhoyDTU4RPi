@@ -36,3 +36,7 @@ Folgende Ziele verfolgt das Projekt:
 * Daten in einer Volkszähler-Instanz (https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
 * Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein.
 
+Additional Informations:
+* [ Installation Instructions ](doc/Install.md)
+* [ Basics and Background (in German language only) ](wiki/Grundlagen-und-Hintergrund)
+
