@@ -10,7 +10,7 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU for Raspberry-Pi with NGINX WebServices
+# Installation Instructions for AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
 
 ## Installation-Requirements
 1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
@@ -92,10 +92,11 @@ zope.interface     7.2
 ```
 
 
-# NGINX WebServer
+# NGINX WebServer and Mosquitto-MQTT-Broker
 The allready known 'Ahoy on ESP8266 or ESP32' includes its own web server for presentation hoymiles inverter data.  
 In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.
-To do this, we need additional PHP FastCGI Process Manager, too.
+To do this, we need additional PHP FastCGI Process Manager, too.  
+To interact between AhoyDTU (python) and NGINX-WebService (php and php-fpm), we'll use a 'Mosquitto MQTT-Broker'.
 
 ## Installation of NGINX Web-Server (allready done)
 ```code
