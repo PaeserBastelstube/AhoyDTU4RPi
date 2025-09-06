@@ -10,7 +10,7 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU for Raspberry-Pi with WebServices
+# AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
 
 This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
 ***ahoy (lumapu)*** is licensed under
@@ -33,11 +33,12 @@ Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und de
 
 Folgende Ziele verfolgt das Projekt:
 * Daten von einem oder mehreren hoymiles-Mikrowechselrichtern zu sammeln und auf einem NGINX-WebServices darzustellen
-* Daten in einer Volkszähler-Instanz (https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
+* Daten in einem Smart-Meter (Volkszähler - https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
 * Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein.
 
 Additional Informations:
 * [ Installation Instructions ](doc/Install.md)
 * [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+
 
 
