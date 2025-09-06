@@ -94,7 +94,7 @@ zope.interface     7.2
 
 # NGINX WebServer and Mosquitto-MQTT-Broker
 The allready known 'Ahoy on ESP8266 or ESP32' includes its own web server for presentation hoymiles inverter data.  
-In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.
+In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.  
 To do this, we need additional PHP FastCGI Process Manager, too.  
 To interact between AhoyDTU (python) and NGINX-WebService (php and php-fpm), we'll use a 'Mosquitto MQTT-Broker'.
 
