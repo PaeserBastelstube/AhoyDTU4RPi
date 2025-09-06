@@ -12,27 +12,17 @@ This work is licensed under a
 ---
 # AhoyDTU for Raspberry-Pi with NGINX WebServices
 
-This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
-***ahoy (lumapu)*** is licensed under
-[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
-
-Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
-Development for Raspberry-PI controllers has been frozen. 
-In this project, the development of AhoyDTU for Raspberry PI processors is continued independently.
-For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted to use it on a Linux system with NGINX Web-Services.
-
-The goal is to collect data from one ore more hoymiles microinverters and present the data on a web-server (NGINX).  
-As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume of any power when using a battery.
-
 ## Installation-Requirements
 1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
 2. AhoyDTU based on python and need some python-modules, later more ...
 3. AhoyDTU with NGINX WebServices based on some specific linux packages. You have to install this packages:
    ```code
-   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio php-yaml nginx php-fpm
+   sudo apt-get update
+   sudo apt-get -y full-upgrade
+   sudo apt-get install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio php-yaml nginx php-fpm
    ```
-4. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or CGI-scripts from a USER-HOME directory.  
-   We prefere to install this project in: `/home/AhoyDTU` :
+4. AhoyDTU must be installed in a non-user HOME directory, because the Web-Server process cannot read HTML or PHP(CGI)-scripts from a USER-HOME directory.  
+   We prefere to install this project in: `/home/AhoyDTU`:
    ```code
    cd /home
    sudo mkdir AhoyDTU
@@ -44,17 +34,20 @@ As an additional feature, it is planed to control the hoymiles microinverter for
 git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
 ```
 
+## Create a PYTHON virtual environment
 Important: Debian 12 follows the recommendation of [`PEP 668`]
 (https://peps.python.org/pep-0668/)  
 Now, python is configured as "externally-managed-environment" !
 - You have to use a python virtual environment. See: `https://docs.python.org/3/library/venv.html`
 - You can install and manage python libs via `pip` in this virtual environment!
 
-## Create a PYTHON virtual environment
 ```code
 cd AhoyDTU
 python3 -m venv ahoyenv       ## create python virtual environment
-source ahoyenv/bin/activate   ## activate the virtual environment
+```
+If you need to start individual python scripts, activate the virtual environment with:  
+```code
+source ahoyenv/bin/activate
 ```
 
 ## AhoyDTU requires the installation of certain python libraries:
@@ -77,50 +70,32 @@ This step takes a while!
 ahoyenv/bin/python3 -m pip list         ## check: search for pyRF24
 Package            Version
 ------------------ ---------
-certifi            2025.4.26
+certifi            2025.7.14
 charset-normalizer 3.4.2
 crcmod             1.7
+DateTime           5.5
 idna               3.10
 jdcal              1.4.1
 paho-mqtt          2.1.0
-pip                20.3.4
-pkg-resources      0.0.0
+pip                23.0.1
 pyrf24             0.5.0
 pytz               2025.2
-requests           2.32.3
-ruamel.yaml        0.18.10
+requests           2.32.5
+ruamel.yaml        0.18.15
 ruamel.yaml.clib   0.2.12
-setuptools         44.1.1
+setuptools         66.1.1
 suntimes           1.1.2
-typing-extensions  4.14.0
+typing_extensions  4.14.1
 tzlocal            5.3.1
-urllib3            2.4.0
+urllib3            2.5.0
+zope.interface     7.2
 ```
 
 
-## start AhoyDTU manualy (marked to delete)
-```code
-cd ahoy
-/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml
-```
-
-## start AhoyDTU as user (system) service (marked to delete)
-```code
-systemctl --user enable /home/AhoyDTU/ahoy/ahoy.service  # to register AhoyDTU as (system) service
-systemctl --user status ahoy.service                     # to check status of service
-systemctl --user start ahoy.service                      # start AhoyDTU as (system) service
-
-for maintenance:
-systemctl --user restart ahoy.service
-systemctl --user stop ahoy.service
-systemctl --user disable ahoy.service
-```
-
-
-# Web-Server (NGINX)
-Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
-In this project, we integrate NGINX Web-Services to control AhoyDTU and present the data from the hoymiles inverters.
-To do this, we need the PHP FastCGI Process Manager, too.
+# NGINX WebServer
+The allready known 'Ahoy on ESP8266 or ESP32' includes its own web server for presentation hoymiles inverter data.  
+In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.
+To do this, we need additional PHP FastCGI Process Manager, too.
 
 ## Installation of NGINX Web-Server (allready done)
 ```code
@@ -128,19 +103,19 @@ sudo apt-get install -y nginx php-fpm php-yaml
 ```
 
 ## configure NGINX
-To configure NGINX, we need to change the ownership of all files in "www" directory and have
-to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
+To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from our AhoyDTU directory into NGINX and PHP configuration
 ```code
 cd /home/AhoyDTU
 sudo rm /etc/nginx/sites-enabled/default
-sudo ln -fs $(pwd)/etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
-sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
+sudo ln -fs etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
+sudo ln -fs etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
 ```
+Please change the PHP-version-directory if necessary.
 
-Finally, we have to restart NGINX Service
+Finally, we have to restart the system-servicesphp8.2-fpm
 ```code
-sudo systemctl restart nginx
+sudo systemctl restart nginx php8.2-fpm
 ```
 
 # Test your Web-Server
