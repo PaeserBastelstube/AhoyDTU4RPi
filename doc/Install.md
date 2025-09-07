@@ -92,15 +92,17 @@ zope.interface     7.2
 ```
 
 
-# NGINX WebServer and Mosquitto-MQTT-Broker
+# NGINX WebServer, Mosquitto-MQTT-Broker and Volkszaehler-Smart-Meter
 The allready known 'Ahoy on ESP8266 or ESP32' includes its own web server for presentation hoymiles inverter data.  
 In this project, we use NGINX Web-Services to control the AhoyDTU and present the data from the hoymiles inverters.  
 To do this, we need additional PHP FastCGI Process Manager, too.  
 For data exchange between AhoyDTU (Python) and NGINX WebService (PHP and PHP-FPM) we use a “Mosquitto MQTT broker”.
 
-## Installation of NGINX WebServer, PHP FastCGI Process Manager and Mosquitto
+## Middelware Installation
+NGINX WebServer, PHP FastCGI Process Manager and Mosquitto
+mariadb-server will need for (Volkszaehler) Smart-Meter
 ```code
-sudo apt-get install -y nginx php-fpm php-yaml mosquitto mosquitto-clients
+sudo apt-get install -y nginx php-fpm php-yaml php-mysql mosquitto mosquitto-clients mariadb-server
 ```
 
 ## configure NGINX
@@ -123,7 +125,7 @@ or
 sudo systemctl restart nginx php8.2-fpm mosquitto
 ```
 
-# Test your Web-Server
+## Test your Web-Server
 Now you can test, if your your WebServer can display your AhoyDTU startpage. Start your prefered browser and load the URL like this example:
 ```code
 http://Raspberry-PI.fritz.box
@@ -136,3 +138,34 @@ tail /var/log/nginx/access.log /var/log/nginx/error.log
 
 If NGINX works to control AhoyDTU, now we can configure our environment and inverters:
 
+## Konfiguration und Start der Datenbank „MariaDB“
+Die Betriebsdaten der AhoyDTU sollen mit Hilfe einer Volkszähler-Instanz gespeichert und ausgewertet werden.
+Zur Speicherung wird die Datenbank MariaDB verwendet, sie wurde bereits installiert.
+
+## Installation der Volkszähler-Instanz
+Die Volkszähler-Software wird von github heruntergeladen und im Verzeichnis /home installiert.
+Zur Nutzung durch den Webserver wird dieses Verzeichnis nach /var/www verlinkt.
+```code
+cd /home
+sudo mkdir volkszaehler
+sudo chown pi:pi volkszaehler
+git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
+```
+
+## PHP Composer installieren
+Innerhalb der Volkszähler Instanz laufen PHP-Scripte. Diese PHP-Scripte benötigen spezifische PHP-Bibliotheken. Damit diese PHP - Bibliotheken genutzt werden können, sind sie mit Hilfe des PHP Paketma-nager Composer zu installieren. Wir Installieren zuerst den PHP Paketmanager Composer.
+```code
+cd /tmp
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
+```
+Anschließend werden die PHP Pakete installiert:
+```code
+cd /home/volkszaehler/
+composer install
+```
+Wir erhalten verschiedenen Fehlermeldungen, daher werden einige „ignore“ Parameter angefügt und der Installationsprozess noch einmal gestartet:
+```code
+composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
+```
