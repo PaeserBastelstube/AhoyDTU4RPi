@@ -152,8 +152,6 @@ sudo chmod +x /usr/local/bin/composer
 cd /home/volkszaehler/
 composer install
 composer require php-mqtt/client
-```
-If we get various error messages, so we add some “ignore” parameters and start the installation process again:
-```code
+# If we get various error messages, so we add some “ignore” parameters and start the installation process again:
 composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 ```
