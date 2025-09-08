@@ -22,23 +22,22 @@ An MQTT broker is used for interprocess communication between the AhoyDTU (based
 
 The project pursues the following goals:
 * Collect data from one or more hoymiles microinverters and display it on an NGINX web service
-* Permanently store data in a Volkszaehler instance (https://github.com/volkszaehler/volkszaehler.org) and make it available for individual analysis
+* Permanent storage of the operating data of all inverters in a Volkszaehler-Smart-Meter instance (https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
 * As an additional feature, it is planned to reduce zero feed-in during battery operation. This requires a corresponding sensor on the electricity meter.
-
 ---
-
 Seit Anfang 2024 konzentriert sich die Wartung von ahoy (lumapu) auf die Programmierung von ESP-Mikrocontrollern. Die Entwicklung für Raspberry-PI-Controller wurde leider eingestellt.  
 In diesem Projekt wird die Entwicklung der AhoyDTU für Raspberry-PI-Controller unabhängig fortgesetzt. Zu diesem Zweck wurde die ahoy (lumapu) Version v0.8.155 kopiert und für die Nutzung auf einem Linux-System mit NGINX-WebServices angepasst.  
 Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und den WebServices (basierend auf PHP) dient ein MQTT-Broker.
 
 Folgende Ziele verfolgt das Projekt:
 * Daten von einem oder mehreren hoymiles-Mikrowechselrichtern zu sammeln und auf einem NGINX-WebServices darzustellen
-* Daten in einem Smart-Meter (Volkszähler - https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
-* Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein.
+* Dauerhafte Speicherung der Betriebsdaten aller Wechselrichter in einer Volkszaehler-Smart-Meter-Instanz (https://github.com/volkszaehler/volkszaehler.org) , sowie der individuellen Auswertung dieser Daten
+* Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein
 
 Additional Informations:
 * [ Installation Instructions ](doc/Install.md)
 * [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+
 
 
 
