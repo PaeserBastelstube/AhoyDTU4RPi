@@ -149,9 +149,9 @@ sudo chmod +x /usr/local/bin/composer
 
 # Installation of certain PHP package libraries 
 ```code
-composer require php-mqtt/client
 cd /home/volkszaehler/
 composer install
+composer require php-mqtt/client
 ```
 If we get various error messages, so we add some “ignore” parameters and start the installation process again:
 ```code
