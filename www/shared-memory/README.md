@@ -57,6 +57,10 @@ Zur Nutzung von `System-V Shared-Memory` in Python ist die folgende Bibliothek z
 [PHP-Script zum Schreiben der Daten](./sysV_out.php)  
 [PHP-Script zum Lesen der Daten](./sysV_in.php)  
 
+Weitere Grundlagen (Quelle)
+- Python: <https://semanchuk.com/philip/sysv_ipc/>
+- PHP: <https://www.php.net/manual/de/book.sem.php>
+
 ## Prüfen der shared-memory Objekte mit “ipcs”
 `ipcs` zeigt Informationen zu den Interprozesskommunikationsfunktionen von System-V Systemen an.
 Standardmäßig werden Informationen zu allen drei Ressourcen angezeigt:
