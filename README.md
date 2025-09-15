@@ -10,7 +10,7 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU for Raspberry-Pi with WebServices
+# AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
 
 This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
 ***ahoy (lumapu)*** is licensed under
@@ -22,17 +22,26 @@ An MQTT broker is used for interprocess communication between the AhoyDTU (based
 
 The project pursues the following goals:
 * Collect data from one or more hoymiles microinverters and display it on an NGINX web service
-* Permanently store data in a Volkszaehler instance (https://github.com/volkszaehler/volkszaehler.org) and make it available for individual analysis
-* As an additional feature, it is planned to reduce zero feed-in during battery operation. This requires a corresponding sensor on the electricity meter.
-
+* Permanent storage of the operating data of all inverters in a Volkszaehler-Smart-Meter instance (https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
+* Alternative, you can configure InfluxDB 2.x Dashboard for a photovoltaic system
+* As an additional feature, it is planned to implement zero feed-in in battery operation. A corresponding sensor on the electricity meter is required for this.
 ---
-
 Seit Anfang 2024 konzentriert sich die Wartung von ahoy (lumapu) auf die Programmierung von ESP-Mikrocontrollern. Die Entwicklung für Raspberry-PI-Controller wurde leider eingestellt.  
 In diesem Projekt wird die Entwicklung der AhoyDTU für Raspberry-PI-Controller unabhängig fortgesetzt. Zu diesem Zweck wurde die ahoy (lumapu) Version v0.8.155 kopiert und für die Nutzung auf einem Linux-System mit NGINX-WebServices angepasst.  
 Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und den WebServices (basierend auf PHP) dient ein MQTT-Broker.
 
 Folgende Ziele verfolgt das Projekt:
 * Daten von einem oder mehreren hoymiles-Mikrowechselrichtern zu sammeln und auf einem NGINX-WebServices darzustellen
-* Daten in einer Volkszähler-Instanz (https://github.com/volkszaehler/volkszaehler.org) dauerhaft zu speichern und für individuelle Auswertungen bereitzustellen
-* Als zusätzliche Funktion ist es geplant, bei Batteriebetrieb eine Nulleinspeisung zu reduzieren. Hierbei muss am Stromzähler ein entsprechender Sensor vorhanden sein.
+* Dauerhafte Speicherung der Betriebsdaten aller Wechselrichter in einer Volkszaehler-Smart-Meter-Instanz (https://github.com/volkszaehler/volkszaehler.org) , sowie der individuellen Auswertung dieser Daten
+* Alternativ können Sie das InfluxDB 2.x Dashboard für eine Photovoltaikanlage konfigurieren
+* Als zusätzliches Feature ist geplant, die Nulleinspeisung im Batteriebetrieb zu implementieren. Hierzu ist ein entsprechender Sensor am Stromzähler erforderlich.
+
+Additional Informations:
+* [ Installation Instructions ](doc/Install.md)
+* [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+
+
+
+
+
 

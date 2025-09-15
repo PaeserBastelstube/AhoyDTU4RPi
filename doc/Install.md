@@ -10,54 +10,61 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU for Raspberry-Pi with NGINX WebServices
+# Installation Instructions for AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
+The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present the Hoymiles inverter data and to configure the system environment.
+In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment, as well as to display the Hoymiles inverter data.  
+For this we also need a `PHP FastCGI Process Manager` and we use the `Mosquitto MQTT Broker` for data exchange.  
+To permanent storage of the operating data of all inverters, we'll use a `Volkszaehler-Smart-Meter instance` (https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
 
-This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
-***ahoy (lumapu)*** is licensed under
-[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
-
-Since the beginning of 2024, the maintenance of ahoy (lumapu) has focused on programming ESP microcontrollers.
-Development for Raspberry-PI controllers has been frozen. 
-In this project, the development of AhoyDTU for Raspberry PI processors is continued independently.
-For this purpose, the ahoy (lumapu) version v0.8.155 was copied and adapted to use it on a Linux system with NGINX Web-Services.
-
-The goal is to collect data from one ore more hoymiles microinverters and present the data on a web-server (NGINX).  
-As an additional feature, it is planed to control the hoymiles microinverter for zero export, to reduce consume of any power when using a battery.
-
-## Installation-Requirements
 1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
-2. AhoyDTU based on python and need some python-modules, later more ...
-3. AhoyDTU with NGINX WebServices based on some specific linux packages. You have to install this packages:
+2. This project based on some specific linux packages, you have to install this packages first:
    ```code
-   sudo apt install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio php-yaml nginx php-fpm
+   sudo apt-get update
+   sudo apt-get -y full-upgrade
+   sudo apt-get -y install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
    ```
-4. AhoyDTU must be installed in a non-user HOME, because the Web-Server process cannot read HTML or CGI-scripts from a USER-HOME directory.  
-   We prefere to install this project in: `/home/AhoyDTU` :
+3. AhoyDTU must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
    ```code
    cd /home
    sudo mkdir AhoyDTU
    sudo chown pi:pi AhoyDTU/
+   git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
    ```
+4. Install Middleware with standard install-parameter and without any special security configurations
+   ```code
+   sudo apt-get install -y nginx php-fpm php-yaml php-mysql mosquitto mosquitto-clients mariadb-server
+   ```
+5. Install the Smart-Meter `Volkszaehler`
+   ```code
+   cd /home
+   sudo mkdir volkszaehler
+   sudo chown pi:pi volkszaehler
+   git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
+   ```
+6. AhoyDTU based on python and need some python-modules, later more ...
 
-## Download AhoyDTU from github
-```code
-git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
-```
 
+# Configuration instructions
+AhoyDTU and the various middleware components require individual specific configuration.
+
+
+## Create a PYTHON virtual environment and install Python modules
 Important: Debian 12 follows the recommendation of [`PEP 668`]
 (https://peps.python.org/pep-0668/)  
 Now, python is configured as "externally-managed-environment" !
 - You have to use a python virtual environment. See: `https://docs.python.org/3/library/venv.html`
 - You can install and manage python libs via `pip` in this virtual environment!
 
-## Create a PYTHON virtual environment
 ```code
-cd AhoyDTU
+cd /home/AhoyDTU
 python3 -m venv ahoyenv       ## create python virtual environment
-source ahoyenv/bin/activate   ## activate the virtual environment
+```
+If you need to start individual python scripts, activate the virtual environment with:  
+```code
+source ahoyenv/bin/activate
 ```
 
-## AhoyDTU requires the installation of certain python libraries:
+### AhoyDTU requires the installation of certain python libraries:
 ```code
 ahoyenv/bin/python3 -m pip install --upgrade paho-mqtt crcmod requests pyRF24 ruamel-yaml SunTimes datetime
 ```
@@ -72,79 +79,56 @@ cd ..
 This step takes a while!
 
 
-## Finally, check all installed `python modules`:
+### Finally, check all installed `python modules`:
 ```code
 ahoyenv/bin/python3 -m pip list         ## check: search for pyRF24
 Package            Version
 ------------------ ---------
-certifi            2025.4.26
+certifi            2025.7.14
 charset-normalizer 3.4.2
 crcmod             1.7
+DateTime           5.5
 idna               3.10
 jdcal              1.4.1
 paho-mqtt          2.1.0
-pip                20.3.4
-pkg-resources      0.0.0
+pip                23.0.1
 pyrf24             0.5.0
 pytz               2025.2
-requests           2.32.3
-ruamel.yaml        0.18.10
+requests           2.32.5
+ruamel.yaml        0.18.15
 ruamel.yaml.clib   0.2.12
-setuptools         44.1.1
+setuptools         66.1.1
 suntimes           1.1.2
-typing-extensions  4.14.0
+typing_extensions  4.14.1
 tzlocal            5.3.1
-urllib3            2.4.0
+urllib3            2.5.0
+zope.interface     7.2
 ```
 
 
-## start AhoyDTU manualy (marked to delete)
-```code
-cd ahoy
-/home/AhoyDTU/ahoyenv/bin/python3 -um hoymiles --log-transactions --verbose  --config ahoy.yml
-```
+## configure NGINX WebServer
+To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from you installed AhoyDTU directory into NGINX and PHP system configuration. But first, you have to remove the NGINX standard configuration!
 
-## start AhoyDTU as user (system) service (marked to delete)
-```code
-systemctl --user enable /home/AhoyDTU/ahoy/ahoy.service  # to register AhoyDTU as (system) service
-systemctl --user status ahoy.service                     # to check status of service
-systemctl --user start ahoy.service                      # start AhoyDTU as (system) service
-
-for maintenance:
-systemctl --user restart ahoy.service
-systemctl --user stop ahoy.service
-systemctl --user disable ahoy.service
-```
-
-
-# Web-Server (NGINX)
-Ahoy on ESP8266 or ESP32 includes its own web server for presentation hoymiles inverter data.
-In this project, we integrate NGINX Web-Services to control AhoyDTU and present the data from the hoymiles inverters.
-To do this, we need the PHP FastCGI Process Manager, too.
-
-## Installation of NGINX Web-Server (allready done)
-```code
-sudo apt-get install -y nginx php-fpm php-yaml
-```
-
-## configure NGINX
-To configure NGINX, we need to change the ownership of all files in "www" directory and have
-to integrate (link) our AhoyDTU service into NGINX and check NGINX configuration
 ```code
 cd /home/AhoyDTU
 sudo rm /etc/nginx/sites-enabled/default
-sudo ln -fs $(pwd)/etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
-sudo ln -fs $(pwd)/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
+sudo ln -fs etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
+sudo ln -fs etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
 ```
+Please change the PHP-version-directory if necessary.  
+No configuration is required for the standard installation of Mosquito.
 
-Finally, we have to restart NGINX Service
+Finally, we have to restart the system-services for nginx and php8.2-fpm.  
+If you have any private 'mosquitto' configurations, a restart is nessasary.
 ```code
-sudo systemctl restart nginx
+sudo systemctl restart nginx php8.2-fpm
+or
+sudo systemctl restart nginx php8.2-fpm mosquitto
 ```
 
-# Test your Web-Server
-Now you can test, if your your WebServer can display your AhoyDTU startpage. Start your prefered browser and load the URL like this example:
+## Test your Web-Server
+Now you can test your NGINX WebServer. Start your prefered browser on your PC, Tablet or mobile-phone and call your Raspberry-pi, like in this example:
 ```code
 http://Raspberry-PI.fritz.box
 ```
@@ -154,5 +138,21 @@ If you have an trouble, have a look on NGINX log files:
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
 
-If NGINX works to control AhoyDTU, now we can configure our environment and inverters:
+## Install PHP Composer
+Our `Smart-Meter Volkszaehler` calls some PHP-scripts and these PHP-scripts require specific PHP-libraries. In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`. We first install the PHP-package-manager.
+```code
+cd /tmp
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+sudo chmod +x /usr/local/bin/composer
+```
 
+# Installation of certain PHP package libraries 
+```code
+cd /home/volkszaehler/
+composer install
+composer require php-mqtt/client
+# If we get various error messages, so we add some “ignore” parameters and start the installation process again:
+composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
+composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
+```
