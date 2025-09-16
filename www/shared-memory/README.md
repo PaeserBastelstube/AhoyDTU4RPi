@@ -74,9 +74,11 @@ Standardmäßig werden Informationen zu allen drei Ressourcen angezeigt:
 •	Nachrichtenwarteschlangen
 •	Semaphor-Arrays.
 ```code
-ipcs		# By default it shows information about all three resources
-ipcs -m	# information about active shared memory segments
-ipcs -q	# information about active message queues
-ipcs -s	# information about active semaphore sets
+ipcs        # By default it shows information about all three resources
+ipcs -m	    # information about active shared memory segments
+ipcs -q	    # information about active message queues
+ipcs -s	    # information about active semaphore sets
+
+man ipcrm   # remove System-V interprocess entities 
 ```
 
