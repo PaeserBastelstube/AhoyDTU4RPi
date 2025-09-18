@@ -17,10 +17,16 @@ fclose($fd);                      # close file-handle
 #      "id" must be as chr(string) - hex(0x30) = dec(48) = chr("0") 
 $ftokKey = ftok($filePathName, "0");
 print("ftokKey=" . $ftokKey . " hex=0x" . dechex($ftokKey) . PHP_EOL);
-$sem_id = sem_get($ftokKey, 1);          # creating a semaphore
 
 while (1) {
     $TSnow = date('d.m.YTH:i:s');        # create TimeStamp
+    $sem_id = @sem_get($ftokKey);        # creating a semaphore
+    if (False == $sem_id) {
+        print ("can't create or open the Semaphore with KEY: " . $ftokKey . PHP_EOL);
+        print ("Please check Semaphore permission!" . PHP_EOL);
+        break;
+    }
+
     if (sem_acquire($sem_id)) {          # acquiring the semaphore
                                          # create shared memeory object
         $shdMemObj = shmop_open($ftokKey, "c", 0644, strlen($TSnow));
@@ -40,8 +46,8 @@ while (1) {
     }
 }
 
-sem_remove($sem_id);                     # delete a semaphore
+# sem_remove($sem_id);                     # delete a semaphore
 
-echo ("please call 'ipcs -m' to control Shared Memory" . PHP_EOL);
+echo (PHP_EOL . "To control shared-memory and semaphore, please call 'ipcs' or remove with 'ipcrm -r ID'" . PHP_EOL);
 echo ("look at: 'cat /proc/sysvipc/shm'" . PHP_EOL);
 ?>

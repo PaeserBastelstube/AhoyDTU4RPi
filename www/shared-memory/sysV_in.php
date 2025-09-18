@@ -17,10 +17,15 @@ fclose($fd);                      # close file-handle
 # "id" must be in chr(string) - hex(0x30) = dec(48) = chr("0") 
 $ftokKey = ftok($filePathName, "0");
 print("ftokKey=" . $ftokKey . " hex=0x" . dechex($ftokKey) . PHP_EOL);
-$sem_id = sem_get($ftokKey, 1);         # creating a semaphore
 
 do {
-  if (sem_acquire($sem_id)) {             # acquiring the semaphore
+  $sem_id = @sem_get($ftokKey, 1, 0o666, 1);       # creating a semaphore
+  if (False == $sem_id) {
+    print ("can't create or open the Semaphore with KEY: 0x" . dechex($ftokKey) . PHP_EOL);
+    break;
+  }
+
+  if (sem_acquire($sem_id)) {           # acquiring the semaphore
     $shdMemObj = @shmop_open($ftokKey, "a", 0644, 0);
     if (!$shdMemObj) {
         echo "Couldn't connect to shared memory segment\n";
@@ -42,7 +47,9 @@ do {
         echo "SHM Block Size: " . $shm_size . " byte found.\n";
         echo "The data inside shared memory was: " . $my_string . "\n";
     }
+    sem_remove($sem_id);                # remove the semaphore
   }
 } while (0);
-echo ("To control shared-memory and semaphore, please call 'ipcs'" . PHP_EOL);
+
+echo ("To control shared-memory and semaphore, please call 'ipcs' or remove with 'ipcrm -a'" . PHP_EOL);
 ?>

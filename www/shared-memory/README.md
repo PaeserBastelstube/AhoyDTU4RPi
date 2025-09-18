@@ -36,7 +36,7 @@ Weiterhin stehen folgende Arten der Kommunikation und zur Datenübertragung zur 
 ## Lösungsansätze
 Im ersten Lösungsansatz wurden die Betriebsdaten in einer Datei gespeichert und von den PHP-FPM Prozessen ausgelesen. Hierbei kam es immer wieder vor, dass eine "leere" Datei gelesen wurde. Diese Lösung funktioniert, wird aber nicht als "konsistente" Lösung angesehen.  
 Im zweiten Lösungsansatz wurde MQTT mit einem "Retain-Mechanismus" implementiert. Der Aufwand war scheinbar gering, jedoch konnte keine zufriedenstellende Programmierung gefunden werden.  
-Als dritter Lösungsansatz wurde die Datenübertragung über Shared-Memory untersucht. Hierbei wurde die Implementierung über System-V erfolgreich umgesetzt. Die Posix-Implementierung wurde nicht beendet.
+Als dritter Lösungsansatz wurde die Datenübertragung über System-V IPC (Semaphore, Shared-Memory, ...) untersucht. Diese Implementierung wurde erfolgreich getestet und wird nun umgesetzt.
 
 ## Shared-Memory
 `Shared Memory` ist ein vom Kernel verwalteter Speicherbereich, der zwei oder mehreren unabhängigen Prozessen den Zugriff auf denselben logischen Speicher ermöglicht.
