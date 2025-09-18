@@ -27,26 +27,36 @@ while (1) {
         break;
     }
 
-    if (sem_acquire($sem_id)) {          # acquiring the semaphore
+    if (sem_acquire($sem_id, false)) {   # acquiring the semaphore
+        print ("Semaphore set - value string len=" . strlen($TSnow) . PHP_EOL);
                                          # create shared memeory object
-        $shdMemObj = shmop_open($ftokKey, "c", 0644, strlen($TSnow));
+        $shdMemObj = @shmop_open($ftokKey, "c", 0644, strlen($TSnow));
         if (!$shdMemObj) {
-            echo "Couldn't create shared memory segment\n";
+			echo "Couldn't create shared memory segment, mybee there is an existing one?" . PHP_EOL;
+        	$shdMemObj = @shmop_open($ftokKey, "w", 0644, 0);
+        	if (!$shdMemObj) {
+				echo "Couldn't create shared memory segment" . PHP_EOL;
+                break;
+			}
         }
-
-        $shm_bytes_written = shmop_write($shdMemObj, $TSnow, 0);
-        shmop_close($shdMemObj);
-
-        if ($shm_bytes_written == strlen($TSnow))
-             print ("  len=" . $shm_bytes_written . "  TSnow=" . $TSnow . PHP_EOL);
-        else print ("  Couldn't write the entire length of data" . PHP_EOL);
-
-        sem_release($sem_id);            # release the semaphore
+        print("opened Shared-Memory with size=" . shmop_size($shdMemObj));
+        if (shmop_size($shdMemObj) == strlen($TSnow)) {
+			$shm_bytes_written = shmop_write($shdMemObj, $TSnow, 0);
+			shmop_close($shdMemObj);
+			if ($shm_bytes_written == strlen($TSnow))
+				print ("  len=" . $shm_bytes_written . "  TSnow=" . $TSnow);
+			else print ("  Couldn't write the entire length of data");
+		} else {
+			print(" - ERROR: need size of: " . strlen($TSnow) . " - delete SHM");
+			shmop_delete($shdMemObj); # vorhandenes SHM löschen
+		}
+		print PHP_EOL;
         sleep(1);
     }
+    sem_release($sem_id);                # release the semaphore
+    sem_remove($sem_id);                 # delete a semaphore
 }
 
-# sem_remove($sem_id);                     # delete a semaphore
 
 echo (PHP_EOL . "To control shared-memory and semaphore, please call 'ipcs' or remove with 'ipcrm -r ID'" . PHP_EOL);
 echo ("look at: 'cat /proc/sysvipc/shm'" . PHP_EOL);

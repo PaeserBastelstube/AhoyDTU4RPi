@@ -48,7 +48,7 @@ else:
     # Now the semaphore is safe to use.
     print(f"Semaphore successfully set with TimeStamp: {sem_id.o_time}")
 
-    a = input(f"Please close Semaphore-ID {sem_id}")
+    # a = input(f"Please close Semaphore-ID {sem_id}")
     try:        # to open Shared-Memory
         shdMemObj = sysv_ipc.SharedMemory(ftokKey)
         r_now = shdMemObj.read()        # read data from shared memory
