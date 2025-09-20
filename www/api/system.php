@@ -1,5 +1,5 @@
 <?php
-include 'system_json.php';
+require_once 'system_json.php';
 header('Content-Type: application/json; charset=utf-8');
 
 $arrKeys = array_keys($_GET);

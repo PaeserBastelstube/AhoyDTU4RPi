@@ -3,7 +3,7 @@ if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=u
 
 # SAVE-Button in "setup.html"
 if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") {
-	include 'operatingSave.php';
+	require_once 'operatingSave.php';
 
 	# SAVE-Button in "setup.html" - except "New Inverter"
 	if (isset($_POST) and count($_POST) > 0) {
@@ -17,7 +17,7 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
 		saveInverter(json_decode(file_get_contents('php://input'), true));
 	}
 } else {										# <-- GET
-  include 'setup_json.php';
+  require_once 'setup_json.php';
 
   $arrKeys = array_keys($_GET);
   if (count($arrKeys) > 0) {

@@ -255,7 +255,7 @@ class ResponseDecoder(ResponseDecoderFactory):
         return device(self.response,
                 time_rx=self.time_rx,
                 inverter_ser=self.inverter_ser,
-                inverter_name=self.inv_name,
+##kk                inverter_name=self.inv_name,
                 dtu_ser=self.dtu_ser,
                 strings=self.strings
                 )

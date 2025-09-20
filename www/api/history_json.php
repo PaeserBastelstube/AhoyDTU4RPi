@@ -1,5 +1,5 @@
 <?php
-include 'generic_json.php';
+require_once 'generic_json.php';
 
 $powerHistory_json = $generic_json + [
 	"refresh" => 3,

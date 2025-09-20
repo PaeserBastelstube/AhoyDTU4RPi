@@ -70,8 +70,8 @@ class Response:
         """
         :param bytes response: response payload bytes
         """
-        self.inverter_ser = params.get('inverter_ser', None)
-        self.inverter_name = params.get('inverter_name', None)
+##kk        self.inverter_ser = params.get('inverter_ser', None)
+##kk        self.inverter_name = params.get('inverter_name', None)
         self.response = args[0]
 
         strings = params.get('strings', None)
@@ -85,8 +85,8 @@ class Response:
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
         return {
-                'inverter_ser': self.inverter_ser,
-                'inverter_name': self.inverter_name,
+##kk                'inverter_ser': self.inverter_ser,
+##kk                'inverter_name': self.inverter_name,
                 }
 
 class StatusResponse(Response):

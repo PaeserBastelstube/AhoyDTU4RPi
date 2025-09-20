@@ -10,7 +10,7 @@ if (file_exists('../html/visualization.html') and ! is_link('../html/live.html')
 	header("Refresh:0");
 }
 # ACHTUNG: symlink must be set at first action - before "include" 
-include 'index_json.php';
+require_once 'index_json.php';
 
 print json_encode($index_json);
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm") {

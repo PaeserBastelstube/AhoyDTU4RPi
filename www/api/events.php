@@ -1,5 +1,5 @@
 <?php
-include 'generic_json.php';
+require_once 'generic_json.php';
 ob_start(); 								#Aktiviert die Ausgabepufferung
 
 header('Content-Type: text/event-stream');
@@ -22,7 +22,7 @@ for ($ii = 0; $ii < 6; $ii++) {
 	sleep(1); 
 }
 
-##$fn = $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_" . $ahoy_data["dtu"]["serial"] . ".log";
+##$fn = $ahoy_conf["WebServer"]["filepath"] . "/AhoyDTU_" . $ahoy_conf["dtu"]["serial"] . ".log";
 ##$fsize = filesize($fn);	
 ##$fsize = filesize($fn) - 1024;	
 ##$finode = fileinode($fn);

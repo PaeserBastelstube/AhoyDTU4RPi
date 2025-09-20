@@ -3,18 +3,18 @@
 # GET:	erase|get_setup|coredump|factory|reboot
 # POST:	save|upload
 
-include 'generic_json.php';						# read config
+require_once 'generic_json.php';						# read config
 $filename = date('Y-m-d_H-i-s') . "_v" . $generic_json["generic"]["version"];
 
 if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") {
-	include 'operatingSave.php';
+	require_once 'operatingSave.php';
 
 	if (isset($_POST) and count($_POST) > 0) {	# save		-->SETTINGS --> SAVE SETTINGS
 		saveSettings($_POST);
    		header("Location: index.html");
 
     } elseif (isset($_GET['ctrl'])) {			# Active Power Control for inverter
-		# saveDebug(json_decode(file_get_contents('php://input'), true), $ahoy_data);
+		# saveDebug(json_decode(file_get_contents('php://input'), true), $ahoy_conf);
 		ap_ctrl(json_decode(file_get_contents('php://input'), true));
    		header("Location: live.html");
 
@@ -37,13 +37,13 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header('Content-Type: application/octet-stream');
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=' . $filename);
-		unset($ahoy_data["iface"]);
-		print json_encode(["version" => $filename, "ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
+		unset($ahoy_conf["iface"]);
+		print json_encode(["version" => $filename, "ahoy" => $ahoy_conf], JSON_PRETTY_PRINT);
 
 	} elseif ($getSwitch == "factory") {		# factory	-->SYSTEM --> FACTORY RESET
 		$toUnlinkArray  = array($ahoy_config["filename"], "../html/colors.css", "../html/live.html");
-		# array_push($toUnlinkArray, $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU_*.log*");
-		array_push($toUnlinkArray, $ahoy_data["WebServer"]["filepath"] . "/AhoyDTU*");
+		# array_push($toUnlinkArray, $ahoy_conf["WebServer"]["filepath"] . "/AhoyDTU_*.log*");
+		array_push($toUnlinkArray, $ahoy_conf["WebServer"]["filepath"] . "/AhoyDTU*");
 		foreach ($toUnlinkArray as $wildcardToUnlink) {
 			foreach (glob($wildcardToUnlink) as $fileToUnlink) {
 				if (file_exists($fileToUnlink)) unlink ($fileToUnlink);
@@ -54,9 +54,9 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 	} elseif ($getSwitch == "reboot") {			# reboot	-->SYSTEM --> REBOOT
 		include 'system_json.php';						# read config
 		header('Content-Type: text/plain');
-		print json_encode(["reboot" => "tbd","ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
+		print json_encode(["reboot" => "tbd","ahoy" => $ahoy_conf], JSON_PRETTY_PRINT);
 		print"\n";
-		print json_encode(["ahoy_data" => $system_json], JSON_PRETTY_PRINT);
+		print json_encode(["ahoy_conf" => $system_json], JSON_PRETTY_PRINT);
 
 	} elseif ($getSwitch == "coredump") {		# coredump	-->SYSTEM --> DOWNLOAD COREDUMP
 		$filename .= "_coredump.json";
@@ -65,7 +65,7 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		header('Content-Type: application/octet-stream');
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=' . $filename);
-		print json_encode(["version" => $filename, "coredump" => $ahoy_data, "system" => $system_json, "inverter_list" => $inverter_list_json], JSON_PRETTY_PRINT);
+		print json_encode(["version" => $filename, "coredump" => $ahoy_conf, "system" => $system_json, "inverter_list" => $inverter_list_json], JSON_PRETTY_PRINT);
 
 	} elseif (str_starts_with($getSwitch, "AhoyDTU_")) {		# -->SYSTEM --> AhoyDTU_*
 		$shell_RC = shell_exec("/usr/bin/bash operatingShell.sh $getSwitch 2>&1");
@@ -79,7 +79,7 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
 #	$filename .= "_local.json";
-#	print json_encode(["version" => $filename] + ["ahoy" => $ahoy_data], JSON_PRETTY_PRINT);
+#	print json_encode(["version" => $filename] + ["ahoy" => $ahoy_conf], JSON_PRETTY_PRINT);
 #	print "\n";
 }
 

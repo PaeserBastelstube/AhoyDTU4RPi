@@ -1,5 +1,5 @@
 <?php
-include 'html_json.php';
+require_once 'html_json.php';
 if (! isset($_SERVER["TERM"]) ) {
 	header('Content-Type: application/json; charset=utf-8');
 }
@@ -17,7 +17,7 @@ if (count($arrKeys) > 0) {
 if (isset ($$var_name)) {
   print json_encode($$var_name);
 # } else {
-#  include 'api.php';
+#  require_once 'api.php';
 }
 
 ?>

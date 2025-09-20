@@ -9,7 +9,7 @@ if (isset($arrKeys) and (count($arrKeys) > 0) and (htmlspecialchars($arrKeys[0])
 	$inverter_id = intval(htmlspecialchars($_GET[$arrKeys[0]]));					# _GET's first key is index number of inverter
 	$inverter_var_name = "inverter_" . $arrKeys[0] . "_" . $inverter_id . "_json";				# change name of variable
 }
-include 'inverter_json.php';			# load inverter data - need variable $inverter_id if exists!!
+require_once 'inverter_json.php';			# load inverter data - need variable $inverter_id if exists!!
 
 if (isset ($$inverter_var_name)) {
 	if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") print($inverter_var_name) . "\n"; 

@@ -158,7 +158,7 @@ class MqttOutputPlugin(OutputPluginFactory):
     """ Mqtt output plugin """
     client = None
 
-    def __init__(self, config, cb_message, **params):
+    def __init__(self, config, on_message, **params):
         """
         Initialize MqttOutputPlugin
 
@@ -209,36 +209,61 @@ class MqttOutputPlugin(OutputPluginFactory):
         self.client.connect(config.get('host', '127.0.0.1'), config.get('port', 1883))
         self.client.loop_start()
 
-        self.qos = config.get('QoS', 0)         # Quality of Service
-        self.ret = config.get('Retain', True)   # Retain Message
+        self.topic = config.get('sub_topic', "")  # Topic for subscribe messages
+        self.qos   = config.get('QoS', 0)         # Quality of Service
+        self.ret   = config.get('Retain', True)   # Retain Message
 
         # connect own (PAHO) callback functions
         self.client.on_connect = self.mqtt_on_connect
-        self.client.on_message = cb_message
+        self.client.on_message = on_message
 
-    # MQTT(PAHO) callcack method to inform about connection to mqtt broker
     def mqtt_on_connect(self, client, userdata, flags, reason_code, properties):
+        """
+        The callback called when the broker reponds to our connection request.
+        https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.on_connect
+        Parameters:    
+            client         – the client instance for this callback
+            userdata       – the private user data as set in Client() or user_data_set()
+            connect_flags  – the flags for this connection
+            reason_code    – the connection reason code received from the broken.
+            properties     – the MQTT v5.0 properties received from the broker.
+        """
         if flags.session_present:
            logging.info("flags.session_present")
-        if reason_code == 0:                                   # success connect
+        if reason_code == 0:                    # success connect
            if HOYMILES_VERBOSE_LOGGING:
               logging.info(f"MQTT: connect to Broker established: {self.client.host}:{self.client.port} as user {self.client.username}")
-        if reason_code > 0:                                    # error processing
+        if reason_code > 0:                     # error processing
            logging.error(f'MQTT connect to broker failed: {reason_code}')
 
-
     def disco(self, **params):
+        """
+            disconnect mqtt when press CTRL-C
+        """
         self.client.loop_stop()    # Stop loop 
         self.client.disconnect()   # disconnect
         return
 
-    def info2mqtt(self, mqtt_topic, mqtt_data):
-        for mqtt_key in mqtt_data:
-            self.client.publish(f'{mqtt_topic}/{mqtt_key}', mqtt_data[mqtt_key], self.qos, self.ret)
+    def info2mqtt(self, mqtt_payload):
+        """
+        https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.publish
+        Publish a message on a topic.
+            This causes a message to be sent to the broker and subsequently from the broker to any clients subscribing to matching topics.
+        Parameters:
+            topic (str) – The topic that the message should be published on.
+            payload     – The actual message to send. If not given, or set to None a zero length message will be used. 
+                          Passing an int or float will result in the payload being converted to a string representing that number. 
+            qos (int)   – The quality of service level to use.
+            retain (bool) – If set to true, the message will be set as the “last known good”/retained message for the topic.
+            properties  – the MQTT v5.0 properties to be included.
+        """
+        if HOYMILES_VERBOSE_LOGGING:
+            logging.info(f"info2mqtt: {self.topic=} {mqtt_payload=}")
+        for mqtt_key in mqtt_payload:
+            self.client.publish(f"{self.topic}/{mqtt_key}", mqtt_payload[mqtt_key], self.qos, self.ret)
         return
 
-    # def store_status(self, response, **params):
-    def store_status(self, data, **params):
+    def store_status(self, InfoCommand, data, **params):
         """
         Publish StatusResponse object
 
@@ -249,24 +274,75 @@ class MqttOutputPlugin(OutputPluginFactory):
         :raises ValueError: when response is not instance of StatusResponse
         """
 
-        # data = response.__dict__()       # convert response-parameter into python-dict
-
         if data is None:
             logging.warn("OUTPUT-MQTT: received data object is empty")
             return
 
-        topic = f'{data.get("inverter_name", "hoymiles")}/{data.get("inverter_ser", None)}'
+        topic = f'{data.get("inverter_ser", "no_topic")}'
 
         if HOYMILES_TRANSACTION_LOGGING:
-           logging.info(f'MQTT topic  : {topic}')
-           logging.info(f'MQTT payload: {data}')
+           logging.info(f'MQTT: {InfoCommand=} {topic=} {data=}')
 
-        # if isinstance(response, StatusResponse):
-        if 'phases' in data and 'strings' in data:
+        if InfoCommand == "InverterDevInform_Simple":      # 0x00 - Hard/Software Version
+            logging.debug(f"MQTT: {data['FLD_PART_NUM']=} {data['FLD_HW_VERSION']=} {data['FLD_GRID_PROFILE_CODE']=} {data['FLD_GRID_PROFILE_VERSION']=}")
+            self.client.publish(f'{topic}/FLD_PART_NUM', data["FLD_PART_NUM"], self.qos, self.ret)
+            self.client.publish(f'{topic}/FLD_HW_VERSION', data["FLD_HW_VERSION"], self.qos, self.ret)
+            self.client.publish(f'{topic}/FLD_GRID_PROFILE_CODE', data["FLD_GRID_PROFILE_CODE"], self.qos, self.ret)
+            self.client.publish(f'{topic}/FLD_GRID_PROFILE_VERSION', data["FLD_GRID_PROFILE_VERSION"], self.qos, self.ret)
 
+        elif InfoCommand == "InverterDevInform_All":       # 0x01 - Firmware
+            logging.debug(f"MQTT: Firmware version {data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}, "
+                          f"build at {data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T"
+                          f"{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}, "
+                          f"Bootloader version {data['BL_VER']}")
+
+            payload = f"{data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}"
+            self.client.publish(f'{topic}/FirmwareVersion', payload , self.qos, self.ret)
+
+            payload = f"{data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}"
+            self.client.publish(f'{topic}/FirmwareBuild_at', payload, self.qos, self.ret)
+
+            payload = f"{data['BL_VER']}"
+            self.client.publish(f'{topic}/bootloaderVersion', payload, self.qos, self.ret)
+
+        elif InfoCommand == "GridOnProFilePara":           # 0x02 - GridOnProFilePara
+            logging.debug(f"MQTT: {data['gridData']=}")
+            self.client.publish(f'{topic}/GridOnProFilePara', data['gridData'], self.qos, self.ret)
+
+        elif InfoCommand == "SystemConfigPara":            # 0x05 - SystemConfigPara
+            logging.debug(f"MQTT: {data=}")
+            #self.client.publish(f'{topic}/GridOnProFilePara', data['gridData'], self.qos, self.ret)
+
+        elif InfoCommand == "RealTimeRunData_Debug":       # 0x0B - StatusResponse
             # Global Head
             if data['time'] is not None:
+               logging.debug(f"MQTT: Time: {data['time'].strftime('%d.%m.%YT%H:%M:%S')}")
                self.client.publish(f'{topic}/time', data['time'].strftime("%d.%m.%YT%H:%M:%S"), self.qos, self.ret)
+
+            # Global
+            if data['yield_today'] is not None:
+               logging.debug(f"MQTT: yield_today: {data['yield_today']}")
+               self.client.publish(f'{topic}/yield_today', data['yield_today'], self.qos, self.ret)
+
+            if data['yield_total'] is not None:
+               logging.debug(f"MQTT: yield_total: {data['yield_total']}")
+               self.client.publish(f'{topic}/yield_total', data['yield_total'], self.qos, self.ret)
+
+            if data['efficiency'] is not None:
+               logging.debug(f"MQTT: efficiency: {data['efficiency']}")
+               self.client.publish(f'{topic}/efficiency', data['efficiency'], self.qos, self.ret)
+
+            if data['powerfactor'] is not None:
+               logging.debug(f"MQTT: powerfactor: {data['powerfactor']}")
+               self.client.publish(f'{topic}/powerfactor', data['powerfactor'], self.qos, self.ret)
+
+            if data['event_count'] is not None:
+               logging.debug(f"MQTT: event_count: {data['event_count']}")
+               self.client.publish(f'{topic}/total_events', data['event_count'], self.qos, self.ret)
+
+            if data['temperature'] is not None:
+               logging.debug(f"MQTT: temperature: {data['temperature']}")
+               self.client.publish(f'{topic}/temperature', data['temperature'], self.qos, self.ret)
 
             # AC Data
             phase_id = 0
@@ -299,33 +375,16 @@ class MqttOutputPlugin(OutputPluginFactory):
                     string_id = string_id + 1
                     string_sum_power += string['power']
 
-            # Global
-            if data['event_count'] is not None:
-               self.client.publish(f'{topic}/total_events', data['event_count'], self.qos, self.ret)
-            if data['powerfactor'] is not None:
-               self.client.publish(f'{topic}/PF_AC', data['powerfactor'], self.qos, self.ret)
-            self.client.publish(f'{topic}/Temp', data['temperature'], self.qos, self.ret)
-            if data['yield_total'] is not None:
-               self.client.publish(f'{topic}/YieldTotal', data['yield_total']/1000, self.qos, self.ret)
-            if data['yield_today'] is not None:
-               self.client.publish(f'{topic}/YieldToday', data['yield_today']/1000, self.qos, self.ret)
-            if data['efficiency'] is not None:
-                self.client.publish(f'{topic}/Efficiency', data['efficiency'], self.qos, self.ret)
+        elif InfoCommand == "AlarmcwData":     # 0x11 - AlarmData
+            logging.debug(f"MQTT: AlarmData: {data}")
 
-        elif isinstance(response, Response_InverterDevInform_All):
-            logging.debug(f"send to mqtt brocker: Firmware version {data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}, "
-                f"build at {data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T"
-                f"{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}, "
-                f"Bootloader version {data['BL_VER']}")
-
-            payload = f'{FW_ver_maj}.{FW_ver_min}.{FW_ver_pat}'
-            self.client.publish(f'{topic}/Firmware/Version', payload , self.qos, self.ret)
-
-            payload = f'{FW_build_dd}/{FW_build_mm}/{FW_build_yy}T{FW_build_HH}:{FW_build_MM}'
-            self.client.publish(f'{topic}/Firmware/Build_at', payload, self.qos, self.ret)
-
-            payload = f'{BL_VER}'
-            self.client.publish(f'{topic}/bootloader-version', payload, self.qos, self.ret)
+        elif InfoCommand == "AlarmUpdate":     # 0x12 - AlarmUpdate
+            logging.debug(f"MQTT: {data['inv_alarm_num']=} {data['inv_alarm_txt']=} {data['inv_alarm_cnt']=} {data['inv_alarm_stm']=} {data['inv_alarm_etm']=}")
+            self.client.publish(f'{topic}/inv_alarm_num', data["inv_alarm_num"], self.qos, self.ret)
+            self.client.publish(f'{topic}/inv_alarm_txt', data["inv_alarm_txt"], self.qos, self.ret)
+            self.client.publish(f'{topic}/inv_alarm_cnt', data["inv_alarm_cnt"], self.qos, self.ret)
+            self.client.publish(f'{topic}/inv_alarm_stm', data["inv_alarm_stm"], self.qos, self.ret)
+            self.client.publish(f'{topic}/inv_alarm_etm', data["inv_alarm_etm"], self.qos, self.ret)
 
         else:
              raise ValueError('Data needs to be instance of StatusResponse or a instance of Response_InverterDevInform_All')

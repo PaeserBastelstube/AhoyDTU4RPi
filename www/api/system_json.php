@@ -5,15 +5,15 @@
 # important to learn about "preg_match_all"
 # https://www.phpliveregex.com/#tab-preg-match-all
 #
-include 'generic_json.php';
+require_once 'generic_json.php';
 
 # additional network configuration
-$iface = $ahoy_data["iface"][2][0];
+$iface = $ahoy_conf["iface"][2][0];
 preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $iface")), $ifconfig);
-$ahoy_data["iface"]["net_mask"] = $ifconfig[1][0];	# net_mask
-$ahoy_data["iface"]["net_mac"]  = $ifconfig[2][1];	# net_mac
+$ahoy_conf["iface"]["net_mask"] = $ifconfig[1][0];	# net_mask
+$ahoy_conf["iface"]["net_mac"]  = $ifconfig[2][1];	# net_mac
 
-if ($ahoy_data["iface"]["wired"]){		# no WiFi - wired ethernet
+if ($ahoy_conf["iface"]["wired"]){		# no WiFi - wired ethernet
 	$net_wifi_channel = "";
 } else {
 	$iwlist_including_status = trim(shell_exec("iwlist $iface frequency 2>&1; echo $?"));
@@ -43,26 +43,26 @@ $flash  = preg_split("/\s+/", shell_exec("free | awk '/Mem/ {print}'"));
 $system_json = [
 	"device_name"  => $generic_json["generic"]["host"],
 	"dark_mode"    => readlink('../html/colors.css') == "../html/colorDark.css",
-	"sched_reboot" => $ahoy_data["WebServer"]["system"]["sched_reboot"] ?? false,
+	"sched_reboot" => $ahoy_conf["WebServer"]["system"]["sched_reboot"] ?? false,
 	"pwd_set"      => $generic_json["generic"]["menu_protEn"],
 	"prot_mask"    => $generic_json["generic"]["menu_mask"]
 	]
     + $generic_json + [
 	"radioNrf"	=> [
-		"en"			=> $ahoy_data["nrf"]["enabled"] ?? false,
+		"en"			=> $ahoy_conf["nrf"]["enabled"] ?? false,
 		"isconnected"	=> 1,
-		"dataRate"		=> $ahoy_data["nrf"]["spiSpeed"] ?? 1000000,
-		"irqOk"			=> isset($ahoy_data["nrf"]["spiIrq"]) ? 1 : 2,
-		"sn"			=> $ahoy_data["dtu"]["serial"] ?? 0
+		"dataRate"		=> $ahoy_conf["nrf"]["spiSpeed"] ?? 1000000,
+		"irqOk"			=> isset($ahoy_conf["nrf"]["spiIrq"]) ? 1 : 2,
+		"sn"			=> $ahoy_conf["dtu"]["serial"] ?? 0
 	],
 	"radioCmt" => [
-		"en"          => $ahoy_data["cmt"]["enabled"] ?? false,
+		"en"          => $ahoy_conf["cmt"]["enabled"] ?? false,
 		"isconnected" => 1,
-		"sn"          => $ahoy_data["cmt"]["serial"] ?? "",
-		"irqOk"       => $ahoy_data["cmt"]["cmtIrqOk"] ?? 2
+		"sn"          => $ahoy_conf["cmt"]["serial"] ?? "",
+		"irqOk"       => $ahoy_conf["cmt"]["cmtIrqOk"] ?? 2
 	],
 	"mqtt" => [
-		"enabled"   => $ahoy_data["mqtt"]["enabled"] ?? false,
+		"enabled"   => $ahoy_conf["mqtt"]["enabled"] ?? false,
 		"connected" => false,
 		"tx_cnt"    => 0,
 		"rx_cnt"    => 0,
@@ -70,12 +70,12 @@ $system_json = [
 	],
 	"network" => [
 		"wifi_channel" => $net_wifi_channel,			# RestApi.h:807
-		"wired"        => $ahoy_data["iface"]["wired"],
+		"wired"        => $ahoy_conf["iface"]["wired"],
 		"ap_pwd"       => "esp_8266",		# Standard PW
-		"ssid"         => $ahoy_data["iface"]["essid"],
-		"hidd"         => ($ahoy_data["iface"]["rssi"] < 0 and $ahoy_data["iface"]["essid"] == "") ? true : false,
-		"mac"          => $ahoy_data["iface"]["net_mac"],
-		"ip"           => $ahoy_data["iface"][4][0]
+		"ssid"         => $ahoy_conf["iface"]["essid"],
+		"hidd"         => ($ahoy_conf["iface"]["rssi"] < 0 and $ahoy_conf["iface"]["essid"] == "") ? true : false,
+		"mac"          => $ahoy_conf["iface"]["net_mac"],
+		"ip"           => $ahoy_conf["iface"][4][0]
 	],
 	"chip" => [
 		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),

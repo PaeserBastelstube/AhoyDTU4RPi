@@ -1,6 +1,6 @@
 <?php
 #include 'generic_json.php';
-include 'system_json.php';
+require_once 'system_json.php';
 
 $html_save_json = $generic_json + [
 	"pending" => false,

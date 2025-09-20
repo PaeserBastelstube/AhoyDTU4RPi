@@ -1,11 +1,11 @@
 <?PHP
-include 'generic_json.php';
+require_once 'generic_json.php';
 
 $requestScheme = $_SERVER['REQUEST_SCHEME'] ?? "http";
 $httpHost = $_SERVER['HTTP_HOST'] ?? trim(shell_exec("hostname -A | awk '{print $1}'"));
 $my_uri = $requestScheme . "://" . $httpHost;
 $numInverters = 0;
-if (isset($ahoy_data["inverters"])) $numInverters = count($ahoy_data["inverters"]);
+if (isset($ahoy_conf["inverters"])) $numInverters = count($ahoy_conf["inverters"]);
 
 $avail_endpoints = array("avail_endpoints" => [
 	"generic"				=> $my_uri . "/api/generic",

@@ -5,9 +5,9 @@
 Hoymiles micro-inverters main application
 """
 
-import sys
+from sys import exit
 import struct
-import traceback
+## import traceback
 import re
 
 import argparse
@@ -16,11 +16,15 @@ yaml = YAML(typ='rt')
 
 import logging
 from logging.handlers import RotatingFileHandler
+import os
+## from os import environ, open, close, O_CREAT
 
 import time
 from suntimes import SunTimes
 from datetime import datetime, timedelta
 
+import sysv_ipc  # for System-V FTOK, Semaphore and Shared-Memory
+import json
 import hoymiles  # import paket on this place, call once: "hoymiles/__init__.py"
 
 ################################################################################
@@ -30,7 +34,6 @@ import hoymiles  # import paket on this place, call once: "hoymiles/__init__.py"
 # SIGKILL = Signal Handler SIGKILL and SIGSTOP cannot be caught, blocked, or ignored!!
 ################################################################################
 from signal import signal, Signals, SIGINT, SIGTERM, SIGHUP
-from os import environ
 def signal_handler(sig_num, frame):
     """ Signal Handler 
 
@@ -39,7 +42,7 @@ def signal_handler(sig_num, frame):
     """
     signame = Signals(sig_num).name
     logging.info(f'Stop by Signal <{signame}> ({sig_num})')
-    if environ.get('TERM') is not None:
+    if os.environ.get('TERM') is not None:
        print (f'\nStop by Signal <{signame}> ({sig_num}) '
             f'at: {time.strftime("%d.%m.%Y %H:%M:%S")}\n')
 
@@ -52,7 +55,7 @@ def signal_handler(sig_num, frame):
     if volkszaehler_client:
        volkszaehler_client.disco()
 
-    sys.exit(0)
+    exit(0)
 
 """ activate signal handler """
 signal(SIGINT,  signal_handler)
@@ -67,7 +70,7 @@ class WebServer:
   handle maximum values
   save data to yaml file for Web-Services
   """
-  def __init__(self, web_config):
+  def __init__(self, web_config, config_fn):
     self.dataToFile = {}
     self.filepath = web_config.get('filepath', '/tmp')
 
@@ -90,6 +93,25 @@ class WebServer:
        if reset_config.get('MaxValues', False) == True:
           self.MaxValues = True
     self.reset_max_values()
+
+    # generate the known FTOK key from specifiv file
+    #   ftok(path, id, [silence_warning = False])
+    #   Note that ftok() has limitations, and this function will issue a warning
+    #   to that effect unless silence_warning is True.
+    #   "id" must be in hex - hex(0x30) = dec(48) = chr("0")
+    self.ftokKey = sysv_ipc.ftok(config_fn, 0x30, silence_warning = True)
+    logging.debug(f"System-V ftokKey={self.ftokKey} hex=0x{self.ftokKey:08x}")
+
+    self.ipc_flags = sysv_ipc.IPC_CREX   # specify whether to create a new semaphore or open an existing one
+    self.ipc_mode = 0o644                # 
+    self.sem_initial_value = 3           # 
+    try: # Creates a new semaphore or opens an existing one.
+        sem_id = sysv_ipc.Semaphore(self.ftokKey, self.ipc_flags, self.ipc_mode, self.sem_initial_value)
+    except sysv_ipc.ExistentialError: # semaphore exists already
+        sem_id = sysv_ipc.Semaphore(self.ftokKey)
+    sem_id.release()                     # close Semaphore
+    sem_id.remove()                      # destry old Semaphore
+
 
   def reset_max_values(self):
       self.max_values = {'max_temp':0,'max_temp_ts':0,'max_power':0,'max_power_ts':0, 'strings':[]}
@@ -117,8 +139,17 @@ class WebServer:
               if (self.max_values['strings'][ii] < string['power']):
                 self.max_values['strings'][ii] = string['power']
       self.dataToFile["MaxValues"] = self.max_values
-      #logging.debug(f"SaveToYaml(MaxValues): {self.dataToFile["MaxValues"]=}")
+      #logging.debug(f"SaveData4PHP(MaxValues): {self.dataToFile["MaxValues"]=}")
    
+  def checkOutput(self):
+    if "DebugDecodeAny" in self.dataToFile and \
+       "InverterDevInform_Simple" in self.dataToFile and \
+       "InverterDevInform_All" in self.dataToFile:
+       return False
+    else:
+       logging.debug(f"SaveData4PHP(checkOutput): missing elements - restart main-init function")
+       return True
+
   def eventArray (self, data):
 	# add data to FiFo-Array (max 50 pos.
     if "AlarmData" in self.dataToFile:
@@ -129,34 +160,65 @@ class WebServer:
     if (len(self.dataToFile["AlarmData"]) > 50):
         self.dataToFile["AlarmData"].pop(0)
     
-  def SaveToYaml (self, inv_ser, typeName, data):
-    if typeName == "DebugDecodeAny":
-        self.InfoCommand = typeName
+  def SaveData4PHP (self, inv_ser, InfoCommand, data):
+    if   (InfoCommand == "AlarmData"):                  # AlarmData == 18 (0x12)
+        self.eventArray(data)                           # FiFo - max 50 pos.
+    elif (InfoCommand == "RealTimeRunData_Debug"):      # RealTimeRunData_Debug == 11 (0x0B)
+        self.getMaxValues(data)                         # extract max.Values
+        # datetime object can't serialied with json.dump
+        if 'time' in data and isinstance(data['time'], datetime):
+            data['time'] = data['time'].strftime('%d.%m.%YT%H:%M:%S')
+        self.dataToFile[InfoCommand] = data
     else:
-        InfoCommand_num  = int("0x" + typeName[-2:], 16)
-        self.InfoCommand = hoymiles.InfoCommands(InfoCommand_num).name
+        self.dataToFile[InfoCommand] = data
 
-    if (self.InfoCommand == "AlarmData"):                    # AlarmData == 18 (0x12)
-        self.eventArray(data)                                # FiFo - max 50 pos.
-    elif (self.InfoCommand == "RealTimeRunData_Debug"):      # RealTimeRunData_Debug == 11 (0x0B)
-        self.getMaxValues(data)
-        self.dataToFile[self.InfoCommand] = data
+    logging.debug(f"SaveData4PHP: save data to ...")
+    try: # Creates a new semaphore or opens an existing one.
+        sem_id = sysv_ipc.Semaphore(self.ftokKey, self.ipc_flags, self.ipc_mode, self.sem_initial_value)
+    except sysv_ipc.ExistentialError: # semaphore exists already
+        # now, open this existing Semaphore and read ".o_time" value
+        # for unused Semaphore, ".o_time" value is zero
+        # for used Semaphore, ".o_time" value is a timestamp
+        sem_id = sysv_ipc.Semaphore(self.ftokKey)
+        logging.debug(f"SaveData4PHP: old Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
+                      f"found with TimeStamp: {sem_id.o_time}")
+        if sem_id.o_time == 0:         # destry forgotten Semaphore and loop
+            sem_id.release()
+            sem_id.remove()
     else:
-        self.dataToFile[self.InfoCommand] = data
+        sem_id.release()               # Initializing sem.o_time to nonzero value
+        logging.debug(f"SaveData4PHP: Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
+                      f"successfully init with TimeStamp: {sem_id.o_time}")
 
-    fn = self.filepath + "/AhoyDTU_" + str(inv_ser) + ".yml"
-    logging.debug(f"SaveToYaml: save data to {fn}")
-    with open(fn, 'w') as yaml_file:
-        yaml.dump(self.dataToFile, yaml_file)
+        SHM_Data = json.dumps(# Data Serialization for writing in SHM
+            {"saveTS" : time.strftime('%d.%m.%YT%H:%M:%S'),
+             "ts_last_success" : datetime.now().timestamp(),
+              inv_ser : {** self.dataToFile}})
 
-  def checkOutput(self):
-    if "DebugDecodeAny" in self.dataToFile and \
-       "InverterDevInform_Simple" in self.dataToFile and \
-       "InverterDevInform_All" in self.dataToFile:
-       return False
-    else:
-       logging.debug(f"SaveToYaml - missing elements - restart main-init function")
-       return True
+        logging.debug(f"SaveData4PHP: try to create SHM with: len={len(SHM_Data)} value={SHM_Data}")
+        # create shared memeory object (SHM)
+        # Flag IPC_CREX is shorthand for IPC_CREAT | IPC_EXCL, they are used when
+        # creating IPC objects and identified by key. If the IPC object (semaphore, ...)
+        # with that key already exists, the call raises an ExistentialError.
+        #
+        # With flags set to default=0, the module attempts to open an existing IPC object,
+        # identified by key and raises a ExistentialError if that IPC object doesn't exist.
+
+        try:
+            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey, self.ipc_flags, self.ipc_mode, len(SHM_Data))
+        except sysv_ipc.ExistentialError:
+            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey)     # SHM must exist allready
+        # check Size
+        if len(SHM_Data) != shdMemObj.size:
+            shdMemObj.detach()
+            shdMemObj.remove()
+            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey, self.ipc_flags, self.ipc_mode, len(SHM_Data))
+
+        shdMemObj.write(SHM_Data)
+        shdMemObj.detach()
+        #logging.debug(f"SaveData4PHP:  Shared-Memory created: {shdMemObj.id=} len={len(shdMemData)} value={shdMemData}")
+        sem_id.remove()                # remove Semaphore
+
 
 class SunsetHandler:
     """ Sunset class
@@ -208,36 +270,39 @@ class SunsetHandler:
             local_sunset  = self.suntimes.setlocal(datetime.now()).strftime("%d.%m.%YT%H:%M")
             local_zone    = self.suntimes.setlocal(datetime.now()).tzinfo.key
 
-            mqtt_client.info2mqtt(f'{dtu_name}/{dtu_serial}', 
+            # TEMPLATE: info2mqtt(data2publish)
+            mqtt_client.info2mqtt(
                 {'dis_night_comm' : 'True', 
                   'local_sunrise' : local_sunrise, 
                    'local_sunset' : local_sunset,
-                     'local_zone' : local_zone})
+                     'local_zone' : local_zone
+                })
         else:
-            mqtt_client.info2mqtt(f'{dtu_name}/{dtu_serial}', {'dis_night_comm': 'False'})
+            # TEMPLATE: info2mqtt(data2publish)
+            mqtt_client.info2mqtt({'dis_night_comm': 'False'})
   
 
 def main_loop(ahoy_config):
     """ Main loop """
     # check 'interval' parameter in config-file
     loop_interval = int(ahoy_config.get('interval', 15))
-    logging.info(f"AHOY-MAIN: loop interval : {loop_interval} sec.")
+    logging.info(f"AHOY-MAIN: {loop_interval=} sec.")
     if (loop_interval <= 0):
         logging.critical("Parameter 'loop_interval' must grater 0 - STOP(999)")
-        sys.exit(999)
+        exit(999)
 
     # check 'transmit_retries' parameter in config-file
     transmit_retries = ahoy_config.get('transmit_retries', 5)
     if (transmit_retries <= 0):
         logging.critical("Parameter 'transmit_retries' must grater 0 - STOP(998)")
-        sys.exit(998)
+        exit(998)
 
     # get inverter from config-file
     inverters = [inverter for inverter in ahoy_config.get('inverters', [])
                  if inverter.get('enabled', True)]
     if len(inverters) == 0:
         logging.critical("no inverters configured - STOP(997)")
-        sys.exit(997)
+        exit(997)
 
     # check all inverter names and serial numbers in config-file
     for inverter in inverters:
@@ -245,7 +310,7 @@ def main_loop(ahoy_config):
            inverter['name'] = 'hoymiles'
         if not 'serial' in inverter:
            logging.error("No inverter serial number found in ahoy.yml - STOP(996)")
-           sys.exit(996)
+           exit(996)
 
     # init Sunset-Handler object
     sunset = SunsetHandler(ahoy_config.get('sunset'))
@@ -279,7 +344,7 @@ def main_loop(ahoy_config):
                time.sleep(time_to_sleep)
     except Exception as e:
         logging.fatal('Exception catched: %s' % e)
-        logging.fatal(traceback.print_exc())
+        ## logging.fatal(traceback.print_exc())
         raise
 
 def poll_inverter(inverter, do_init, retries):
@@ -353,34 +418,34 @@ def poll_inverter(inverter, do_init, retries):
             decoder = hoymiles.ResponseDecoder(response,  
                     request=com.request,
                     inverter_ser=inverter_ser,
-                    inverter_name=inverter_name,
+##kk                    inverter_name=inverter_name,
                     strings=inverter_strings
                     )
 
             result = decoder.decode()                          # decode response from inverter
-            typeName = type(result).__name__                   # get class (type) name
             data = result.__dict__()                           # convert result into python-dict
 
+            resultTypeName = type(result).__name__             # get class (type) name
+            if resultTypeName == "DebugDecodeAny":
+               InfoCommand = resultTypeName
+            else:
+               InfoCommand_num  = int("0x" + resultTypeName[-2:], 16)
+               InfoCommand = hoymiles.InfoCommands(InfoCommand_num).name
+
             if hoymiles.HOYMILES_TRANSACTION_LOGGING:
-               logging.debug(f'Decoded: {data}')
+               logging.debug(f'Decoded: {resultTypeName=} {InfoCommand=} {data=}')
 
             if web_server:
-               web_server.SaveToYaml (inverter_ser, typeName, data)    # save for using in NGINX
+               web_server.SaveData4PHP(inverter_ser, InfoCommand, data)      # save for using in NGINX
+
+            if mqtt_client:
+               mqtt_client.store_status(InfoCommand, data)     # output to MQTT-Broker
 
             # check result object for output
             if isinstance(result, hoymiles.decoders.StatusResponse):
                 if hoymiles.HOYMILES_VERBOSE_LOGGING:
                    logging.info(f"StatusResponse: payload contains {len(data)} elements "
                                 f"(power={data['phases'][0]['power']} W - event_count={data['event_count']})")
-
-                # when 'event_count' is changed, add AlarmData-command to queue
-                if data is not None and 'event_count' in data:
-                    if event_message_index[inv_str] != data['event_count']:
-                       event_message_index[inv_str]  = data['event_count']
-                       if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                          logging.info(f"event_count changed to {data['event_count']} --> AlarmData requested")
-                       # add AlarmData-command to queue 
-                       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData, alarm_id=event_message_index[inv_str]))
 
                 # when 'event_count' is changed, add AlarmUpdate-command to queue
                 if data is not None and 'event_count' in data:
@@ -393,8 +458,8 @@ def poll_inverter(inverter, do_init, retries):
                        command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_str]))
 
                 # sent outputs
-                if mqtt_client:
-                   mqtt_client.store_status(data)
+##                if mqtt_client:
+##                   mqtt_client.store_status(data)
 
                 if influx_client:
                    influx_client.store_status(data)
@@ -403,44 +468,24 @@ def poll_inverter(inverter, do_init, retries):
                    # logging.info(f"call: VolkszaehlerOutputPlugin.store_status")
                    volkszaehler_client.store_status(data)
 
-            # check decoder object for different data types
-            if isinstance(result, hoymiles.decoders.Response_InverterDevInform_Simple):
-               if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f"HW Part Number {data['FLD_PART_NUM']}, "
-                               f"HW Version {data['FLD_HW_VERSION']}")
-            if isinstance(result, hoymiles.decoders.Response_InverterDevInform_All):
-               if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f"Firmware version {data['FW_ver_maj']}.{data['FW_ver_min']}.{data['FW_ver_pat']}, "
-                               f"build at {data['FW_build_dd']:>02}/{data['FW_build_mm']:>02}/{data['FW_build_yy']}T"
-                               f"{data['FW_build_HH']:>02}:{data['FW_build_MM']:>02}, "
-                               f"Bootloader version {data['BL_VER']}")
-               if mqtt_client:
-                  mqtt_client.store_status(data)
-
-            if isinstance(result, hoymiles.decoders.Response_AlarmEvent):
-               if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f"Response_AlarmEvent: {data['inv_alarm_num']}:{data['inv_alarm_txt']} Start:{data['inv_alarm_stm']} End:{data['inv_alarm_etm']}")
-
-            if isinstance(result, hoymiles.decoders.DebugDecodeAny):
-               if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f"DebugDecodeAny: payload ({data['len_payload']} bytes): {data['payload']}")
 
 def mqtt_on_message(mqtt_client, userdata, message):
     ''' 
-    MQTT(PAHO) callcack method to handle receiving payload 
-    ( run in thread: "paho-mqtt-client-" - important for signals and Exceptions !)
+    https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.on_message
+    The callback called when a message has been received on a topic that the client subscribes to.
+    Parameters:
+        client   – the client instance for this callback
+        userdata – the private user data as set in Client() or user_data_set()
+        message  – the received message. This is a class with members topic, payload, qos, retain.
+    running in a thread: "paho-mqtt-client-" - important for signals and Exceptions!
     a)  when receiving topic ends with "SENSOR" for privat electricity meter
     b)  when receiving topic ends with "command" for runtime faster debugging
 
-    Handle commands to topic
+    Handle commands to sub_topic
         hoymiles/{inverter_ser}/command
     frame a payload and put onto command_queue
-
-    Inverters must have mqtt.send_raw_enabled: true configured
-
-    This can be used to inject debug payloads
     The message must be in hexlified format
-
+    Inverters must have mqtt.send_raw_enabled: true configured
     Use of variables:
     tttttttt gets expanded to a current int(time)
 
@@ -448,47 +493,45 @@ def mqtt_on_message(mqtt_client, userdata, message):
       mosquitto -h broker -t inverter_topic/command -m 800b00tttttttt0000000500000000
 
     This allows for even faster hacking during runtime
-
-    :param paho.mqtt.client.Client client: mqtt-client instance
-    :param dict userdata: Userdata
-    :param dict message: mqtt-client message object
     '''
     # print(f"msg-topic: {message.topic} - QoS: {message.qos}")
     # print(f"payload:  ",str(message.payload.decode("utf-8")), "\n")
 
-    # handle specific payload topic
-    if message.topic.endswith("SENSOR"):
-       data = yaml.safe_load(str(message.payload.decode("utf-8")))    # string to dict
-       if volkszaehler_client:
-          volkszaehler_client.store_status(data)
-       else:
-          # eBZ = elektronischer Basiszähler (Stromzähler)
-          for key in data.keys():
-              if "1_8_0" in data[key] and "2_8_0" in data[key] and "16_7_0" in data[key]:
-                 logging.info  (f"{key}- {data[key]['96_1_0']} - "
-                                f"eBZ-import: {data[key]['1_8_0']:.02f} - "
-                                f"eBZ-export: {data[key]['2_8_0']} - "
-                                f"eBZ-power: {data[key]['16_7_0']:.02f}")
+##    # handle specific payload topic
+##    if message.topic.endswith("SENSOR"):
+##       data = yaml.safe_load(str(message.payload.decode("utf-8")))    # string to dict
+##       if volkszaehler_client:
+##          volkszaehler_client.store_status(data)
+##       else:
+##          # eBZ = elektronischer Basiszähler (Stromzähler)
+##          for key in data.keys():
+##              if "1_8_0" in data[key] and "2_8_0" in data[key] and "16_7_0" in data[key]:
+##                 logging.info  (f"{key}- {data[key]['96_1_0']} - "
+##                                f"eBZ-import: {data[key]['1_8_0']:.02f} - "
+##                                f"eBZ-export: {data[key]['2_8_0']} - "
+##                                f"eBZ-power: {data[key]['16_7_0']:.02f}")
 
+    # message is a class with members topic, payload, qos, retain
     if message.topic.endswith("command"):
         p_message = message.payload.decode('utf-8').lower()
 
         # Expand tttttttt to current time for use in hexlified payload
         expand_time = ''.join(f'{b:02x}' for b in struct.pack('>L', int(time.time())))
+
         p_message = p_message.replace('tttttttt', expand_time)
-        logging.info (f"MQTT-command: {message.topic} - {p_message}")
+        logging.info (f"MQTT-command: {message.topic=} {p_message=}")
 
         if (len(p_message) < 2048 and len(p_message) % 2 == 0 and re.match(r'^[a-f0-9]+$', p_message)):
             payload = bytes.fromhex(p_message)
             if hoymiles.HOYMILES_VERBOSE_LOGGING:
-               logging.info (f"MQTT-command for {inv_str}: {payload}")
+               logging.info (f"MQTT-command for {inv_str=}: {payload=}")
 
-            # commands must start with \x80
-            if payload[0] == 0x80:
+            # add command (payload) to inverter-command-queue
+            if payload[0] == 0x80:                      # commands must start with \x80
                 # array "command_queue[inv_str]" will be shared to an other thread --> critical section
                 command_queue[inv_str].append(hoymiles.frame_payload(payload[1:]))
             else:
-                logging.info (f"MQTT-command: must start with \x80: {payload}")
+                logging.info (f"MQTT-command: must start with \x80: {payload=}")
         else:
             logging.info (f"MQTT-command to long (max length: 2048 bytes) - or contains non hex char")
 
@@ -533,7 +576,7 @@ def init_logging(ahoy_config):
         datefmt='%Y-%m-%d %H:%M:%S.%s', level=lvl)
 
     logging.info(f'AhoyDTU-logging started for "{dtu_name}" with level: {logging.getLevelName(logging.root.level)}')
-    if environ.get('TERM') is not None:
+    if os.environ.get('TERM') is not None:
        print(f"run before starting AHOY: tail -f {fn} &")
 
 if __name__ == '__main__':
@@ -549,18 +592,14 @@ if __name__ == '__main__':
 
     # Load config file given in commandline parameter
     try:
-        if isinstance(global_config.config_file, str):
-            with open(global_config.config_file, 'r') as fh_yaml:
-                cfg = yaml.load(fh_yaml)
-        else:
-            with open('ahoy.yml', 'r') as fh_yaml:
-                cfg = yaml.load(fh_yaml)
+        with open(global_config.config_file, 'r') as fh_yaml:
+            cfg = yaml.load(fh_yaml)
     except FileNotFoundError:
-        logging.error("Could not load config file. Try --help")
-        sys.exit(2)
+        logging.error(f"Could not load config file: '{global_config.config_file}' - Try --help")
+        exit(2)
     except yaml.YAMLError as e_yaml:
-        logging.error(f'Failed to load config file {global_config.config_file}: {e_yaml}')
-        sys.exit(1)
+        logging.error(f"Failed to load config file: '{global_config.config_file}' - {e_yaml}")
+        exit(1)
 
     # read all parameter from configuration file as 'ahoy_config'
     ahoy_config = dict(cfg.get('ahoy', {}))
@@ -577,41 +616,11 @@ if __name__ == '__main__':
     radio_config = ahoy_config.get('nrf', [{}])
     hmradio = hoymiles.HoymilesNRF(**radio_config)
 
-    # create MQTT client object
-      # if: mqtt-disabled is "true" - only
-      # if: mqtt-disabled is "true" AND inverter-mqtt-send_raw_enabled is "true" 
-      # if: mqtt topic is defined - only or with other functions
-    mqtt_c_obj  = mqtt_client = None                 # create client-obj-placeholder
-    mqtt_config = ahoy_config.get('mqtt', None)      # get mqtt-config, if available
-
-    # MQTT_TOPIC array should contain QOS levels as well as topic names.
-    # MQTT_TOPIC = [("Server1/kpi1",0),("Server2/kpi2",0),("Server3/kpi3",0)]
-    mqtt_topic  = mqtt_config.get('topic', None)     # get topic, if available
-    mqtt_topic_array = []                            # create empty array
-    if mqtt_topic:                                   # add topic to array
-       mqtt_topic_array.append((mqtt_topic, mqtt_config.get('QoS',0)))
-
-    #if mqtt_config and (mqtt_config.get('enabled', False) or mqtt_topic):
-    if mqtt_config and (mqtt_config.get('enabled', False)):
-       from .outputs import MqttOutputPlugin
-
-       # create MQTT(PAHO) client object with own callback funtion
-       try:
-           mqtt_c_obj = MqttOutputPlugin(mqtt_config, mqtt_on_message)
-       except:
-           print("MQTT is requested or listening to topic is configured in ahoy-config,")
-           print("but broker is not available--> exit(31)")
-           exit(31)
-
-       if mqtt_c_obj and not mqtt_config.get('enabled', False):
-          mqtt_client = mqtt_c_obj   # dupp. MQTT-Object for tranmitting data
-
     # create WebServer client object
     web_server = None
     webserver_config = ahoy_config.get('WebServer', None)
-    #if webserver_config and webserver_config.get('enabled', False):
-       # init WebServices
-    web_server = WebServer(webserver_config)
+    if webserver_config:
+        web_server = WebServer(webserver_config, global_config.config_file)     # create class object
     if (None != web_server):
           logging.info(f"WebServer init successfull!")
 
@@ -631,31 +640,54 @@ if __name__ == '__main__':
     volkszaehler_client = None
     volkszaehler_config = ahoy_config.get('volkszaehler', {})
     if volkszaehler_config and volkszaehler_config.get('enabled', False):
-        from .outputs import VolkszaehlerOutputPlugin
+        from .outputs import VolkszaehlerOutputPlugin # import VZ-class from external "outputs" file
         volkszaehler_client = VolkszaehlerOutputPlugin(volkszaehler_config)
+
+    # create MQTT client object
+    mqtt_client = None                               # create client-obj-placeholder
+    mqtt_config = ahoy_config.get('mqtt', None)      # get mqtt-config, if available
+    sub_topic_array = []                             # create array for subscribe-topic's
+    if mqtt_config and (mqtt_config.get('enabled', False)):
+       from .outputs import MqttOutputPlugin         # import MQTT-class from external "outputs" file
+
+       # create MQTT client object with own mqtt_on_message callback funtion
+       try:
+           mqtt_client = MqttOutputPlugin(mqtt_config, mqtt_on_message)
+       except:
+           print("MQTT is requested or listening to topic is configured in ahoy-config,")
+           print("but broker is not available--> exit(31)")
+           exit(31)
+
+       sub_topic = mqtt_config.get('sub_topic', None)   # get topic, if available
+       if sub_topic:                                    # add subscribe-topic to array
+           # sub_topic_array should contain QOS levels as well as topic names
+           # sub_topic_array=[("Server1/kpi1",0),("Server2/kpi2",0),("Server3/kpi3",0)]
+           sub_topic_array.append((sub_topic, mqtt_config.get('QoS',0)))
+
+    # start subscribe mqtt broker, if requested 'sub_topic' available
+    if mqtt_client and len(sub_topic_array) > 0:
+       if hoymiles.HOYMILES_VERBOSE_LOGGING:
+          logging.info(f'MQTT: subscribe for topic/QoS: {sub_topic_array}')
+       mqtt_client.client.subscribe(sub_topic_array)
 
     # init important runtime variables
     event_message_index = {}
     command_queue = {}
     mqtt_command_topic_subs = []
 
-    for g_inverter in ahoy_config.get('inverters', []): # loop inverters in ahoy_config
-        inv_str = str(g_inverter.get('serial'))         # inverter serial number as index
-        command_queue[inv_str] = []                     # create empty command-queue
+    # 
+    for g_inverter in ahoy_config.get('inverters', []): # loop over all known inverters
+        inv_str = str(g_inverter.get('serial', 0))      # get inverter serial number as index
+        command_queue[inv_str] = []                     # init empty inverter-command-queue
         event_message_index[inv_str] = 0                # init event-queue with value=0
 
         # if send_raw_enabled, add topic to subscribe mqtt-command-queue
         if mqtt_client and g_inverter.get('mqtt', {}).get('send_raw_enabled', False):
-           mqtt_topic_array.append(
-             (g_inverter.get('mqtt', {}).get('topic', f'hoymiles/{inv_str}') + '/command',
-              mqtt_config.get('QoS',0)
-             ))
-
-    # start subscribe mqtt broker, if requested 'topic' available
-    if mqtt_c_obj and len(mqtt_topic_array) > 0:
-       if hoymiles.HOYMILES_VERBOSE_LOGGING:
-          logging.info(f'MQTT: subscribe for topic: {mqtt_topic_array}')
-       mqtt_c_obj.client.subscribe(mqtt_topic_array)
+           sub_topic_array.append(
+             g_inverter.get('mqtt', {}).get('topic',
+             f'hoymiles/{inv_str}') + '/command',
+             mqtt_config.get('QoS',0)
+           )
 
     # start main-loop
     main_loop(ahoy_config)

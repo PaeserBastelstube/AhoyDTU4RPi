@@ -3,19 +3,19 @@ header('Content-Type: application/json; charset=utf-8');
 
 
 $debug_fn = "/tmp/AhoyDTU_debug.log";
-function saveDebug($my_post, $ahoy_data = ""){
+function saveDebug($my_post, $ahoy_conf = ""){
 	global $debug_fn;
 	file_put_contents($debug_fn, "_my_post: ". json_encode($my_post)     . "\n", LOCK_EX);
 	file_put_contents($debug_fn, "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents($debug_fn, "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents($debug_fn, "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
 	file_put_contents($debug_fn, "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents($debug_fn, "_data_s :" . json_encode($ahoy_data)   . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "_data_s :" . json_encode($ahoy_conf)   . "\n", FILE_APPEND | LOCK_EX);
 }
 
 function saveSettings($my_post){
-	include 'generic_json.php';    # to load AhoyDTU configuration
-	saveDebug($my_post, $ahoy_data);
+	require_once 'generic_json.php';    # to load AhoyDTU configuration
+	saveDebug($my_post, $ahoy_conf);
 
 	## System Config # from web.h - line 465
 	## [device] =>  $(hostname)	# wird im Betriebssystem verwaltet - nicht änderbar
@@ -27,8 +27,8 @@ function saveSettings($my_post){
 	## [timezone] => 13			# wofür wird das benötigt
 
 	# Reboot Ahoy at midnight
-	if (isset($my_post["schedReboot"]))	$ahoy_data["WebServer"]["system"]["sched_reboot"] = $my_post["schedReboot"];
-	else unset($ahoy_data["WebServer"]["system"]["sched_reboot"]);
+	if (isset($my_post["schedReboot"]))	$ahoy_conf["WebServer"]["system"]["sched_reboot"] = $my_post["schedReboot"];
+	else unset($ahoy_conf["WebServer"]["system"]["sched_reboot"]);
 
 	# check and switch for Dark or Bright color
 	if (isset ($my_post["darkMode"]) and $my_post["darkMode"] == "on") {
@@ -39,27 +39,27 @@ function saveSettings($my_post){
 		symlink ('../html/colorBright.css', '../html/colors.css');
 	}
 
-	if (isset($my_post["region"]))		$ahoy_data["WebServer"]["generic"]["region"]     = $my_post["region"];
-	if (isset($my_post["timezone"]))	$ahoy_data["WebServer"]["generic"]["timezone"]   = $my_post["timezone"] -12;
+	if (isset($my_post["region"]))		$ahoy_conf["WebServer"]["generic"]["region"]     = $my_post["region"];
+	if (isset($my_post["timezone"]))	$ahoy_conf["WebServer"]["generic"]["timezone"]   = $my_post["timezone"] -12;
 
 	# custom link
-	if (isset($my_post["cstLnk"]))		$ahoy_data["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
-	if (isset($my_post["cstLnkTxt"]))	$ahoy_data["WebServer"]["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
+	if (isset($my_post["cstLnk"]))		$ahoy_conf["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
+	if (isset($my_post["cstLnkTxt"]))	$ahoy_conf["WebServer"]["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
 
 
 	## System configuration / Serial console # from web.h - line 603
 	# "serEn":"on","serDbg":"on","priv":"on","wholeTrace":"on","log2mqtt":"on",
-	if (isset($my_post["serEn"]))		$ahoy_data["logging"]["serial"]["serEn"] = $my_post["serEn"];
-	else unset($ahoy_data["logging"]["serial"]["serEn"]);
-	if (isset($my_post["serDbg"]))		$ahoy_data["logging"]["serial"]["serDbg"] = $my_post["serDbg"];
-	else unset($ahoy_data["logging"]["serial"]["serDbg"]);
-	if (isset($my_post["priv"]))		$ahoy_data["logging"]["serial"]["priv"] = $my_post["priv"];
-	else unset($ahoy_data["logging"]["serial"]["priv"]);
-	if (isset($my_post["wholeTrace"]))	$ahoy_data["logging"]["serial"]["wholeTrace"] = $my_post["wholeTrace"];
-	else unset($ahoy_data["logging"]["serial"]["wholeTrace"]);
-	if (isset($my_post["log2mqtt"]))	$ahoy_data["logging"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
-	else unset($ahoy_data["logging"]["serial"]["log2mqtt"]);
-	if (isset($ahoy_data["logging"]["serial"]) and count($ahoy_data["logging"]["serial"]) == 0) unset($ahoy_data["logging"]["serial"]);
+	if (isset($my_post["serEn"]))		$ahoy_conf["logging"]["serial"]["serEn"] = $my_post["serEn"];
+	else unset($ahoy_conf["logging"]["serial"]["serEn"]);
+	if (isset($my_post["serDbg"]))		$ahoy_conf["logging"]["serial"]["serDbg"] = $my_post["serDbg"];
+	else unset($ahoy_conf["logging"]["serial"]["serDbg"]);
+	if (isset($my_post["priv"]))		$ahoy_conf["logging"]["serial"]["priv"] = $my_post["priv"];
+	else unset($ahoy_conf["logging"]["serial"]["priv"]);
+	if (isset($my_post["wholeTrace"]))	$ahoy_conf["logging"]["serial"]["wholeTrace"] = $my_post["wholeTrace"];
+	else unset($ahoy_conf["logging"]["serial"]["wholeTrace"]);
+	if (isset($my_post["log2mqtt"]))	$ahoy_conf["logging"]["serial"]["log2mqtt"] = $my_post["log2mqtt"];
+	else unset($ahoy_conf["logging"]["serial"]["log2mqtt"]);
+	if (isset($ahoy_conf["logging"]["serial"]) and count($ahoy_conf["logging"]["serial"]) == 0) unset($ahoy_conf["logging"]["serial"]);
 
 	# Network configuration # from web.h - line 500
 	## [ap_pwd] => esp_8266          #Standard in AhoyDTU
@@ -77,12 +77,12 @@ function saveSettings($my_post){
 	# Protection configuration # from web.h - line 489
 	## [adminpwd] => {PWD}
 	if (isset($my_post["adminpwd"])) {
- 		if ($my_post["adminpwd"] == "") unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
- 		else $ahoy_data["WebServer"]["system"]["pwd_pwd"] = $my_post["adminpwd"];
+ 		if ($my_post["adminpwd"] == "") unset($ahoy_conf["WebServer"]["system"]["pwd_pwd"]);
+ 		else $ahoy_conf["WebServer"]["system"]["pwd_pwd"] = $my_post["adminpwd"];
 	}
 	if (isset($my_post["login"]) and $my_post["login"] == "login") {
-		if (isset($my_post["pwd"]) and $my_post["pwd"] == $ahoy_data["WebServer"]["system"]["pwd_pwd"])
-			unset($ahoy_data["WebServer"]["system"]["pwd_pwd"]);
+		if (isset($my_post["pwd"]) and $my_post["pwd"] == $ahoy_conf["WebServer"]["system"]["pwd_pwd"])
+			unset($ahoy_conf["WebServer"]["system"]["pwd_pwd"]);
 	}
 
 	## [protMask0] => on   # Index
@@ -101,46 +101,47 @@ function saveSettings($my_post){
 	if (isset($my_post["protMask5"]) and $my_post["protMask5"] == "on") $prot_mask += 2**5;
 	if (isset($my_post["protMask6"]) and $my_post["protMask6"] == "on") $prot_mask += 2**6;
 	if (isset($my_post["protMask7"]) and $my_post["protMask7"] == "on") $prot_mask += 2**7;
-	if ($prot_mask > 0) $ahoy_data["WebServer"]["system"]["prot_mask"] = $prot_mask;
-	else unset($ahoy_data["WebServer"]["system"]["prot_mask"]);
+	if ($prot_mask > 0) $ahoy_conf["WebServer"]["system"]["prot_mask"] = $prot_mask;
+	else unset($ahoy_conf["WebServer"]["system"]["prot_mask"]);
 
-	if (isset($ahoy_data["WebServer"]["system"]) and count($ahoy_data["WebServer"]["system"]) == 0) unset($ahoy_data["WebServer"]["system"]);
+	if (isset($ahoy_conf["WebServer"]["system"]) and count($ahoy_conf["WebServer"]["system"]) == 0) unset($ahoy_conf["WebServer"]["system"]);
 
 	# Inverter configuration # from web.h - line 512
 	## [invInterval invRstMid invRstComStart invRstComStop invRstNotAvail invRstMaxMid strtWthtTm rdGrid
 
 	# Interval [s]
-	$ahoy_data["interval"] = $my_post["invInterval"] ?? 15;
+	$ahoy_conf["interval"] = intval($my_post["invInterval"] ?? 15);
+    if ($ahoy_conf["interval"] < 5) $ahoy_conf["interval"] = 15;
 
 	# Reset values and YieldDay at midnight
-	if (isset($my_post["AtMidnight"])) $ahoy_data["WebServer"]["InverterReset"]["AtMidnight"] = $my_post["AtMidnight"];
-	else unset($ahoy_data["WebServer"]["InverterReset"]["AtMidnight"]);
+	if (isset($my_post["AtMidnight"])) $ahoy_conf["WebServer"]["InverterReset"]["AtMidnight"] = $my_post["AtMidnight"];
+	else unset($ahoy_conf["WebServer"]["InverterReset"]["AtMidnight"]);
 
 	# Reset values at sunrise
-	if (isset($my_post["invRstComStart"])) $ahoy_data["WebServer"]["InverterReset"]["AtSunrise"] = $my_post["invRstComStart"];
-	else unset($ahoy_data["WebServer"]["InverterReset"]["AtSunrise"]);
+	if (isset($my_post["invRstComStart"])) $ahoy_conf["WebServer"]["InverterReset"]["AtSunrise"] = $my_post["invRstComStart"];
+	else unset($ahoy_conf["WebServer"]["InverterReset"]["AtSunrise"]);
 
 	# Reset values at sunset
-	if (isset($my_post["invRstComStop"])) $ahoy_data["WebServer"]["InverterReset"]["AtSunset"] = $my_post["invRstComStop"];
-	else unset($ahoy_data["WebServer"]["InverterReset"]["AtSunset"]);
+	if (isset($my_post["invRstComStop"])) $ahoy_conf["WebServer"]["InverterReset"]["AtSunset"] = $my_post["invRstComStop"];
+	else unset($ahoy_conf["WebServer"]["InverterReset"]["AtSunset"]);
 
 	# Reset values when inverter status is 'not available'
-	if (isset($my_post["invRstNotAvail"]))	$ahoy_data["WebServer"]["InverterReset"]["NotAvailable"] = $my_post["invRstNotAvail"];
-	else unset($ahoy_data["WebServer"]["InverterReset"]["NotAvailable"]);
+	if (isset($my_post["invRstNotAvail"]))	$ahoy_conf["WebServer"]["InverterReset"]["NotAvailable"] = $my_post["invRstNotAvail"];
+	else unset($ahoy_conf["WebServer"]["InverterReset"]["NotAvailable"]);
 
 	# Include reset 'max' values
-	if (isset($my_post["invRstMaxMid"]))	$ahoy_data["WebServer"]["InverterReset"]["MaxValues"] = $my_post["invRstMaxMid"];
-	else unset($ahoy_data["WebServer"]["InverterReset"]["MaxValues"]);
+	if (isset($my_post["invRstMaxMid"]))	$ahoy_conf["WebServer"]["InverterReset"]["MaxValues"] = $my_post["invRstMaxMid"];
+	else unset($ahoy_conf["WebServer"]["InverterReset"]["MaxValues"]);
 
 	# Start without time sync (useful in AP-Only-Mode)
-	if (isset($my_post["strtWthtTm"]))	$ahoy_data["WebServer"]["strtWthtTm"] = $my_post["strtWthtTm"];
-	else unset($ahoy_data["WebServer"]["strtWthtTm"]);
+	if (isset($my_post["strtWthtTm"]))	$ahoy_conf["WebServer"]["strtWthtTm"] = $my_post["strtWthtTm"];
+	else unset($ahoy_conf["WebServer"]["strtWthtTm"]);
 
 	# Read Grid Profile
-	if (isset($my_post["rdGrid"]))	$ahoy_data["WebServer"]["rdGrid"] = $my_post["rdGrid"];
-	else unset($ahoy_data["WebServer"]["rdGrid"]);
+	if (isset($my_post["rdGrid"]))	$ahoy_conf["WebServer"]["rdGrid"] = $my_post["rdGrid"];
+	else unset($ahoy_conf["WebServer"]["rdGrid"]);
 
-	if (isset($ahoy_data["WebServer"]["InverterReset"]) and count($ahoy_data["WebServer"]["InverterReset"]) == 0) unset($ahoy_data["WebServer"]["InverterReset"]);
+	if (isset($ahoy_conf["WebServer"]["InverterReset"]) and count($ahoy_conf["WebServer"]["InverterReset"]) == 0) unset($ahoy_conf["WebServer"]["InverterReset"]);
 
 	# NTP Server configuration # from web.h - line 566
 	## ntpAddr  => wird im Betriebssystem verwaltet - nicht änderbar
@@ -150,111 +151,111 @@ function saveSettings($my_post){
 
 	# Sunrise & Sunset configuration # from web.h - line 573
 	## sunLat - sunLon - sunOffsSr - sunOffsSs
-	if (isset($my_post["sunLat"]) and $my_post["sunLat"] != "")	$ahoy_data["sunset"]["latitude"] = floatval($my_post["sunLat"]);
-	else unset($ahoy_data["sunset"]["latitude"]);
-	if (isset($my_post["sunLon"]) and $my_post["sunLon"] != "")	$ahoy_data["sunset"]["longitude"] = floatval($my_post["sunLon"]);
-	else unset($ahoy_data["sunset"]["longitude"]);
-	if (isset($my_post["sunOffsSr"]))	$ahoy_data["sunset"]["sunOffsSr"] = 60 * $my_post["sunOffsSr"];
-	else unset($ahoy_data["sunset"]["sunOffsSr"]);
-	if (isset($my_post["sunOffsSs"]))	$ahoy_data["sunset"]["sunOffsSs"] = 60 * $my_post["sunOffsSs"];
-	else unset($ahoy_data["sunset"]["sunOffsSs"]);
+	if (isset($my_post["sunLat"]) and $my_post["sunLat"] != "")	$ahoy_conf["sunset"]["latitude"] = floatval($my_post["sunLat"]);
+	else unset($ahoy_conf["sunset"]["latitude"]);
+	if (isset($my_post["sunLon"]) and $my_post["sunLon"] != "")	$ahoy_conf["sunset"]["longitude"] = floatval($my_post["sunLon"]);
+	else unset($ahoy_conf["sunset"]["longitude"]);
+	if (isset($my_post["sunOffsSr"]))	$ahoy_conf["sunset"]["sunOffsSr"] = 60 * $my_post["sunOffsSr"];
+	else unset($ahoy_conf["sunset"]["sunOffsSr"]);
+	if (isset($my_post["sunOffsSs"]))	$ahoy_conf["sunset"]["sunOffsSs"] = 60 * $my_post["sunOffsSs"];
+	else unset($ahoy_conf["sunset"]["sunOffsSs"]);
 
-	if (isset($ahoy_data["sunset"]["latitude"]) and $ahoy_data["sunset"]["latitude"] != "" and
-		isset($ahoy_data["sunset"]["longitude"]) and $ahoy_data["sunset"]["longitude"] != "") {
-		$ahoy_data["sunset"]["enabled"] = true;
+	if (isset($ahoy_conf["sunset"]["latitude"]) and $ahoy_conf["sunset"]["latitude"] != "" and
+		isset($ahoy_conf["sunset"]["longitude"]) and $ahoy_conf["sunset"]["longitude"] != "") {
+		$ahoy_conf["sunset"]["enabled"] = true;
 	} else {
-		$ahoy_data["sunset"]["enabled"] = false;
-		if (isset($my_post["sunOffsSr"])) unset($ahoy_data["sunset"]["sunOffsSr"]);
-		if (isset($my_post["sunOffsSs"])) unset($ahoy_data["sunset"]["sunOffsSs"]);
+		$ahoy_conf["sunset"]["enabled"] = false;
+		if (isset($my_post["sunOffsSr"])) unset($ahoy_conf["sunset"]["sunOffsSr"]);
+		if (isset($my_post["sunOffsSs"])) unset($ahoy_conf["sunset"]["sunOffsSs"]);
 	}
 
 	# MQTT configuration # from web.h - line 586
 	## mqttAddr - mqttPort - mqttClientId - mqttUser - mqttPwd - mqttTopic - mqttJson - mqttInterval - retain
-    if (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")	 $ahoy_data["mqtt"]["host"]     = $my_post["mqttAddr"];
-	else unset($ahoy_data["mqtt"]["host"]);
-    if (isset($my_post["mqttPort"]) and $my_post["mqttPort"] != "")	 $ahoy_data["mqtt"]["port"]     = $my_post["mqttPort"];
-	else unset($ahoy_data["mqtt"]["port"]);
-    if (isset($my_post["mqttClientId"]) and $my_post["mqttClientId"] != "") $ahoy_data["mqtt"]["clientId"] = $my_post["mqttClientId"];
-	else unset($ahoy_data["mqtt"]["clientId"]);
-    if (isset($my_post["mqttUser"]) and $my_post["mqttUser"] != "")	 $ahoy_data["mqtt"]["user"]     = $my_post["mqttUser"];
-	else unset($ahoy_data["mqtt"]["user"]);
-    if (isset($my_post["mqttPwd"]) and $my_post["mqttPwd"] != "")	 $ahoy_data["mqtt"]["password"] = $my_post["mqttPwd"];
-	else unset($ahoy_data["mqtt"]["password"]);
-    if (isset($my_post["mqttTopic"]) and $my_post["mqttTopic"] != "")$ahoy_data["mqtt"]["topic"]    = $my_post["mqttTopic"];
-	else unset($ahoy_data["mqtt"]["topic"]);
-    if (isset($my_post["mqttJson"]) and $my_post["mqttJson"] != "")	 $ahoy_data["mqtt"]["asJson"]   = $my_post["mqttJson"];
-	else unset($ahoy_data["mqtt"]["asJson"]);
-    if (isset($my_post["mqttInterval"]) and $my_post["mqttInterval"] != 0) $ahoy_data["mqtt"]["Interval"] = $my_post["mqttInterval"];
-	else unset($ahoy_data["mqtt"]["Interval"]);
-    if (isset($my_post["retain"]) and $my_post["retain"] != "")		 $ahoy_data["mqtt"]["Retain"]   = $my_post["retain"];
-	else unset($ahoy_data["mqtt"]["Retain"]);
-	$ahoy_data["mqtt"]["enabled"] = (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"] != "")  ? true : false;
+    if (isset($my_post["mqttAddr"]) and $my_post["mqttAddr"]		!= "")	$ahoy_conf["mqtt"]["host"]		= $my_post["mqttAddr"];
+	else unset($ahoy_conf["mqtt"]["host"]);
+    if (isset($my_post["mqttPort"]) and $my_post["mqttPort"]		!= "")	$ahoy_conf["mqtt"]["port"]		= intval($my_post["mqttPort"]);
+	else unset($ahoy_conf["mqtt"]["port"]);
+    if (isset($my_post["mqttClientId"]) and $my_post["mqttClientId"]!= "")	$ahoy_conf["mqtt"]["clientId"]	= $my_post["mqttClientId"];
+	else unset($ahoy_conf["mqtt"]["clientId"]);
+    if (isset($my_post["mqttUser"]) and $my_post["mqttUser"]		!= "")	$ahoy_conf["mqtt"]["user"]		= $my_post["mqttUser"];
+	else unset($ahoy_conf["mqtt"]["user"]);
+    if (isset($my_post["mqttPwd"]) and $my_post["mqttPwd"]			!= "")	$ahoy_conf["mqtt"]["password"]	= $my_post["mqttPwd"];
+	else unset($ahoy_conf["mqtt"]["password"]);
+    if (isset($my_post["mqttTopic"]) and $my_post["mqttTopic"]		!= "")	$ahoy_conf["mqtt"]["sub_topic"]	= $my_post["mqttTopic"];
+	else unset($ahoy_conf["mqtt"]["topic"]);
+    if (isset($my_post["mqttJson"]) and $my_post["mqttJson"]		!= "")	$ahoy_conf["mqtt"]["asJson"]	= true;
+	else unset($ahoy_conf["mqtt"]["asJson"]);
+    if (isset($my_post["mqttInterval"]) and $my_post["mqttInterval"]!= 0)	$ahoy_conf["mqtt"]["Interval"]	= intval($my_post["mqttInterval"]);
+	else unset($ahoy_conf["mqtt"]["Interval"]);
+    if (isset($my_post["retain"]) and $my_post["retain"]			!= "")	$ahoy_conf["mqtt"]["Retain"]	= true;
+	else unset($ahoy_conf["mqtt"]["Retain"]);
+	$ahoy_conf["mqtt"]["enabled"] = (isset($ahoy_conf["mqtt"]["host"]) and isset($ahoy_conf["mqtt"]["port"]))  ? true : false;
 
 
 	# Pinout Configuration
 	# "pinLed0":"255","pinLed1":"255","pinLed2":"255","pinLedHighActive":"0","pinLedLum":"255",
-	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] != "255") $ahoy_data["ledpin"]["pinLed0"] = $my_post["pinLed0"];
-	else unset($ahoy_data["ledpin"]["pinLed0"]);
-	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] != "255") $ahoy_data["ledpin"]["pinLed1"] = $my_post["pinLed1"];
-	else unset($ahoy_data["ledpin"]["pinLed1"]);
-	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] != "255") $ahoy_data["ledpin"]["pinLed2"] = $my_post["pinLed2"];
-	else unset($ahoy_data["ledpin"]["pinLed2"]);
-	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] != "0") $ahoy_data["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
-	else unset($ahoy_data["ledpin"]["pinLedHighActive"]);
-	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] != "0") $ahoy_data["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
-	else unset($ahoy_data["ledpin"]["pinLedLum"]);
-	if (isset($ahoy_data["ledpin"]) and count($ahoy_data["ledpin"]) == 0) unset($ahoy_data["ledpin"]);
+	if (isset($my_post["pinLed0"]) and $my_post["pinLed0"] != "255") $ahoy_conf["ledpin"]["pinLed0"] = $my_post["pinLed0"];
+	else unset($ahoy_conf["ledpin"]["pinLed0"]);
+	if (isset($my_post["pinLed1"]) and $my_post["pinLed1"] != "255") $ahoy_conf["ledpin"]["pinLed1"] = $my_post["pinLed1"];
+	else unset($ahoy_conf["ledpin"]["pinLed1"]);
+	if (isset($my_post["pinLed2"]) and $my_post["pinLed2"] != "255") $ahoy_conf["ledpin"]["pinLed2"] = $my_post["pinLed2"];
+	else unset($ahoy_conf["ledpin"]["pinLed2"]);
+	if (isset($my_post["pinLedHighActive"]) and $my_post["pinLedHighActive"] != "0") $ahoy_conf["ledpin"]["pinLedHighActive"] = $my_post["pinLedHighActive"];
+	else unset($ahoy_conf["ledpin"]["pinLedHighActive"]);
+	if (isset($my_post["pinLedLum"]) and $my_post["pinLedLum"] != "0") $ahoy_conf["ledpin"]["pinLedLum"] = $my_post["pinLedLum"];
+	else unset($ahoy_conf["ledpin"]["pinLedLum"]);
+	if (isset($ahoy_conf["ledpin"]) and count($ahoy_conf["ledpin"]) == 0) unset($ahoy_conf["ledpin"]);
 	
 	# "pinCs":"255","pinCe":"255","pinIrq":"255","pinSclk":"255","pinMosi":"255","pinMiso":"255"
-	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_data["nrf"]["enabled"] = $my_post["nrfEnable"];
-	else $ahoy_data["nrf"]["enabled"] = false;
-	if (isset($my_post["spiCSN"])	and $ahoy_data["nrf"]["enabled"]) $ahoy_data["nrf"]["spiCSN"]  = $my_post["spiCSN"];
-	else unset($ahoy_data["nrf"]["spiCSN"]);
-	if (isset($my_post["spiSpeed"]) and $my_post["spiSpeed"]!= "255") $ahoy_data["nrf"]["spiSpeed"]= $my_post["spiSpeed"];
-	else unset($ahoy_data["nrf"]["spiSpeed"]);
-	if (isset($my_post["spiCe"])    and $my_post["spiCe"]   != "255") $ahoy_data["nrf"]["spiCe"]   = $my_post["spiCe"];
-	else unset($ahoy_data["nrf"]["spiCe"]);
-	if (isset($my_post["spiCs"])    and $my_post["spiCs"]   != "255") $ahoy_data["nrf"]["spiCs"]   = $my_post["spiCs"];
-	else unset($ahoy_data["nrf"]["spiCs"]);
-	if (isset($my_post["spiIrq"])   and $my_post["spiIrq"]  != "255") $ahoy_data["nrf"]["spiIrq"]  = $my_post["spiIrq"];
-	else unset($ahoy_data["nrf"]["spiIrq"]);
-	if (isset($my_post["spiSclk"])  and $my_post["spiSclk"] != "255") $ahoy_data["nrf"]["spiSclk"] = $my_post["spiSclk"];
-	else unset($ahoy_data["nrf"]["spiSclk"]);
-	if (isset($my_post["spiMosi"])  and $my_post["spiMosi"] != "255") $ahoy_data["nrf"]["spiMosi"] = $my_post["spiMosi"];
-	else unset($ahoy_data["nrf"]["spiMosi"]);
-	if (isset($my_post["spiMiso"])  and $my_post["spiMiso"] != "255") $ahoy_data["nrf"]["spiMiso"] = $my_post["spiMiso"];
-	else unset($ahoy_data["nrf"]["spiMiso"]);
+	if (isset($my_post["nrfEnable"]) and $my_post["nrfEnable"] == "on") $ahoy_conf["nrf"]["enabled"] = $my_post["nrfEnable"];
+	else $ahoy_conf["nrf"]["enabled"] = false;
+	if (isset($my_post["spiCSN"])	and $ahoy_conf["nrf"]["enabled"]) $ahoy_conf["nrf"]["spiCSN"]  = intval($my_post["spiCSN"]);
+	else unset($ahoy_conf["nrf"]["spiCSN"]);
+	if (isset($my_post["spiSpeed"]) and $my_post["spiSpeed"]!= "255") $ahoy_conf["nrf"]["spiSpeed"]= intval($my_post["spiSpeed"]);
+	else unset($ahoy_conf["nrf"]["spiSpeed"]);
+	if (isset($my_post["spiCe"])    and $my_post["spiCe"]   != "255") $ahoy_conf["nrf"]["spiCe"]   = intval($my_post["spiCe"]);
+	else unset($ahoy_conf["nrf"]["spiCe"]);
+	if (isset($my_post["spiCs"])    and $my_post["spiCs"]   != "255") $ahoy_conf["nrf"]["spiCs"]   = intval($my_post["spiCs"]);
+	else unset($ahoy_conf["nrf"]["spiCs"]);
+	if (isset($my_post["spiIrq"])   and $my_post["spiIrq"]  != "255") $ahoy_conf["nrf"]["spiIrq"]  = intval($my_post["spiIrq"]);
+	else unset($ahoy_conf["nrf"]["spiIrq"]);
+	if (isset($my_post["spiSclk"])  and $my_post["spiSclk"] != "255") $ahoy_conf["nrf"]["spiSclk"] = intval($my_post["spiSclk"]);
+	else unset($ahoy_conf["nrf"]["spiSclk"]);
+	if (isset($my_post["spiMosi"])  and $my_post["spiMosi"] != "255") $ahoy_conf["nrf"]["spiMosi"] = intval($my_post["spiMosi"]);
+	else unset($ahoy_conf["nrf"]["spiMosi"]);
+	if (isset($my_post["spiMiso"])  and $my_post["spiMiso"] != "255") $ahoy_conf["nrf"]["spiMiso"] = intval($my_post["spiMiso"]);
+	else unset($ahoy_conf["nrf"]["spiMiso"]);
 
 	# "cmtEnable":"on","pinCmtSclk":"255","pinSdio":"255","pinCsb":"255","pinFcsb":"255","pinGpio3":"255"
-	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_data["cmt"]["enabled"] = $my_post["cmtEnable"];
-	else $ahoy_data["cmt"]["enabled"] = false;
-	if (isset($my_post["pinCmtSclk"])  and $my_post["pinCmtSclk"] != "255") $ahoy_data["cmt"]["pinCmtSclk"] = $my_post["pinCmtSclk"];
-	else unset($ahoy_data["cmt"]["pinCmtSclk"]);
-	if (isset($my_post["pinSdio"])     and $my_post["pinSdio"]    != "255") $ahoy_data["cmt"]["pinSdio"]    = $my_post["pinSdio"];
-	else unset($ahoy_data["cmt"]["pinSdio"]);
-	if (isset($my_post["pinCsb"])      and $my_post["pinCsb"]     != "255") $ahoy_data["cmt"]["pinCsb"]     = $my_post["pinCsb"];
-	else unset($ahoy_data["cmt"]["pinCsb"]);
-	if (isset($my_post["pinFcsb"])     and $my_post["pinFcsb"]    != "255") $ahoy_data["cmt"]["pinFcsb"]    = $my_post["pinFcsb"];
-	else unset($ahoy_data["cmt"]["pinFcsb"]);
-	if (isset($my_post["pinGpio3"])    and $my_post["pinGpio3"]   != "255") $ahoy_data["cmt"]["pinGpio3"]   = $my_post["pinGpio3"];
-	else unset($ahoy_data["cmt"]["pinGpio3"]);
+	if (isset($my_post["cmtEnable"]) and $my_post["cmtEnable"] == "on") $ahoy_conf["cmt"]["enabled"] = $my_post["cmtEnable"];
+	else $ahoy_conf["cmt"]["enabled"] = false;
+	if (isset($my_post["pinCmtSclk"])  and $my_post["pinCmtSclk"] != "255") $ahoy_conf["cmt"]["pinCmtSclk"] = $my_post["pinCmtSclk"];
+	else unset($ahoy_conf["cmt"]["pinCmtSclk"]);
+	if (isset($my_post["pinSdio"])     and $my_post["pinSdio"]    != "255") $ahoy_conf["cmt"]["pinSdio"]    = $my_post["pinSdio"];
+	else unset($ahoy_conf["cmt"]["pinSdio"]);
+	if (isset($my_post["pinCsb"])      and $my_post["pinCsb"]     != "255") $ahoy_conf["cmt"]["pinCsb"]     = $my_post["pinCsb"];
+	else unset($ahoy_conf["cmt"]["pinCsb"]);
+	if (isset($my_post["pinFcsb"])     and $my_post["pinFcsb"]    != "255") $ahoy_conf["cmt"]["pinFcsb"]    = $my_post["pinFcsb"];
+	else unset($ahoy_conf["cmt"]["pinFcsb"]);
+	if (isset($my_post["pinGpio3"])    and $my_post["pinGpio3"]   != "255") $ahoy_conf["cmt"]["pinGpio3"]   = $my_post["pinGpio3"];
+	else unset($ahoy_conf["cmt"]["pinGpio3"]);
 
 	# "ethEn":"on","ethCs":"255","ethSclk":"255","ethMiso":"255","ethMosi":"255","ethIrq":"255","ethRst":"255"
-	if (isset($my_post["ethEn"])    and $my_post["ethEn"]   == "on")  $ahoy_data["eth"]["ethEn"]   = $my_post["ethEn"];
-	else unset($ahoy_data["eth"]["ethEn"]);
-	if (isset($my_post["ethCs"])    and $my_post["ethCs"]   != "255") $ahoy_data["eth"]["ethCs"]   = $my_post["ethCs"];
-	else unset($ahoy_data["eth"]["ethCs"]);
-	if (isset($my_post["ethSclk"])  and $my_post["ethSclk"] != "255") $ahoy_data["eth"]["ethSclk"] = $my_post["ethSclk"];
-	else unset($ahoy_data["eth"]["ethSclk"]);
-	if (isset($my_post["ethMiso"])  and $my_post["ethMiso"] != "255") $ahoy_data["eth"]["ethMiso"] = $my_post["ethMiso"];
-	else unset($ahoy_data["eth"]["ethMiso"]);
-	if (isset($my_post["ethMosi"])  and $my_post["ethMosi"] != "255") $ahoy_data["eth"]["ethMosi"] = $my_post["ethMosi"];
-	else unset($ahoy_data["eth"]["ethMosi"]);
-	if (isset($my_post["ethIrq"])   and $my_post["ethIrq"]  != "255") $ahoy_data["eth"]["ethIrq"]  = $my_post["ethIrq"];
-	else unset($ahoy_data["eth"]["ethIrq"]);
-	if (isset($my_post["ethRst"])   and $my_post["ethRst"]  != "255") $ahoy_data["eth"]["ethRst"]  = $my_post["ethRst"];
-	else unset($ahoy_data["eth"]["ethRst"]);
-	if (isset($ahoy_data["eth"])	and count($ahoy_data["eth"]) == 0) unset($ahoy_data["eth"]);
+	if (isset($my_post["ethEn"])    and $my_post["ethEn"]   == "on")  $ahoy_conf["eth"]["ethEn"]   = $my_post["ethEn"];
+	else unset($ahoy_conf["eth"]["ethEn"]);
+	if (isset($my_post["ethCs"])    and $my_post["ethCs"]   != "255") $ahoy_conf["eth"]["ethCs"]   = $my_post["ethCs"];
+	else unset($ahoy_conf["eth"]["ethCs"]);
+	if (isset($my_post["ethSclk"])  and $my_post["ethSclk"] != "255") $ahoy_conf["eth"]["ethSclk"] = $my_post["ethSclk"];
+	else unset($ahoy_conf["eth"]["ethSclk"]);
+	if (isset($my_post["ethMiso"])  and $my_post["ethMiso"] != "255") $ahoy_conf["eth"]["ethMiso"] = $my_post["ethMiso"];
+	else unset($ahoy_conf["eth"]["ethMiso"]);
+	if (isset($my_post["ethMosi"])  and $my_post["ethMosi"] != "255") $ahoy_conf["eth"]["ethMosi"] = $my_post["ethMosi"];
+	else unset($ahoy_conf["eth"]["ethMosi"]);
+	if (isset($my_post["ethIrq"])   and $my_post["ethIrq"]  != "255") $ahoy_conf["eth"]["ethIrq"]  = $my_post["ethIrq"];
+	else unset($ahoy_conf["eth"]["ethIrq"]);
+	if (isset($my_post["ethRst"])   and $my_post["ethRst"]  != "255") $ahoy_conf["eth"]["ethRst"]  = $my_post["ethRst"];
+	else unset($ahoy_conf["eth"]["ethRst"]);
+	if (isset($ahoy_conf["eth"])	and count($ahoy_conf["eth"]) == 0) unset($ahoy_conf["eth"]);
 	
 
 	# aus Display Config
@@ -277,7 +278,7 @@ function saveSettings($my_post){
 ## bool saveSettings() { # .../src/config/settings.h - Zeile 382
 ##        void loadDefaults(bool keepWifi = false) {
 
-	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
+	saveToAhoyConfigFile($ahoy_conf, $ahoy_config);
 }
 
 
@@ -301,10 +302,10 @@ function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
 		$fileContentArray  = json_decode($fileContentString, true);  ## WICHTIG: ",true" - sonst JSON und kein ARRAY
 
 		saveDebug($my_post, ["fileContentString" => $fileContentString, "fileContentArray" => $fileContentArray]);
-		$ahoy_data = $fileContentArray["ahoy"];
+		$ahoy_conf = $fileContentArray["ahoy"];
 	}
-#	saveDebug($my_post, $ahoy_data);
-	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
+#	saveDebug($my_post, $ahoy_conf);
+	saveToAhoyConfigFile($ahoy_conf, $ahoy_config);
 }
 
 
@@ -316,17 +317,17 @@ function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
 
 function saveInverter($my_post){
 	include 'generic_json.php';    # to load AhoyDTU configuration
-	saveDebug($my_post, $ahoy_data);
+	saveDebug($my_post, $ahoy_conf);
 
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "serial_utc_offset")	# call from serial WebConsole
-		$ahoy_data["WebServer"]["TimezoneOffset"] = $my_post["val"];
+		$ahoy_conf["WebServer"]["TimezoneOffset"] = $my_post["val"];
 
 	# add new / delete inverter ## see setup.html:736
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "save_iv") {  ## detect inverter commands
 
 		if ($my_post["ser"] == 0) {                                   ## delete inverter
-			# unset($ahoy_data["inverters"][$my_post["id"]]);
-			array_splice($ahoy_data["inverters"], $my_post["id"], 1);
+			# unset($ahoy_conf["inverters"][$my_post["id"]]);
+			array_splice($ahoy_conf["inverters"], $my_post["id"], 1);
 
 		} else {                                                      ## add / change inverter
 			$txpower = "max";
@@ -354,19 +355,19 @@ function saveInverter($my_post){
 	 		}
 			global $debug_fn;
 			#file_put_contents($debug_fn, "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
-			if (! isset($ahoy_data["inverters"])) $ahoy_data["inverters"] = [];
-			$ahoy_data["inverters"][$my_post["id"]] = $inverter;
+			if (! isset($ahoy_conf["inverters"])) $ahoy_conf["inverters"] = [];
+			$ahoy_conf["inverters"][$my_post["id"]] = $inverter;
 		}	
 	}
-	saveToAhoyConfigFile($ahoy_data, $ahoy_config);
+	saveToAhoyConfigFile($ahoy_conf, $ahoy_config);
 }
 
-function saveToAhoyConfigFile($ahoy_data, $ahoy_config) {
+function saveToAhoyConfigFile($ahoy_conf, $ahoy_config) {
 	global $debug_fn;
-	file_put_contents($debug_fn, "\n_data_e: " . json_encode($ahoy_data) . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "\n_data_e: " . json_encode($ahoy_conf) . "\n", FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file
-	$RC = yaml_emit_file($ahoy_config["filename"], ["ahoy" => $ahoy_data]);
+	$RC = yaml_emit_file($ahoy_config["filename"], ["ahoy" => $ahoy_conf]);
 
 	# print ($RC ? "alles OK\n" : "Fehler\n");
 	if ($RC == true) {
@@ -376,7 +377,7 @@ function saveToAhoyConfigFile($ahoy_data, $ahoy_config) {
 		# if (isset($my_post["reboot"])) { reboot in 1 sec.}
 	} else {
 		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $ahoy_config["filename"] . "\n");
-		print ("Length: " . count($ahoy_data) . ": " . json_encode($ahoy_data) . "\n");
+		print ("Length: " . count($ahoy_conf) . ": " . json_encode($ahoy_conf) . "\n");
 	}
 }
 
