@@ -2,35 +2,42 @@
 require_once 'generic_json.php'; # incl. reading ahoy.yml
 
 
-# read Info-Files in {filepath} with current inverter data
+# TEST, when interactive call
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and $argv[0] == "inverter_json.php") {
-	$inverter_id = 0; # for test only
-}
-
-# load (read) AhoyDTU-data-file
-if ((isset($inverter_id)) and ($inverter_id >= 0)) {
-    $ahoy_data = readOperatingData(realpath($ahoy_config["filename"]));
-	$data_yaml = $ahoy_data[$ahoy_conf["inverters"][$inverter_id]["serial"]];
-} else {
 	$inverter_id = 0;
 }
 
-if (isset($data_yaml["GridOnProFilePara"]))			$grid_data		= $data_yaml["GridOnProFilePara"];
-else $grid_data = array();
-if (isset($data_yaml["InverterDevInform_Simple"]))	$simple_hw_data	= $data_yaml["InverterDevInform_Simple"];
-else $simple_hw_data = array();
-if (isset($data_yaml["InverterDevInform_All"]))		$all_hw_data	= $data_yaml["InverterDevInform_All"];
-else $all_hw_data = array();
-if (isset($data_yaml["RealTimeRunData_Debug"]))		$status_data	= $data_yaml["RealTimeRunData_Debug"];
-else $status_data = array();
-if (isset($data_yaml["AlarmData"]))					$alarm_data		= $data_yaml["AlarmData"];
-else $alarm_data = array();
-if (! isset($data_yaml["RealTimeRunData_Debug"]["time"])) $status_data['time'] = 0;
+# Default values
+$simple_hw_data = array();
+$all_hw_data = array();
+$grid_data = array();
+$sysConfig_data = array();
+$status_data = array();
+$alarm_data = array();
+$MaxValues_data = array();
+if (!isset($inverter_id)) $inverter_id = 0;
 
-if (isset($data_yaml["InverterDevInform_All"])) {
-  $fw_date = $all_hw_data["FW_build_dd"] . "." . $all_hw_data["FW_build_mm"] . "." . $all_hw_data["FW_build_yy"];  #"0-00-00"
-  $fw_time = $all_hw_data["FW_build_HH"] . ":" . $all_hw_data["FW_build_MM"];                                  #"00:00"
-  $fw_ver  = $all_hw_data["FW_ver_maj"]  . "." . $all_hw_data["FW_ver_min"]  . "." . $all_hw_data["FW_ver_pat"];   #"0.00.00"
+# read AhoyDTU operating data
+if ((isset($inverter_id)) and ($inverter_id >= 0)) {
+    $ahoy_data = readOperatingData(realpath($ahoy_config["filename"]));
+	$data_yaml = $ahoy_data[$ahoy_conf["inverters"][$inverter_id]["serial"]];
+
+	if (isset($data_yaml["InverterDevInform_Simple"]))	$simple_hw_data	= $data_yaml["InverterDevInform_Simple"];
+	if (isset($data_yaml["InverterDevInform_All"]))		$all_hw_data	= $data_yaml["InverterDevInform_All"];
+	if (isset($data_yaml["GridOnProFilePara"]))			$grid_data		= $data_yaml["GridOnProFilePara"];
+	if (isset($data_yaml["SystemConfigPara"]))			$sysConfig_data	= $data_yaml["SystemConfigPara"];
+	if (isset($data_yaml["RealTimeRunData_Debug"]))		$status_data	= $data_yaml["RealTimeRunData_Debug"]; # rtrd_data
+	if (isset($data_yaml["AlarmData"]))					$alarm_data		+= $data_yaml["AlarmData"];
+	if (isset($data_yaml["AlarmUpdate"]))				$alarm_data		+= $data_yaml["AlarmUpdate"];
+	if (isset($data_yaml["MaxValues"]))					$MaxValues_data	= $data_yaml["MaxValues"];
+}
+
+if (! isset($status_data["time"])) $status_data['time'] = 0;
+
+if (isset($all_hw_data)) {
+  $fw_date = $all_hw_data["FW_build_dd"] . "." . $all_hw_data["FW_build_mm"] . "." . $all_hw_data["FW_build_yy"];	#"0-00-00"
+  $fw_time = $all_hw_data["FW_build_HH"] . ":" . $all_hw_data["FW_build_MM"];										#"00:00"
+  $fw_ver  = $all_hw_data["FW_ver_maj"]  . "." . $all_hw_data["FW_ver_min"]  . "." . $all_hw_data["FW_ver_pat"];	#"0.00.00"
 } else {
   $fw_date = "0-00-00";
   $fw_time = "00:00";
@@ -44,9 +51,9 @@ $max_pwr = 0;
 if (isset($status_data["inverter_ser"])) {
   switch (substr($status_data["inverter_ser"], 0,4)) {
     case 1121:
-	  $max_pwr = 400; break;
+	  $max_pwr =  400; break;
     case 1141:
-	  $max_pwr = 800; break;
+	  $max_pwr =  800; break;
     case 1161:
 	  $max_pwr = 1500; break;
   }
@@ -131,23 +138,23 @@ if (isset($status_data["strings"])){
 }
 
 if (isset($status_data["yield_total"])) {
-  array_push($$inverter_var_id["ch"],[ 
-    $ACvoltage,                                 # U_AC [V]
-    $ACcurrent,                                 # I_AC [A]
-	$ACpower,                                   # P_AC [W]
-	$frequency,                                 # F_AC [Hz]
-	$status_data["powerfactor"],           # Pf_AC
-	$status_data["temperature"],           # Temp [°C]
-	$status_data["yield_total"] / 1000,    # Pmax-total [kW]
-	$status_data["yield_today"],           # Pmax-today [kW]
-	$DCpower,                                   # P_DC [W]
-	$status_data["efficiency"],            # [%]
-	$ACQpower,                                  # Q [var]
-	$data_yaml["MaxValues"]["max_power"],     # MaxPower [W]
-	$data_yaml["MaxValues"]["max_temp"]       # MaxTemp [°C]
-  ]);
+	array_push($$inverter_var_id["ch"],[ 
+		$ACvoltage,								# U_AC [V]
+		$ACcurrent,								# I_AC [A]
+		$ACpower,								# P_AC [W]
+		$frequency,								# F_AC [Hz]
+		$status_data["powerfactor"],			# Pf_AC
+		$status_data["temperature"],			# Temp [°C]
+		$status_data["yield_total"] / 1000,		# Pmax-total [kW]
+		$status_data["yield_today"],			# Pmax-today [kW]
+		$DCpower,								# P_DC [W]
+		$status_data["efficiency"],				# [%]
+		$ACQpower,								# Q [var]
+		$data_yaml["MaxValues"]["max_power"],	# MaxPower [W]
+		$data_yaml["MaxValues"]["max_temp"]		# MaxTemp [°C]
+	]);
 } else {
-  array_push($$inverter_var_id["ch"],[0,0,0,0,0,0,0,0,0,0,0,0]);
+	array_push($$inverter_var_id["ch"],[0,0,0,0,0,0,0,0,0,0,0,0]);
 }
 
 ## tbd knut
@@ -155,20 +162,19 @@ if (isset($status_data["yield_total"])) {
 # schleife über config, nicht status-data
 # else zweig mit 0 werten
 for ($ii = 0; $ii < count($ahoy_conf["inverters"][$inverter_id]["strings"] ?? []); $ii++) {
-  if (isset($status_data["strings"])){
-  #for ($ii = 0; $ii < count($status_data["strings"]); $ii++) {
-    $$inverter_var_id["ch"][$ii + 1] = [
-	  $status_data["strings"][$ii]["voltage"],      # U_DC [V]
-	  $status_data["strings"][$ii]["current"],      # I_DC [A]
-	  $status_data["strings"][$ii]["power"],        # P_DC [W]
-	  $status_data["strings"][$ii]["energy_daily"], # YieldDay [Wh]
-	  $status_data["strings"][$ii]["energy_total"] / 1000, # YieldTotal [kWh]
-	  $status_data["strings"][$ii]["irradiation"],  # Irradiation [%]
-	  $data_yaml["MaxValues"]["strings"][$ii]      # MaxPower [W]
-    ];
-  } else $$inverter_var_id["ch"][$ii + 1] = [0,0,0,0,0,0,0];
-  array_push($$inverter_var_id["ch_name"],    $ahoy_conf["inverters"][$inverter_id]["strings"][$ii]["s_name"]);
-  array_push($$inverter_var_id["ch_max_pwr"], $ahoy_conf["inverters"][$inverter_id]["strings"][$ii]["s_maxpower"]);
+	if (isset($status_data["strings"])) {
+		$$inverter_var_id["ch"][$ii + 1] = [
+			$status_data["strings"][$ii]["voltage"],			# U_DC [V]
+			$status_data["strings"][$ii]["current"],			# I_DC [A]
+			$status_data["strings"][$ii]["power"],				# P_DC [W]
+			$status_data["strings"][$ii]["energy_daily"],		# YieldDay [Wh]
+			$status_data["strings"][$ii]["energy_total"] / 1000,# YieldTotal [kWh]
+			$status_data["strings"][$ii]["irradiation"],		# Irradiation [%]
+			$data_yaml["MaxValues"]["strings"][$ii]				# MaxPower [W]
+		];
+	} else $$inverter_var_id["ch"][$ii + 1] = [0,0,0,0,0,0,0];  # no inverter configured
+	array_push($$inverter_var_id["ch_name"],    $ahoy_conf["inverters"][$inverter_id]["strings"][$ii]["s_name"]);
+	array_push($$inverter_var_id["ch_max_pwr"], $ahoy_conf["inverters"][$inverter_id]["strings"][$ii]["s_maxpower"]);
 }
 
 $inverter_list_json = ["inverter" => []];
@@ -226,43 +232,45 @@ if (isset($status_data["inverter_ser"])) {
 }
 $inverter_version = "inverter_version_" . $inverter_id . "_json";
 $$inverter_version = [
-	"id" => $inverter_id,
-	"name" => $status_data["inverter_name"] ?? "",
-	"serial" => $status_data["inverter_ser"] ?? "",
-	"generation" => 1,
-	"max_pwr" => $max_pwr,
-	"part_num" => $simple_hw_data["FLD_PART_NUM"] ?? 0,
-	"hw_ver" => $simple_hw_data["FLD_HW_VERSION"] ?? 0,
-	"prod_cw" => $prod_cw,
-	"prod_year" => $prod_year,
-	"fw_date" => $fw_date, # "0-00-00",
-	"fw_time" => $fw_time, # "00:00",
-	"fw_ver" =>  $fw_ver,  # "0.00.00",
-	"boot_ver" => $all_hw_data["BL_VER"] ?? 0 
+	"id"			=> $inverter_id,
+	"name"			=> $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
+	"serial"		=> $status_data["inverter_ser"] ?? "",
+	"generation"	=> 1,
+	"max_pwr"		=> $max_pwr,
+	"part_num"		=> $simple_hw_data["FLD_PART_NUM"] ?? 0,
+	"hw_ver"		=> $simple_hw_data["FLD_HW_VERSION"] ?? 0,
+	"prod_cw"		=> $prod_cw,
+	"prod_year"		=> $prod_year,
+	"fw_date"		=> $fw_date, # "0-00-00",
+	"fw_time"		=> $fw_time, # "00:00",
+	"fw_ver"		=>  $fw_ver,  # "0.00.00",
+	"boot_ver"		=> $all_hw_data["BL_VER"] ?? 0 
 ];
 
 # $inverter_alarm_0_json 
 $inverter_alarm = "inverter_alarm_" . $inverter_id . "_json";
 $$inverter_alarm = [
-	"iv_id" => $inverter_id,
-	"iv_name" => $status_data["inverter_name"] ?? "",
-	"cnt" => 0,
+	"iv_id"   => $inverter_id,
+	"iv_name" => $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
+	"cnt"     => 0,
 	"last_id" => count($alarm_data) ?? 0,
-	"alarm" => []
+	"alarm"   => []
 ];
-for ($ii = $$inverter_alarm["last_id"]; $ii >= 0; $ii--) {
-	if (isset($alarm_data[$ii])) {
-		if ($alarm_data[$ii]["inv_alarm_num"] == 1) $alarm_data[$ii]["inv_alarm_cnt"] = 1;
+# print ("count Alarm: " . $$inverter_alarm["last_id"] . PHP_EOL);
+# print_r($alarm_data);
+krsort($alarm_data);
+foreach ($alarm_data as $ii => $a_event) {
+	if (isset($a_event)) {
 		array_push($$inverter_alarm["alarm"], 
 			[
-			"code" => $alarm_data[$ii]["inv_alarm_cnt"] ?? 0, 
-			"str" => $alarm_data[$ii]["inv_alarm_txt"] ?? "", 
-			"start" => $alarm_data[$ii]["inv_alarm_stm"] ?? 0,
-			"end" => $alarm_data[$ii]["inv_alarm_etm"] ?? 0
+			"code"  => $ii,
+			"str"   => $alarm_data[$ii]["a_event_txt"] ?? "", 
+			"start" => $alarm_data[$ii]["a_event_sts"] ?? 0,
+			"end"   => $alarm_data[$ii]["a_event_ets"] ?? 0
 			]
 		);
 	}
-	else array_push($$inverter_alarm["alarm"], ["code" => 0, "str" => "Unknown", "start" => 0, "end" => 0]);
+	else array_push($$inverter_alarm["alarm"], ["code" => 999, "str" => "Unknown", "start" => 0, "end" => 0]);
 }
 
 # $inverter_pwrack_0_json 

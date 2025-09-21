@@ -126,6 +126,7 @@ function readOperatingData($filePathName, $print_OK = False) {
 	# generate the specific FTOK key from file-path-name
 	#  ftok(string $filename, string $project_id): int
 	# "id" must be in chr(string) - hex(0x30) = dec(48) = chr("0")
+    if (!file_exists($filePathName)) $filePathName = "/tmp";
 	$ftokKey = ftok($filePathName, "0");
 	if ($print_OK) termPrint("ftokKey=" . $ftokKey . " hex=0x" . dechex($ftokKey));
 

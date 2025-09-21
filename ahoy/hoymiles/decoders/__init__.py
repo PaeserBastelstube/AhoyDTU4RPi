@@ -70,8 +70,6 @@ class Response:
         """
         :param bytes response: response payload bytes
         """
-##kk        self.inverter_ser = params.get('inverter_ser', None)
-##kk        self.inverter_name = params.get('inverter_name', None)
         self.response = args[0]
 
         strings = params.get('strings', None)
@@ -84,10 +82,7 @@ class Response:
 
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
-        return {
-##kk                'inverter_ser': self.inverter_ser,
-##kk                'inverter_name': self.inverter_name,
-                }
+        return { }
 
 class StatusResponse(Response):
     """Inverter StatusResponse object"""
@@ -460,52 +455,60 @@ class Response_AlarmEvent(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
 
-        alarmData = ' '.join([f"{b:02x}" for b in self.response])
-        logging.debug(f"AlarmData: len={len(self.response)} data={alarmData}")
+        chunk_size = 12
+        self.a_event = {}
+
+        alarmEvent = ' '.join([f"{b:02x}" for b in self.response])
+        logging.debug(f"AlarmEvent: len={len(self.response)} data={alarmEvent}")
 
         crc_valid = self.validate_crc_m()
         if crc_valid:
             #logging.debug(' payload has valid modbus crc')
             self.response = self.response[:-2]
 
-        self.a_opcode = 0
-        self.a_code = struct.unpack('>H', self.response[:2])[0]
-        self.a_text = self.alarm_codes.get(self.a_code, 'N/A')
-        self.a_count = 0
-        self.startTime = 0
-        self.endTime = 0
+        if len(self.response) < chunk_size:
+            a_code = struct.unpack('>H', self.response[:2])[0]
+            self.a_event[a_code] = {
+                'a_event_num' : a_code,
+                'a_event_txt' : self.alarm_codes.get(a_code, 'N/A'),
+            ##  'a_event_cnt' : a_code,
+                'a_event_sts' : datetime.now().timestamp(),
+                'a_event_ets' : datetime.now().timestamp()
+            }
+            return
 
-        chunk_size = 12
         for i_chunk in range(2, len(self.response), chunk_size):
             chunk = self.response[i_chunk:i_chunk+chunk_size]
 
             if (len(chunk[0:6]) < 6):
-                logging.error(f'f"AlarmData length of chunk must be greater or equal 6 bytes: {chunk}')
+                logging.error(f'f"AlarmEvent: length of chunk must be greater or equal 6 bytes: {chunk}')
                 return
 
-            self.opcode, self.a_code, self.a_count, self.startTime, self.endTime, self.nn, self.mm = struct.unpack('>BBHHHHH', chunk)
-            self.a_text = self.alarm_codes.get(self.a_code, 'N/A')
+            opcode, a_code, a_count, startTime, endTime, nn, mm = struct.unpack('>BBHHHHH', chunk)
+            a_text = self.alarm_codes.get(a_code, 'N/A')
+            self.a_event[a_count] = {
+                'a_event_num' : a_code,
+                'a_event_txt' : a_text,
+            ##  'a_event_cnt' : a_count,
+                'a_event_sts' : startTime,
+                'a_event_ets' : endTime
+            }
 
             dbg = ''
             for fmt in ['BBHHHHH']:
                 dbg += f'{fmt:7} unpacked:' + str(struct.unpack('>' + fmt, chunk))
 
-            logging.debug(f"AlarmData: code={' '.join([f'{byte:02x}' for byte in chunk])}")
-            logging.debug(f"AlarmData: format={dbg}")
-            logging.debug(f"AlarmData: opcode={self.opcode} a_code={self.a_code} a_text={self.a_text} a_count={self.a_count} "
-                          f"StartTime={timedelta(seconds=self.startTime)} EndTime={timedelta(seconds=self.endTime)}")
+            ## logging.debug(f"AlarmEvent: code={' '.join([f'{byte:02x}' for byte in chunk])}")
+            ## logging.debug(f"AlarmEvent: format={dbg}")
+            logging.debug(f"AlarmEvent: {opcode=} {a_code=} {a_text=} {a_count=} "
+                          f"StartTime={timedelta(seconds=startTime)} EndTime={timedelta(seconds=endTime)} {nn=} {mm=}")
 
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
         data = super().__dict__()
 
         # logging.debug(f'AlarmData: {struct.unpack(">HIHHHHH", self.response[0:16])}')
-        data['inv_alarm_num'] = self.a_code
-        data['inv_alarm_txt'] = self.a_text
-        data['inv_alarm_cnt'] = self.a_count
-        data['inv_alarm_stm'] = self.startTime
-        data['inv_alarm_etm'] = self.endTime
-        return data
+        return self.a_event
 
 class DebugDecodeAny(UnknownResponse):
     """Default decoder"""

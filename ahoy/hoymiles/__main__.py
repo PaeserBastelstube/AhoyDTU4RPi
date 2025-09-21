@@ -150,21 +150,23 @@ class WebServer:
        logging.debug(f"SaveData4PHP(checkOutput): missing elements - restart main-init function")
        return True
 
-  def eventArray (self, data):
+  def eventArray (self, InfoCommand, data): # InfoCommand == "AlarmData" or "AlarmUpdate"
 	# add data to FiFo-Array (max 50 pos.
-    if "AlarmData" in self.dataToFile:
-        eventArrayCount = len(self.dataToFile.get("AlarmData", [])) 
-        self.dataToFile["AlarmData"].update({eventArrayCount : data})
+    if InfoCommand in self.dataToFile:
+        self.dataToFile[InfoCommand].update(data)
     else:
-        self.dataToFile["AlarmData"] = {0 : data}
-    if (len(self.dataToFile["AlarmData"]) > 50):
-        self.dataToFile["AlarmData"].pop(0)
-    
+        self.dataToFile[InfoCommand] = data
+
+    while len(self.dataToFile[InfoCommand]) > 50:
+        myFirstKey = next(iter(self.dataToFile[InfoCommand].keys()))
+        del(self.dataToFile[InfoCommand][myFirstKey])
+    # logging.debug(f"SaveData4PHP: len={len(self.dataToFile[InfoCommand])} {self.dataToFile[InfoCommand]=}")
+
   def SaveData4PHP (self, inv_ser, InfoCommand, data):
-    if   (InfoCommand == "AlarmData"):                  # AlarmData == 18 (0x12)
-        self.eventArray(data)                           # FiFo - max 50 pos.
-    elif (InfoCommand == "RealTimeRunData_Debug"):      # RealTimeRunData_Debug == 11 (0x0B)
-        self.getMaxValues(data)                         # extract max.Values
+    if (InfoCommand.startswith("Alarm")):           # AlarmData == 17(0x11) + AlarmUpdate == 18(0x12)
+        self.eventArray(InfoCommand, data)          # FiFo - max 50 pos.
+    elif (InfoCommand == "RealTimeRunData_Debug"):  # RealTimeRunData_Debug == 11 (0x0B)
+        self.getMaxValues(data)                     # extract max.Values
         # datetime object can't serialied with json.dump
         if 'time' in data and isinstance(data['time'], datetime):
             data['time'] = data['time'].strftime('%d.%m.%YT%H:%M:%S')
@@ -172,7 +174,7 @@ class WebServer:
     else:
         self.dataToFile[InfoCommand] = data
 
-    logging.debug(f"SaveData4PHP: save data to ...")
+    # logging.debug(f"SaveData4PHP: try to save data to System-V IPC")
     try: # Creates a new semaphore or opens an existing one.
         sem_id = sysv_ipc.Semaphore(self.ftokKey, self.ipc_flags, self.ipc_mode, self.sem_initial_value)
     except sysv_ipc.ExistentialError: # semaphore exists already
@@ -187,15 +189,16 @@ class WebServer:
             sem_id.remove()
     else:
         sem_id.release()               # Initializing sem.o_time to nonzero value
-        logging.debug(f"SaveData4PHP: Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
-                      f"successfully init with TimeStamp: {sem_id.o_time}")
+        ## logging.debug(f"SaveData4PHP: Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
+        ##               f"successfully init with TimeStamp: {sem_id.o_time}")
 
         SHM_Data = json.dumps(# Data Serialization for writing in SHM
             {"saveTS" : time.strftime('%d.%m.%YT%H:%M:%S'),
              "ts_last_success" : datetime.now().timestamp(),
               inv_ser : {** self.dataToFile}})
 
-        logging.debug(f"SaveData4PHP: try to create SHM with: len={len(SHM_Data)} value={SHM_Data}")
+        logging.debug(f"SaveData4PHP: type={InfoCommand} SHM with: len={len(SHM_Data)}")
+        ## logging.debug(f"SaveData4PHP: type={InfoCommand} SHM with: len={len(SHM_Data)} value={SHM_Data}")
         # create shared memeory object (SHM)
         # Flag IPC_CREX is shorthand for IPC_CREAT | IPC_EXCL, they are used when
         # creating IPC objects and identified by key. If the IPC object (semaphore, ...)
@@ -216,7 +219,7 @@ class WebServer:
 
         shdMemObj.write(SHM_Data)
         shdMemObj.detach()
-        #logging.debug(f"SaveData4PHP:  Shared-Memory created: {shdMemObj.id=} len={len(shdMemData)} value={shdMemData}")
+        ## logging.debug(f"SaveData4PHP:  Shared-Memory created: {shdMemObj.id=} len={len(shdMemData)} value={shdMemData}")
         sem_id.remove()                # remove Semaphore
 
 
@@ -286,7 +289,7 @@ def main_loop(ahoy_config):
     """ Main loop """
     # check 'interval' parameter in config-file
     loop_interval = int(ahoy_config.get('interval', 15))
-    logging.info(f"AHOY-MAIN: {loop_interval=} sec.")
+    logging.info(f"AhoyDTU-MAIN: {loop_interval=} sec.")
     if (loop_interval <= 0):
         logging.critical("Parameter 'loop_interval' must grater 0 - STOP(999)")
         exit(999)
@@ -360,8 +363,8 @@ def poll_inverter(inverter, do_init, retries):
     inverter_strings = inverter.get('strings')
     inv_str          = str(inverter_ser)
 
-    # Queue at least status data request
-    if do_init:
+    # Command queue 
+    if do_init: # this command is executed at start in the morning
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 00
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 01
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))          # 02
@@ -369,19 +372,22 @@ def poll_inverter(inverter, do_init, retries):
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 04
       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 05
       # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0c
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))          # 11
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))        # 12
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))         # 13
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))       # 14
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))        # 15
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))  # 1E
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))      # FF
-    command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))  # 0b
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))                  # 11
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))                # 12
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))                 # 13
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))               # 14
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))                # 15
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))          # 1E
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))              # FF
+
+    # this command is executed on each run
+    command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))        # 0b
 
     # Put all queued commands for current inverter on air
     while len(command_queue[inv_str]) > 0:
         if hoymiles.HOYMILES_VERBOSE_LOGGING:
-           logging.info(f'Poll inverter name={inverter_name} ser={inverter_ser} command={hoymiles.InfoCommands(command_queue[inv_str][0][0]).name}')
+           logging.info(f"Poll inverter name={inverter_name} ser={inverter_ser} "
+                        f"command={hoymiles.InfoCommands(command_queue[inv_str][0][0]).name}")
         payload = command_queue[inv_str].pop(0)    ## get first object from command queue
 
         # Send payload {ttl}-times until we get at least one reponse
@@ -418,7 +424,6 @@ def poll_inverter(inverter, do_init, retries):
             decoder = hoymiles.ResponseDecoder(response,  
                     request=com.request,
                     inverter_ser=inverter_ser,
-##kk                    inverter_name=inverter_name,
                     strings=inverter_strings
                     )
 
@@ -449,13 +454,16 @@ def poll_inverter(inverter, do_init, retries):
 
                 # when 'event_count' is changed, add AlarmUpdate-command to queue
                 if data is not None and 'event_count' in data:
-                    # if event_message_index[inv_str] < data['event_count']:
                     if event_message_index[inv_str] != data['event_count']:
                        event_message_index[inv_str]  = data['event_count']
                        if hoymiles.HOYMILES_VERBOSE_LOGGING:
                           logging.info(f"event_count changed to {data['event_count']} --> AlarmUpdate requested")
                        # add AlarmUpdate-command to queue 
-                       command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_str]))
+                       command_queue[inv_str].append(
+                         hoymiles.compose_send_time_payload(
+                           hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_str]
+                         )
+                       )
 
                 # sent outputs
 ##                if mqtt_client:

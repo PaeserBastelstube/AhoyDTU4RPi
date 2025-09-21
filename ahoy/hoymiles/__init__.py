@@ -244,7 +244,7 @@ class ResponseDecoder(ResponseDecoderFactory):
                 model_desc = "event not configured - check ahoy script"
 
             logging.info(f'--> using model_decoder: {model}Decode{command.upper()}'
-                         f' - {InfoCommands(int(command, 16)).name} [{command}] ({model_desc})')
+                         f' - {InfoCommands(int(command, 16)).name} 0x[{command}] ({model_desc})')
 
         model_decoders = __import__('hoymiles.decoders')
         if hasattr(model_decoders, f'{model}Decode{command.upper()}'):
@@ -255,7 +255,6 @@ class ResponseDecoder(ResponseDecoderFactory):
         return device(self.response,
                 time_rx=self.time_rx,
                 inverter_ser=self.inverter_ser,
-##kk                inverter_name=self.inv_name,
                 dtu_ser=self.dtu_ser,
                 strings=self.strings
                 )
