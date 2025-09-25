@@ -5,16 +5,16 @@ header('Content-Type: application/json; charset=utf-8');
 $debug_fn = "/tmp/AhoyDTU_debug.log";
 function saveDebug($my_post, $ahoy_conf = ""){
 	global $debug_fn;
-	file_put_contents($debug_fn, "_my_post: ". json_encode($my_post)     . "\n", LOCK_EX);
-	file_put_contents($debug_fn, "_get :"    . json_encode($_GET)        . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents($debug_fn, "_post :"   . json_encode($_POST)       . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents($debug_fn, "_files :"  . json_encode($_FILES)      . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents($debug_fn, "_server :" . json_encode($_SERVER)     . "\n", FILE_APPEND | LOCK_EX);
-	file_put_contents($debug_fn, "_data_s :" . json_encode($ahoy_conf)   . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//_my_post: ". json_encode($my_post)	. PHP_EOL, LOCK_EX);
+	file_put_contents($debug_fn, "//_get :"    . json_encode($_GET)		. PHP_EOL, FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//_post :"   . json_encode($_POST)	. PHP_EOL, FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//_files :"  . json_encode($_FILES)	. PHP_EOL, FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//_server :" . json_encode($_SERVER)	. PHP_EOL, FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//_conf_s :" . json_encode($ahoy_conf). PHP_EOL, FILE_APPEND | LOCK_EX);
 }
 
 function saveSettings($my_post){
-	require_once 'generic_json.php';    # to load AhoyDTU configuration
+	global $ahoy_conf, $ahoy_config;
 	saveDebug($my_post, $ahoy_conf);
 
 	## System Config # from web.h - line 465
@@ -282,19 +282,34 @@ function saveSettings($my_post){
 }
 
 
-function ap_ctrl($my_post){				# Active Power Control for inverter
-	saveDebug($my_post);
+function ap_ctrl($my_post){			# Active Power Control for inverter
 	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"66"}	# relative = in %
 	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_absolute","val":"870"}		# absolute in Watt
-	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_relative","val":"870"}		# persistent = Keep limit over inverter restart = yes
+	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_relative","val":"66"}		# persistent = Keep limit over inverter restart = yes
 	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"870"}	# nonpersistent = no
+	# _my_post: {"id":0,"token":"*","cmd":"restart","val":"0"}							# Restart Inverter
+	# _my_post: {"id":0,"token":"*","cmd":"power","val":"0"}							# Inverter Ausschalten
+	# _my_post: {"id":0,"token":"*","cmd":"power","val":"1"}							# Inverter Einschalten
+
+	global $ahoy_conf, $ahoy_config;
+	saveDebug($my_post, $ahoy_conf);
 
 	# Welche Kommandos müssen nun von der AhoyDTU an den WR gesendet werden?
 
+	# send Return-Code message:
+	# "ERR_AUTH"				--> "authentication error"
+	# "ERR_INDEX"				--> "inverter index invalid"
+	# "ERR_UNKNOWN_CMD")		--> "unknown cmd"
+	# "ERR_LIMIT_NOT_ACCEPT")	--> "inverter does not accept dev control request at this moment"
+	# "ERR_UNKNOWN_CMD")		--> "authentication error"
+	$RC = false;     # for test only
+    if ($RC) print json_encode(["success" => true]);
+    # else	 print json_encode(["error" => "ERR_UNKNOWN_CMD"]);
+    else	 print json_encode(["error" => "ERR_INDEX"]);
 }
 
 function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
-	include 'generic_json.php';			# to load current AhoyDTU configuration
+	require_once 'generic_json.php';	# to load current AhoyDTU configuration
 
 	if (isset($_SERVER["QUERY_STRING"]) and $_SERVER["QUERY_STRING"] == "upload") {
 		# file content
@@ -316,7 +331,7 @@ function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS
 # "pa":"0","freq":"12","disnightcom":false}
 
 function saveInverter($my_post){
-	include 'generic_json.php';    # to load AhoyDTU configuration
+	require_once 'generic_json.php';    # to load AhoyDTU configuration
 	saveDebug($my_post, $ahoy_conf);
 
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "serial_utc_offset")	# call from serial WebConsole
@@ -353,7 +368,7 @@ function saveInverter($my_post){
 					"s_yield"    => floatval($channel["yld"])
 				);
 	 		}
-			global $debug_fn;
+			#global $debug_fn;
 			#file_put_contents($debug_fn, "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
 			if (! isset($ahoy_conf["inverters"])) $ahoy_conf["inverters"] = [];
 			$ahoy_conf["inverters"][$my_post["id"]] = $inverter;
@@ -364,20 +379,21 @@ function saveInverter($my_post){
 
 function saveToAhoyConfigFile($ahoy_conf, $ahoy_config) {
 	global $debug_fn;
-	file_put_contents($debug_fn, "\n_data_e: " . json_encode($ahoy_conf) . "\n", FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//ahoy_config: " . gettype($ahoy_config) ."::". json_encode($ahoy_config, true) . PHP_EOL, FILE_APPEND | LOCK_EX);
+	file_put_contents($debug_fn, "//ahoy_conf_e: " . json_encode($ahoy_conf) . PHP_EOL, FILE_APPEND | LOCK_EX);
 
 	# Save changed data to AhoyDTU config file
 	$RC = yaml_emit_file($ahoy_config["filename"], ["ahoy" => $ahoy_conf]);
 
-	# print ($RC ? "alles OK\n" : "Fehler\n");
+	#print ($RC ? "alles OK\n" : "Fehler:".$ahoy_config);
 	if ($RC == true) {
 		print json_encode(["success" => true]);
 
 		##  [reboot] => on - from SAVE button
 		# if (isset($my_post["reboot"])) { reboot in 1 sec.}
 	} else {
-		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $ahoy_config["filename"] . "\n");
-		print ("Length: " . count($ahoy_conf) . ": " . json_encode($ahoy_conf) . "\n");
+		print_r ("\n\n" . "one ore more Settings changed, Error while saving config to: " . $ahoy_config["filename"] . PHP_EOL);
+		print ("Length: " . count($ahoy_conf) . ": " . json_encode($ahoy_conf) . PHP_EOL);
 	}
 }
 

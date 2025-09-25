@@ -13,10 +13,10 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 		saveSettings($_POST);
    		header("Location: index.html");
 
-    } elseif (isset($_GET['ctrl'])) {			# Active Power Control for inverter
-		# saveDebug(json_decode(file_get_contents('php://input'), true), $ahoy_conf);
+    } elseif (isset($_GET['ctrl'])) {			# APC - Active Power Control for inverter
+		# https://stackoverflow.com/questions/57632438/post-is-empty-on-nginx
 		ap_ctrl(json_decode(file_get_contents('php://input'), true));
-   		header("Location: live.html");
+   		# header("Location: live.html");
 
 	} else {									# upload	-->SETTINGS - IMPORT (UPLOAD)
 		# https://stackoverflow.com/questions/57632438/post-is-empty-on-nginx
@@ -31,13 +31,11 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 	if ($getSwitch == "erase") {				# erase		-->SETTINGS --> DELETE SETTINGS
 		unlink ($ahoy_config["filename"]);
 		header("Location: index.html");
-
 	} elseif ($getSwitch == "get_setup") {		# get_setup	 -->SETTINGS --> EXPORT SETTINGS
 		$filename .= "_ahoy_setup.json";
 		header('Content-Type: application/octet-stream');
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=' . $filename);
-		unset($ahoy_conf["iface"]);
 		print json_encode(["version" => $filename, "ahoy" => $ahoy_conf], JSON_PRETTY_PRINT);
 
 	} elseif ($getSwitch == "factory") {		# factory	-->SYSTEM --> FACTORY RESET
@@ -74,14 +72,18 @@ if (isset($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST") 
 
 		# https://wiki.selfhtml.org/wiki/HTTP/Header/Refresh
 		header( "Refresh:5; url=index.html");
+	} else {
+		header("Location: api.php");
 	}
+} else {
+	header("Location: api.php");
 }
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-#	$filename .= "_local.json";
-#	print json_encode(["version" => $filename] + ["ahoy" => $ahoy_conf], JSON_PRETTY_PRINT);
-#	print "\n";
+if (isset($argv) and $argv[0] == "operating.php"){
+	termPrint(
+		"/ahoy_config:"	. PHP_EOL . json_encode($ahoy_config) . PHP_EOL .
+		"/ahoy_conf:"	. PHP_EOL . json_encode($ahoy_conf)
+	);
 }
-
 EOF:
 ?>

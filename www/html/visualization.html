@@ -69,11 +69,11 @@
             var totalsRendered = false
 
             function getErrStr(code) {
-                if("ERR_AUTH") return "authentication error"
-                if("ERR_INDEX") return "inverter index invalid"
-                if("ERR_UNKNOWN_CMD") return "unknown cmd"
-                if("ERR_LIMIT_NOT_ACCEPT") return "inverter does not accept dev control request at this moment"
-                if("ERR_UNKNOWN_CMD") return "authentication error"
+                if(code == "ERR_AUTH") return "authentication error"
+                if(code == "ERR_INDEX") return "inverter index invalid"
+                if(code == "ERR_UNKNOWN_CMD") return "unknown cmd"
+                if(code == "ERR_LIMIT_NOT_ACCEPT") return "inverter does not accept dev control request at this moment"
+                if(code == "ERR_UNKNOWN_CMD") return "authentication error"
                 return "n/a"
             }
 

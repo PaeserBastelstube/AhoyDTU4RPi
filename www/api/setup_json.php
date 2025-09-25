@@ -125,10 +125,11 @@ if (($net_proto??"") == "dhcp") $setup_json["static_ip"] = []; # if you are a DH
 $setup_getip_json = [ "ip" => trim(`hostname -I`) ];
 $setup_networks_json = [ "success" => false, ] + $setup_getip_json;
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
-	$argv[0] == "setup_json.php") {
-  print "/setup_json:\n" . json_encode($setup_json) . "\n";
-  print "/setup_getip_json:\n" . json_encode($setup_getip_json) . "\n";
-  print "/setup_networks_json:\n" . json_encode($setup_networks_json) . "\n";
+if (isset($argv) and $argv[0] == "setup_json.php"){
+	termPrint(
+		"/setup_json:"			. PHP_EOL . json_encode($setup_json)		. PHP_EOL .
+		"/setup_getip_json:"	. PHP_EOL . json_encode($setup_getip_json)	. PHP_EOL .
+		"/setup_networks_json:"	. PHP_EOL . json_encode($setup_networks_json)
+	);
 }
 ?>

@@ -20,8 +20,9 @@ if (isset($ahoy_conf["inverters"])) {
 	}
 }
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm" and
-	$argv[0] == "live_json.php") {
-	print "\live_json:\n" . json_encode($live_json) . "\n";
+if (isset($argv) and $argv[0] == "live_json.php"){
+	termPrint(
+		"/live_json:"		. PHP_EOL . json_encode($live_json)
+	);
 }
 ?>

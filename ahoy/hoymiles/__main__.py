@@ -365,23 +365,32 @@ def poll_inverter(inverter, do_init, retries):
 
     # Command queue 
     if do_init: # this command is executed at start in the morning
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 00
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 01
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))          # 02
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 03
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 04
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 05
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0c
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))                  # 11
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))                # 12
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))                 # 13
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))               # 14
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))                # 15
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))          # 1E
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))              # FF
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 0x00
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 0x01
+      if webserver_config.get('rdGrid', None):
+        command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))        # 0x02
+
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 0x03
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 0x04
+
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 0x05
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))      # 0x0b
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0x0c
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_A_Phase))    # 0x0d
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_B_Phase))    # 0x0e
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_C_Phase))    # 0x0f
+
+      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))                  # 0x11
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))                # 0x12
+
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))                 # 0x13
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))               # 0x14
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))                # 0x15
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))          # 0x1E
+      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))              # 0xFF
 
     # this command is executed on each run
-    command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))        # 0b
+    command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))        # 0x0b
 
     # Put all queued commands for current inverter on air
     while len(command_queue[inv_str]) > 0:

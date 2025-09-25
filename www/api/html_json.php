@@ -23,9 +23,10 @@ $html_system_json = [
 			  "
 ];
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-	# header('Content-Type: application/json; charset=utf-8');
-	print "/html/save_json:\n"   . json_encode($html_save_json)   . "\n";
-	print "/html/system_json:\n" . json_encode($html_system_json) . "\n";
+if (isset($argv) and $argv[0] == "html_json.php"){
+	termPrint(
+		"/html/save_json:"		. PHP_EOL . json_encode($html_save_json) . PHP_EOL .
+		"/html/system_json:"	. PHP_EOL . json_encode($html_system_json)
+	);
 }
 ?>

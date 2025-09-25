@@ -34,6 +34,7 @@ if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
 print json_encode($avail_endpoints);
 
 if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") {
-	print "\n";
+	print PHP_EOL;
 }
 ?>
+

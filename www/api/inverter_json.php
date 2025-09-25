@@ -1,12 +1,6 @@
 <?php
 require_once 'generic_json.php'; # incl. reading ahoy.yml
 
-
-# TEST, when interactive call
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and $argv[0] == "inverter_json.php") {
-	$inverter_id = 0;
-}
-
 # Default values
 $simple_hw_data = array();
 $all_hw_data = array();
@@ -17,9 +11,22 @@ $alarm_data = array();
 $MaxValues_data = array();
 if (!isset($inverter_id)) $inverter_id = 0;
 
-# read AhoyDTU operating data
-if ((isset($inverter_id)) and ($inverter_id >= 0)) {
-    $ahoy_data = readOperatingData(realpath($ahoy_config["filename"]));
+################################################################################
+# 1121-Series Intervers, 1 MPPT, 1 Phase
+# 1141-Series Inverters, 2 MPPT, 1 Phase
+# 1161-Series Inverters, 2 MPPT, 1 Phase
+# 
+# define max-power in 2 steps
+# 1) look at "serial numer"
+# 2) read "Hardware numer" and compare with list:
+#    $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
+#    .../src/hm/hmDefines.h
+################################################################################
+$max_pwr = 0;
+
+if (isset($ahoy_conf["inverters"][$inverter_id]["serial"])) {
+	# read AhoyDTU operating data
+    $ahoy_data = readOperatingData($ahoy_config["filename"]);
 	$data_yaml = $ahoy_data[$ahoy_conf["inverters"][$inverter_id]["serial"]];
 
 	if (isset($data_yaml["InverterDevInform_Simple"]))	$simple_hw_data	= $data_yaml["InverterDevInform_Simple"];
@@ -30,11 +37,23 @@ if ((isset($inverter_id)) and ($inverter_id >= 0)) {
 	if (isset($data_yaml["AlarmData"]))					$alarm_data		+= $data_yaml["AlarmData"];
 	if (isset($data_yaml["AlarmUpdate"]))				$alarm_data		+= $data_yaml["AlarmUpdate"];
 	if (isset($data_yaml["MaxValues"]))					$MaxValues_data	= $data_yaml["MaxValues"];
+
+	switch (substr($ahoy_conf["inverters"][$inverter_id]["serial"], 0,4)) {
+		case 1121: $max_pwr =  400; break;
+		case 1141: $max_pwr =  800; break;
+		case 1161: $max_pwr = 1500; break;
+	}
+	if (isset($simple_hw_data["FLD_PART_NUM"])){
+		# print dechex($simple_hw_data["FLD_PART_NUM"]) . PHP_EOL;
+		switch (substr(dechex($simple_hw_data["FLD_PART_NUM"]),1,6)) {
+			case 101110: $max_pwr = 600; break;
+		}
+	}
 }
 
 if (! isset($status_data["time"])) $status_data['time'] = 0;
 
-if (isset($all_hw_data)) {
+if (count($all_hw_data) > 0) {
   $fw_date = $all_hw_data["FW_build_dd"] . "." . $all_hw_data["FW_build_mm"] . "." . $all_hw_data["FW_build_yy"];	#"0-00-00"
   $fw_time = $all_hw_data["FW_build_HH"] . ":" . $all_hw_data["FW_build_MM"];										#"00:00"
   $fw_ver  = $all_hw_data["FW_ver_maj"]  . "." . $all_hw_data["FW_ver_min"]  . "." . $all_hw_data["FW_ver_pat"];	#"0.00.00"
@@ -42,21 +61,6 @@ if (isset($all_hw_data)) {
   $fw_date = "0-00-00";
   $fw_time = "00:00";
   $fw_ver  = "0.00.00";
-}
-
-# 1121-Series Intervers, 1 MPPT, 1 Phase
-# 1141-Series Inverters, 2 MPPT, 1 Phase
-# 1161-Series Inverters, 2 MPPT, 1 Phase
-$max_pwr = 0;
-if (isset($status_data["inverter_ser"])) {
-  switch (substr($status_data["inverter_ser"], 0,4)) {
-    case 1121:
-	  $max_pwr =  400; break;
-    case 1141:
-	  $max_pwr =  800; break;
-    case 1161:
-	  $max_pwr = 1500; break;
-  }
 }
 
 $inverter_grid = "inverter_grid_" . $inverter_id . "_json";
@@ -68,9 +72,6 @@ if (isset($ahoy_conf["inverters"][$inverter_id]["name"])) {
  } else {
 	$$inverter_grid = [];
 }
-
-$inverter_pwrack = "inverter_pwrack_" . $inverter_id . "_json";
-$$inverter_pwrack = ["ack" => false];
 
 $inverter_radiostat = "inverter_radiostat_" . $inverter_id . "_json";
 if (isset($ahoy_conf["inverters"][$inverter_id]["name"])) {
@@ -234,7 +235,7 @@ $inverter_version = "inverter_version_" . $inverter_id . "_json";
 $$inverter_version = [
 	"id"			=> $inverter_id,
 	"name"			=> $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
-	"serial"		=> $status_data["inverter_ser"] ?? "",
+	"serial"		=> $ahoy_conf["inverters"][$inverter_id]["serial"] ?? "",
 	"generation"	=> 1,
 	"max_pwr"		=> $max_pwr,
 	"part_num"		=> $simple_hw_data["FLD_PART_NUM"] ?? 0,
@@ -273,21 +274,20 @@ foreach ($alarm_data as $ii => $a_event) {
 	else array_push($$inverter_alarm["alarm"], ["code" => 999, "str" => "Unknown", "start" => 0, "end" => 0]);
 }
 
-# $inverter_pwrack_0_json 
+# $inverter_pwrack_0_json                                         # power acknowledge
 $inverter_pwrack = "inverter_pwrack_" . $inverter_id . "_json";
+## $$inverter_pwrack = ["ack" => false];
 $$inverter_pwrack = ["ack" => false];
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm" and
-	$argv[0] == "inverter_json.php") {
-	# header('Content-Type: application/json; charset=utf-8');
-	# print json_encode($_SERVER, JSON_PRETTY_PRINT);
-
-	print "/inverter_list_json"		. ":\n"	. json_encode($inverter_list_json)	. "\n";
-	print "/" . $inverter_pwrack	. ":\n" . json_encode($$inverter_pwrack)	. "\n";
-	print "/" . $inverter_var_id	. ":\n" . json_encode($$inverter_var_id)	. "\n";
-	print "/" . $inverter_version	. ":\n" . json_encode($$inverter_version)	. "\n";
-	print "/" . $inverter_grid		. ":\n" . json_encode($$inverter_grid)		. "\n";
-	print "/" . $inverter_alarm		. ":\n" . json_encode($$inverter_alarm)		. "\n";
-	print "/" . $inverter_pwrack	. ":\n" . json_encode($$inverter_pwrack)	. "\n";
+if (isset($argv) and $argv[0] == "inverter_json.php"){
+	termPrint(
+		"/inverter_list_json:"			  . PHP_EOL . json_encode($inverter_list_json)	. PHP_EOL .
+		"/" . $inverter_grid		. ":" . PHP_EOL . json_encode($$inverter_grid)		. PHP_EOL .
+		"/"	. $inverter_radiostat	. ":" . PHP_EOL . json_encode($$inverter_radiostat)	. PHP_EOL .
+		"/"	. $inverter_var_id		. ":" . PHP_EOL . json_encode($$inverter_var_id)	. PHP_EOL .
+		"/"	. $inverter_version		. ":" . PHP_EOL . json_encode($$inverter_version)	. PHP_EOL .
+		"/" . $inverter_alarm		. ":" . PHP_EOL . json_encode($$inverter_alarm)		. PHP_EOL .
+		"/"	. $inverter_pwrack		. ":" . PHP_EOL . json_encode($$inverter_pwrack)
+	);
 }
 ?>

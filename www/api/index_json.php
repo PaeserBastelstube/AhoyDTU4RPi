@@ -27,7 +27,7 @@ $index_json = $generic_json + [
 	"warnings"		=> []										# number of inverter warnings
 ];
 
-$ahoy_data = readOperatingData(realpath($ahoy_config["filename"]));
+$ahoy_data = readOperatingData($ahoy_config["filename"]);
 
 if (isset($ahoy_conf["inverters"])) {
 	foreach ($ahoy_conf["inverters"] as $ii => $inv) {			# loop over all inverters and search for status files
@@ -57,7 +57,7 @@ if (isset($ahoy_conf["inverters"])) {
 }
 
 EOF:
-if ($argv[0] == "index_json.php") {
+if (isset($argv) and $argv[0] == "index_json.php") {
 	termPrint("/ahoy_data:"	. PHP_EOL . json_encode($ahoy_data));
 	termPrint("/ahoy_conf:"	. PHP_EOL . json_encode($ahoy_conf));
 	termPrint("/index_json:". PHP_EOL . json_encode($index_json));

@@ -3,14 +3,33 @@
 ################################################################################
 
 ################################################################################
-##rewrite_log on;
-##error_log   /tmp/AhoyDTU_nginx.log debug;
+# rewrite_log on;
+# error_log   /tmp/AhoyDTU_nginx_error.log debug;
 
-##log_format postdata escape=json 
-##    '$remote_addr - [$time_local] '
-##    '"$request" $status $bytes_sent ' 
-##    '"$http_referer" "$request_body"';
-##access_log  /tmp/AhoyDTU_access.log  postdata;
+log_format postdata escape=json 
+     '$time_local - [$remote_addr] '
+     '"$request" $status $bytes_sent ' 
+     '"$http_referer" "$request_body"';
+access_log /tmp/AhoyDTU_nginx_access.log postdata;
+#
+# Breakdown of NGINX Log Format Variables
+#   $body_bytes_sent:			Size of the response body.
+#   $connection_requests:		Number of requests made over a keepalive connection.
+#   $host:						Host header sent by the client.
+#   $http_referer:				The page that linked to the requested resource.
+#   $http_user_agent:			Browser or bot used.
+#   $http_x_forwarded_for:		IP forwarded by proxy servers (useful behind load balancers).
+#   $remote_addr:				IP address of the client.
+#   $remote_user:				Authenticated user (if any).
+#   $request:					Full HTTP request line.
+#   $request_body:				save the entire client request body into a file
+#   $request_length:			Size of the incoming request from the client.
+#   $request_time:				Time taken to process the request on the NGINX side.
+#   $scheme:					Protocol used (http or https).
+#   $status:					HTTP response status code.
+#   $time_local:				Timestamp of the request.
+#   $upstream_response_time:	Time taken for the upstream server to respond.
+#
 ################################################################################
 
 server {
@@ -61,15 +80,12 @@ server {
     }
 
 	location ~ ^/api/(ctrl)+$ {
-		limit_except POST{ deny all; }
+		limit_except GET POST{ deny all; }
 		root /home/AhoyDTU/www/api;
-
-		# rewrite ^/api/(ctrl)$ $scheme://$http_host/operating.php?$1 last;
+		if ($request_method = GET ) {
+			return 301 $scheme://$http_host/operating.php?$1;
+		}
 		return 308 $scheme://$http_host/operating.php?$1;
-
-		#$uri=$scheme://$http_host/operating.php?$1;
-		#include /etc/nginx/snippets/fastcgi-php.conf;			# bei unbekannten Aufrufen wird =404 gesendet
-		#fastcgi_pass unix:/run/php/php8.2-fpm-ahoydtu.sock;		# Übergabe an PHP-FPM
 	add_header Content-Type text/plain;
 	return 200 "loc:ctrl document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
 	}

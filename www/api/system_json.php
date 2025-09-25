@@ -1,19 +1,18 @@
 <?php
-#
-#2345678901234567890123456789012345678901234567890123456789012345678901234567890
+################################################################################
 #
 # important to learn about "preg_match_all"
 # https://www.phpliveregex.com/#tab-preg-match-all
 #
+################################################################################
 require_once 'generic_json.php';
 
-# additional network configuration
-$iface = $ahoy_conf["iface"][2][0];
+# additional network configuration # $iface set in "generic_json"
 preg_match_all('/ netmask (.+?) | ether (.+?) /m', trim(shell_exec("ifconfig $iface")), $ifconfig);
-$ahoy_conf["iface"]["net_mask"] = $ifconfig[1][0];	# net_mask
-$ahoy_conf["iface"]["net_mac"]  = $ifconfig[2][1];	# net_mac
+$ahoy_iface["net_mask"] = $ifconfig[1][0];	# net_mask
+$ahoy_iface["net_mac"]  = $ifconfig[2][1];	# net_mac
 
-if ($ahoy_conf["iface"]["wired"]){		# no WiFi - wired ethernet
+if ($ahoy_iface["wired"]){		# no WiFi - wired ethernet
 	$net_wifi_channel = "";
 } else {
 	$iwlist_including_status = trim(shell_exec("iwlist $iface frequency 2>&1; echo $?"));
@@ -70,12 +69,12 @@ $system_json = [
 	],
 	"network" => [
 		"wifi_channel" => $net_wifi_channel,			# RestApi.h:807
-		"wired"        => $ahoy_conf["iface"]["wired"],
+		"wired"        => $ahoy_iface["wired"],
 		"ap_pwd"       => "esp_8266",		# Standard PW
-		"ssid"         => $ahoy_conf["iface"]["essid"],
-		"hidd"         => ($ahoy_conf["iface"]["rssi"] < 0 and $ahoy_conf["iface"]["essid"] == "") ? true : false,
-		"mac"          => $ahoy_conf["iface"]["net_mac"],
-		"ip"           => $ahoy_conf["iface"][4][0]
+		"ssid"         => $ahoy_iface["essid"],
+		"hidd"         => ($ahoy_iface["rssi"] < 0 and $ahoy_conf["iface"]["essid"] == "") ? true : false,
+		"mac"          => $ahoy_iface["net_mac"],
+		"ip"           => $ahoy_iface[4][0]
 	],
 	"chip" => [
 		"cpu_freq"      => intval($lscpu["lscpu"][13]["data"]),
@@ -99,8 +98,9 @@ $system_json = [
 	]
 ];
 
-if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] == "xterm" and
-	$argv[0] == "system_json.php") {
-	print "/system_json:\n" . json_encode($system_json) . "\n";
+if (isset($argv) and $argv[0] == "system_json.php"){
+	termPrint(
+		"/system_json:"	. PHP_EOL . json_encode($system_json)
+	);
 }
 ?>

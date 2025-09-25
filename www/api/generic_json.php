@@ -1,17 +1,16 @@
 <?php
+################################################################################
 # generic_json.php
 # June 2025 - PaeserBastelstube - inital
+################################################################################
 #
-#2345678901234567890123456789012345678901234567890123456789012345678901234567890
 #
+################################################################################
 date_default_timezone_set('Europe/Berlin');
 if (! isset($_SERVER["TERM"])) header('Content-Type: application/json; charset=utf-8');
 
-# Name of DTU
-$AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));	# hostname of raspberry ==> Name of DTU
-
-# load new ahoy config
-$ahoy_config["filename"] = '../../ahoy/AhoyDTU.yml';	# /home/AhoyDTU/ahoy/AhoyDTU.yml
+# load new ahoy config - /home/AhoyDTU/ahoy/AhoyDTU.yml
+$ahoy_config["filename"] = realpath('../../ahoy/AhoyDTU.yml');
 $ahoy_config["filetime"] = 0;
 $ahoy_conf = array();
 if (file_exists($ahoy_config["filename"])) {
@@ -31,6 +30,9 @@ if (file_exists($ahoy_config["old_filename"])) {
 	}
 }
 
+# Name of DTU
+$AhoyHost = trim(shell_exec("hostname -A | awk '{print $1}'"));	# hostname of raspberry ==> Name of DTU
+
 # check ahoy config: when no data loaded, define default values
 if (count($ahoy_conf) > 0) {
 	$ahoy_conf = $ahoy_conf["ahoy"];
@@ -46,12 +48,16 @@ if (count($ahoy_conf) > 0) {
 	# mDtuSn |= 0x80000000; 
 	$IP_array = explode(".", shell_exec("hostname -I | awk '{print $1}'"));			# get IP of network interface
 	$dtu_serial = intval(0x80000000 + $IP_array[1] * $IP_array[2] * $IP_array[3]);	# def DTU-Serial from IP-Address
-	$ahoy_conf["dtu"] = ["serial" => dechex($dtu_serial), "name" => $AhoyHost];
 
+	$ahoy_conf["dtu"] = [
+		"serial" => dechex($dtu_serial), 
+		"name" => $AhoyHost];
 	$ahoy_conf["WebServer"]["filepath"] = "/tmp";
-	$ahoy_conf["logging"] = ["filename" => "/tmp/AhoyDTU_" . strval(dechex($dtu_serial)) . ".log", 
-			 "level" => "INFO", "max_log_filesize" => 1000000, "max_log_files" => 1];
-
+	$ahoy_conf["logging"] = [
+		"filename"	=> "/tmp/AhoyDTU_" . strval(dechex($dtu_serial)) . ".log", 
+		"level"		=> "INFO",
+		"max_log_filesize" => 1000000,
+		"max_log_files" => 1];
 	$ahoy_conf["sunset"]["enabled"] = false;
 	$ahoy_conf["nrf"]["enabled"] = false;
 	$ahoy_conf["cmt"]["enabled"] = false;
@@ -61,25 +67,25 @@ if (count($ahoy_conf) > 0) {
 }
 
 # network configuration
-preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ahoy_conf["iface"]);
-# $ahoy_conf["iface"][0][0] = default via 192.168.254.253 dev wlan0 proto dhcp src 192.168.254.55 metric 600
-#                                         |xxxxx 1 xxxxx|     | 2 |       | 3|     |xxxxxx 4 xxx| 
-# $ahoy_conf["iface"][1][0] = gateway IP address
-# $ahoy_conf["iface"][2][0] = name of network interface
-# $ahoy_conf["iface"][3][0] = dhcp
-# $ahoy_conf["iface"][4][0] = system IP address (my Raspis IP)
+preg_match_all('/default via (.+) dev (.+) proto (.+) src (.+) metric/m', trim(shell_exec('ip route')), $ahoy_iface);
+# $ahoy_iface[0][0] = default via 192.168.254.253 dev wlan0 proto dhcp src 192.168.254.55 metric 600
+#                                 |xxxxx 1 xxxxx|     | 2 |       | 3|     |xxxxxx 4 xxx| 
+# $ahoy_iface[1][0] = gateway IP address
+# $ahoy_iface[2][0] = name of network interface
+# $ahoy_iface[3][0] = dhcp
+# $ahoy_iface[4][0] = system IP address (my Raspis IP)
 
-$ahoy_conf["iface"]["rssi"] = 0;
-$iface = $ahoy_conf["iface"][2][0];
+$ahoy_iface["rssi"] = 0;
+$iface = $ahoy_iface[2][0];
 if (str_starts_with($iface, "wlan")) {
 	preg_match_all('/ESSID:"(.+)"|Signal level=(.+) dBm/m', trim(shell_exec('iwconfig $iface 2>&1')), $wifi_rssi_array);
-	$ahoy_conf["iface"]["essid"] = trim($wifi_rssi_array[1][0]);
-	$ahoy_conf["iface"]["rssi"]  = trim($wifi_rssi_array[2][1]);
-	$ahoy_conf["iface"]["wired"] = false;
+	$ahoy_iface["essid"] = trim($wifi_rssi_array[1][0]);
+	$ahoy_iface["rssi"]  = trim($wifi_rssi_array[2][1]);
+	$ahoy_iface["wired"] = false;
 } else {
-	$ahoy_conf["iface"]["essid"] = "";
-	$ahoy_conf["iface"]["rssi"]  = "LAN connected";
-	$ahoy_conf["iface"]["wired"] = true;
+	$ahoy_iface["essid"] = "";
+	$ahoy_iface["rssi"]  = "LAN connected";
+	$ahoy_iface["wired"] = true;
 }
 
 # System Uptime
@@ -97,7 +103,7 @@ $menu_prot   = $menu_protEn and $menu_mask > 0 ? true : false;
 # Define "ahoy-generic-data" Variable
 $generic_json = [
 	"generic" => [
-		"wifi_rssi"   => $ahoy_conf["iface"]["rssi"],	# WIFI-RSSI or LAN
+		"wifi_rssi"   => $ahoy_iface["rssi"],			# WIFI-RSSI or LAN --> icon on HTML side bar
 		"ts_uptime"   => intval($uptime_array[0]),		# system uptime
 		"ts_now"      => time(),						# current time
 		"version"     => "0.8.0",
@@ -108,11 +114,11 @@ $generic_json = [
 		"menu_prot"   => $menu_prot,					# Switch, if prot=set - true=locked - false=unlocked
 		"menu_mask"   => $menu_mask,					# exp-sum of 7 switches
 		"menu_protEn" => $menu_protEn,					# check, if prot-PW != "\0"
-		"cst_lnk"     => $ahoy_conf["WebServer"]["generic"]["cst"]["lnk"] ?? "",	# custom 
-		"cst_lnk_txt" => $ahoy_conf["WebServer"]["generic"]["cst"]["txt"] ?? "",
+		"cst_lnk"     => $ahoy_conf["WebServer"]["generic"]["cst"]["lnk"] ?? "",	# custom link
+		"cst_lnk_txt" => $ahoy_conf["WebServer"]["generic"]["cst"]["txt"] ?? "",	# custom link text
 		"region"      => $ahoy_conf["WebServer"]["generic"]["region"] ?? 0,			# wo wird das benötigt
 		"timezone"    => $ahoy_conf["WebServer"]["generic"]["timezone"] ?? 1,	 	# wo wird das benötigt
-		"esp_type"    => "RASPI"
+		"esp_type"    => "RASPI"													# see HTML footer
 	]
 ];
 
@@ -178,12 +184,17 @@ function termPrint($textToPrint) {
 
 
 
-if ($argv[0] == "generic_json.php"){
-	# termPrint(readOperatingData(realpath($ahoy_config["filename"]), True));
-	$ahoy_data = readOperatingData(realpath($ahoy_config["filename"]));
+if (isset($argv) and $argv[0] == "generic_json.php"){
+	# For Test only
+	# termPrint(readOperatingData($ahoy_config["filename"], True));
+	$ahoy_data = readOperatingData($ahoy_config["filename"]);
 
-	termPrint("/ahoy_data:"    . PHP_EOL . json_encode($ahoy_data) . PHP_EOL .
-			  "/generic_json:" . PHP_EOL . json_encode($generic_json) . PHP_EOL . 
-			  "/ahoy_conf:"    . PHP_EOL . json_encode($ahoy_conf));
+	termPrint(
+		"/ahoy_config:"	. PHP_EOL . json_encode($ahoy_config) . PHP_EOL .
+		"/ahoy_conf:"	. PHP_EOL . json_encode($ahoy_conf) . PHP_EOL .
+		"/ahoy_iface:"	. PHP_EOL . json_encode($ahoy_iface) . PHP_EOL .
+		"/ahoy_data:"	. PHP_EOL . json_encode($ahoy_data) . PHP_EOL .
+		"/generic_json:". PHP_EOL . json_encode($generic_json)
+	);
 }
 ?>

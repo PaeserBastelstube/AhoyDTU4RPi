@@ -28,7 +28,7 @@ if (isset ($_SERVER["REQUEST_METHOD"]) and $_SERVER["REQUEST_METHOD"] == "POST")
   }
 
   if (isset ($$var_name)) print json_encode($$var_name);
-  else include 'api.php';
+  else require_once 'api.php';
 
   if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm") print ("\n");
 }
