@@ -52,10 +52,10 @@ Zur Nutzung von `System-V Shared-Memory` in Python ist die folgende Bibliothek z
 ```code
 /home/AhoyDTU/ahoyenv/bin/python3 -m pip install sysv_ipc
 ```
-[Python-Script zum Schreiben der Daten](./sysV_out.py)  
-[Python-Script zum Lesen der Daten](./sysV_in.py)  
-[PHP-Script zum Schreiben der Daten](./sysV_out.php)  
-[PHP-Script zum Lesen der Daten](./sysV_in.php)  
+[Python-Script (System-V IPC) zum Schreiben der Daten](./sysv_ipc_shm_write.py)  
+[Python-Script (System-V IPC) zum Lesen der Daten](./sysv_ipc_shm_read.py)  
+[PHP-Script zum Schreiben der Daten](./sysv_ipc_shm_write.php)  
+[PHP-Script zum Lesen der Daten](./sysv_ipc_shm_read.php)  
 
 Weitere Grundlagen (Quelle)
 - Python: <https://semanchuk.com/philip/sysv_ipc/>

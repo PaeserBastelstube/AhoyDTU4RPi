@@ -1,4 +1,4 @@
-# sysV_out.py
+# sysv_ipc_shm_write.py
 ################################################################################
 # System V IPC for Python - Semaphores, Shared Memory and Message Queues
 # https://semanchuk.com/philip/sysv_ipc/

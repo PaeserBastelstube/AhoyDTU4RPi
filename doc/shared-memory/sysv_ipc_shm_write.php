@@ -1,4 +1,4 @@
-// sysV_out.php
+// sysv_ipc_shm_write.php
 <?php 
 ################################################################################
 # System-V IPC for PHP - Semaphores, Shared Memory and Message Queues
