@@ -29,10 +29,10 @@ print("ftokKey=" . $ftokKey . " hex=0x" . dechex($ftokKey) . PHP_EOL);
 while (1) {
     $TSnow = date('d.m.YTH:i:s');		# create TimeStamp
 
-	if (! msg_queue_exists($ftokKey)) {
-		print "No Message-Queue found - EXIT" . PHP_EOL;
-		break;
-	}
+##	if (! msg_queue_exists($ftokKey)) {
+##		print "No Message-Queue found - EXIT" . PHP_EOL;
+##		break;
+##	}
 
 	$ipc_mq = msg_get_queue($ftokKey);	# open existing message-queue
 	if (false == $ipc_mq) {				# check if mq exists

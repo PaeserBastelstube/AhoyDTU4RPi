@@ -177,6 +177,41 @@ function readOperatingData($filePathName, $print_OK = False) {
 	return json_decode($shm_string, true);
 }
 
+#############################################################################
+# System-V IPC for PHP - Semaphores, Shared Memory and Message Queues
+# https://www.php.net/manual/en/book.shmop.php
+# https://www.php.net/manual/en/book.sem.php
+################################################################################
+function sendInverterConfig($filePathName, $sendMessage, $print_OK = False) {
+	# def a file to generate the specific FTOK key
+	# generate the specific FTOK key from file-path-name
+	#  ftok(string $filename, string $project_id): int
+	# "id" must be in chr(string) - hex(0x30) = dec(48) = chr("0")
+    if (!file_exists($filePathName)) $filePathName = "/tmp";
+	$ftokKey = ftok($filePathName, "0");
+	if (false == $ftokKey) {
+		return 1;
+	}
+	if ($print_OK) termPrint("ftokKey=" . $ftokKey . " hex=0x" . dechex($ftokKey));
+
+	if (msg_queue_exists($ftokKey)) {
+		$ipc_mq = msg_get_queue($ftokKey);		# open existing message-queue
+        if (false == $ipc_mq) {					# check if mq exists
+			if ($print_OK) termPrint("  ERROR: can't open IPC-message-queue");
+			return 3;
+        }
+		$status_mq = msg_stat_queue($ipc_mq);	# get status of mq
+		if ($status_mq['msg_qnum'] > 0){		# check for waiting messages
+			if ($print_OK) termPrint("IPC-Message-queue must be empty");
+			return 4;
+		}
+        msg_send($ipc_mq, 1, $sendMessage);		# send message to queue
+	} else {
+		return 2;
+	}
+	return 0;
+}
+
 function termPrint($textToPrint) {
 	if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm")
 		print $textToPrint . PHP_EOL;

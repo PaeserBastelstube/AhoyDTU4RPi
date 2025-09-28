@@ -66,7 +66,7 @@ source ahoyenv/bin/activate
 
 ### AhoyDTU requires the installation of certain python libraries:
 ```code
-ahoyenv/bin/python3 -m pip install --upgrade paho-mqtt crcmod requests pyRF24 ruamel-yaml SunTimes datetime
+ahoyenv/bin/python3 -m pip install --upgrade crcmod datetime paho-mqtt phpserialize pyRF24 requests ruamel-yaml SunTimes sysv-ipc
 ```
 
 If you have trouble to install `pyRF24`, please use the following workaround:
@@ -91,6 +91,7 @@ DateTime           5.5
 idna               3.10
 jdcal              1.4.1
 paho-mqtt          2.1.0
+phpserialize       1.3
 pip                23.0.1
 pyrf24             0.5.0
 pytz               2025.2
@@ -99,6 +100,7 @@ ruamel.yaml        0.18.15
 ruamel.yaml.clib   0.2.12
 setuptools         66.1.1
 suntimes           1.1.2
+sysv-ipc           1.1.0
 typing_extensions  4.14.1
 tzlocal            5.3.1
 urllib3            2.5.0

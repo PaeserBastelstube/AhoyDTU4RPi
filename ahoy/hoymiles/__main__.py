@@ -24,6 +24,7 @@ from suntimes import SunTimes
 from datetime import datetime, timedelta
 
 import sysv_ipc  # for System-V FTOK, Semaphore and Shared-Memory
+from phpserialize import unserialize
 import json
 import hoymiles  # import paket on this place, call once: "hoymiles/__init__.py"
 
@@ -55,6 +56,9 @@ def signal_handler(sig_num, frame):
     if volkszaehler_client:
        volkszaehler_client.disco()
 
+    if web_server:
+       web_server.disco()
+
     exit(0)
 
 """ activate signal handler """
@@ -66,9 +70,10 @@ signal(SIGHUP,  signal_handler)
 ################################################################################
 
 class WebServer:
-  """ Handler for DataDump and WebServices
-  handle maximum values
-  save data to yaml file for Web-Services
+  """ communication with WebServices over System-V IPC objects
+  to handle maximum values
+  to send data over Shared Memory by using a Semaphore
+  to receive data from IPC Message-Queue
   """
   def __init__(self, web_config, config_fn):
     self.dataToFile = {}
@@ -100,7 +105,7 @@ class WebServer:
     #   to that effect unless silence_warning is True.
     #   "id" must be in hex - hex(0x30) = dec(48) = chr("0")
     self.ftokKey = sysv_ipc.ftok(config_fn, 0x30, silence_warning = True)
-    logging.debug(f"System-V ftokKey={self.ftokKey} hex=0x{self.ftokKey:08x}")
+    logging.debug(f"System-V: create ftokKey={self.ftokKey} hex=0x{self.ftokKey:08x}")
 
     self.ipc_flags = sysv_ipc.IPC_CREX   # specify whether to create a new semaphore or open an existing one
     self.ipc_mode = 0o644                # 
@@ -112,6 +117,18 @@ class WebServer:
     sem_id.release()                     # close Semaphore
     sem_id.remove()                      # destry old Semaphore
 
+    try:                                 # create new message-queue (ipc_mq)
+        self.ipc_mq = sysv_ipc.MessageQueue(self.ftokKey, self.ipc_flags)
+        logging.debug(f"System-V: new message-queue with {self.ipc_mq.id=} and {self.ipc_mq.max_size=} created")
+    except sysv_ipc.ExistentialError:    # message-queue does exists allready
+        self.ipc_mq = sysv_ipc.MessageQueue(self.ftokKey)
+        logging.debug(f"System-V: existing message-queue found with {self.ipc_mq.current_messages} messages in queue")
+        while (self.ipc_mq.current_messages > 0):    # remove old messages from queue
+            self.ipc_mq.receive(False)               # wait if there's no messages
+
+  def disco(self):
+      if (self.ipc_mq):
+        self.ipc_mq.remove()      # remove message queue
 
   def reset_max_values(self):
       self.max_values = {'max_temp':0,'max_temp_ts':0,'max_power':0,'max_power_ts':0, 'strings':[]}
@@ -222,6 +239,21 @@ class WebServer:
         ## logging.debug(f"SaveData4PHP:  Shared-Memory created: {shdMemObj.id=} len={len(shdMemData)} value={shdMemData}")
         sem_id.remove()                # remove Semaphore
 
+  def receiveInverterCommand (self):
+    dataReceived = False
+    try:
+        # Receives a message from the queue, returning a tuple of (message, type)
+        dataReceived = self.ipc_mq.receive(False)[0].decode()
+        logging.debug(f"System-V(message-queue): len={dataReceived.__sizeof__()} type={type(dataReceived)} {dataReceived=}")
+    except sysv_ipc.BusyError:
+        pass  # Does absolutely nothing
+        # logging.debug(f"System-V: ERROR: cannot receive data from message-queue")
+    except sysv_ipc.ExistentialError:   # The queue no longer exists
+        logging.debug("System-V: The queue no longer exists")
+        self.disco()
+
+    return (dataReceived)
+
 
 class SunsetHandler:
     """ Sunset class
@@ -329,6 +361,17 @@ def main_loop(ahoy_config):
             sunset.checkWaitForSunrise()
             if time.time() - t_loop_start > 6 * 60 * 60:     # Interruption at night > 6h 
                web_server.reset_max_value()
+
+            sysv_ipc = web_server.receiveInverterCommand()
+            if (sysv_ipc and isinstance(sysv_ipc, str)):
+                # logging.info(f"System-V(message-queue): len={sysv_ipc.__sizeof__()} type={type(sysv_ipc)} {sysv_ipc=}")
+                sysv_ipc_uns = unserialize(sysv_ipc.encode())
+
+                # convert all items to string
+                sysv_ipc_dict = {key.decode(): val.decode() if isinstance(val, bytes) else val for key, val in sysv_ipc_uns.items()}
+                logging.info(f"System-V(command): len={sysv_ipc_dict.__sizeof__()} type={type(sysv_ipc_dict)} {sysv_ipc_dict=}")
+
+                # now send command to inverter
 
             for inverter in inverters:
                 poll_inverter(inverter, do_init, transmit_retries)

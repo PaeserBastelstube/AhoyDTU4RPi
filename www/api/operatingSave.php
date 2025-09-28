@@ -295,17 +295,37 @@ function ap_ctrl($my_post){			# Active Power Control for inverter
 	saveDebug($my_post, $ahoy_conf);
 
 	# Welche Kommandos müssen nun von der AhoyDTU an den WR gesendet werden?
+	$RC = sendInverterConfig($ahoy_config["filename"], $my_post);
+    # RC = 0 --> all OK
+    # RC = 1 --> no	ftokKey created
+    # RC = 2 --> no msg_queue_exists
+    # RC = 3 --> creation of message-queue failed
+    # RC = 4 --> message-queue not empty
 
-	# send Return-Code message:
+	switch ($RC) {
+	case 0:
+		print json_encode(["success" => true]);
+		break;
+	case 1:
+		print json_encode(["error" => "ERR_LIMIT_NOT_ACCEPT", "code" => "no ftokKey created"]);
+		break;
+	case 2:
+		print json_encode(["error" => "ERR_LIMIT_NOT_ACCEPT", "code" => "no msg_queue_exists"]);
+		break;
+	case 3:
+		print json_encode(["error" => "ERR_LIMIT_NOT_ACCEPT", "code" => "creation of message-queue failed"]);
+		break;
+	case 4:
+		print json_encode(["error" => "ERR_LIMIT_NOT_ACCEPT", "code" => "message-queue not empty"]);
+		break;
+	}
+
+	# JavaScript Return-Code messages:
 	# "ERR_AUTH"				--> "authentication error"
 	# "ERR_INDEX"				--> "inverter index invalid"
 	# "ERR_UNKNOWN_CMD")		--> "unknown cmd"
 	# "ERR_LIMIT_NOT_ACCEPT")	--> "inverter does not accept dev control request at this moment"
 	# "ERR_UNKNOWN_CMD")		--> "authentication error"
-	$RC = false;     # for test only
-    if ($RC) print json_encode(["success" => true]);
-    # else	 print json_encode(["error" => "ERR_UNKNOWN_CMD"]);
-    else	 print json_encode(["error" => "ERR_INDEX"]);
 }
 
 function importSettings($my_post){		# UPLOAD / IMPORT SETTINGS

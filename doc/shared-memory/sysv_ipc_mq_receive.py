@@ -41,9 +41,12 @@ try: # create new message-queue (ipc_mq)
 except sysv_ipc.ExistentialError: # message-queue does exists allready
     ipc_mq = sysv_ipc.MessageQueue(ftokKey)
     print(f"  existing message-queue found with {ipc_mq.current_messages} messages in queue")
+    if (ipc_mq.current_messages > 0):       # print ERROR, old messages from queue
+        print("  Remove old messages from IPC message-queue!")
     while (ipc_mq.current_messages > 0):    # remove old messages from queue
         ipc_mq.receive(False)               # wait if there's no messages
 
+print ("Wait for receiving messages in IPC-queue")
 try:
   while True:
     try:
