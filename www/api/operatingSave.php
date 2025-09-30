@@ -134,8 +134,9 @@ function saveSettings($my_post){
 	else unset($ahoy_conf["WebServer"]["InverterReset"]["MaxValues"]);
 
 	# Start without time sync (useful in AP-Only-Mode)
-	if (isset($my_post["strtWthtTm"]))	$ahoy_conf["WebServer"]["strtWthtTm"] = $my_post["strtWthtTm"];
-	else unset($ahoy_conf["WebServer"]["strtWthtTm"]);
+	# ATTENTION: time always sync by linux
+	# if (isset($my_post["strtWthtTm"]))	$ahoy_conf["WebServer"]["strtWthtTm"] = $my_post["strtWthtTm"];
+	# else unset($ahoy_conf["WebServer"]["strtWthtTm"]);
 
 	# Read Grid Profile
 	if (isset($my_post["rdGrid"]))	$ahoy_conf["WebServer"]["rdGrid"] = $my_post["rdGrid"];

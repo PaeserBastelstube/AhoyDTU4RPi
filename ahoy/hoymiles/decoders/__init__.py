@@ -328,16 +328,30 @@ class Response_SystemConfigPara(UnknownResponse):
     def __init__(self, *args, **params):
         super().__init__(*args, **params)
         """
+        vergl. "src\hm\hmDefines.h:169"
+        const byteAssign_t SystemConfigParaAssignment[] = {
+            { FLD_ACT_ACTIVE_PWR_LIMIT,    UNIT_PCT,   CH0,  2, 2, 10   }/*,
+            { FLD_ACT_REACTIVE_PWR_LIMIT,  UNIT_PCT,   CH0,  4, 2, 10   },
+            { FLD_ACT_PF,                  UNIT_NONE,  CH0,  6, 2, 1000 }*/
+        };
         """
 
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
         data = super().__dict__()
+        # data['SystemConfigPara'] = ' '.join([f"{b:02x}" for b in self.response])
+
+        FLD_ACT_ACTIVE_PWR_LIMIT, FLD_ACT_REACTIVE_PWR_LIMIT, FLD_ACT_PF = struct.unpack('>HHH', self.response[2:8])
+        data['FLD_ACT_ACTIVE_PWR_LIMIT'] = FLD_ACT_ACTIVE_PWR_LIMIT / 10.0
+        data['FLD_ACT_REACTIVE_PWR_LIMIT'] = FLD_ACT_REACTIVE_PWR_LIMIT / 10.0
+        data['FLD_ACT_PF'] = FLD_ACT_PF / 1000.0
+
         return data
 
 class Response_AlarmEvent(UnknownResponse):
     """ Hoymiles micro-inverter event log decode helper
         vergl. "src\hm\hmInverter.h:685"
+        vergl. "src\hm\hmDefines.h:177"
     """
 
     alarm_codes = {
@@ -557,7 +571,18 @@ class DebugDecodeAny(UnknownResponse):
         data['len_payload'] = len(self.response)
         data['payload'] = self.response
         return data
+"""
+    vergl. "src\hm\hmDefines.h:190"
+    { FLD_UAC, UNIT_V,    CH0, 14, 2, 10   },
+    { FLD_IAC, UNIT_A,    CH0, 22, 2, 100  },
+    { FLD_PAC, UNIT_W,    CH0, 18, 2, 10   },
+    { FLD_Q,   UNIT_VAR,  CH0, 20, 2, 10   },
+    { FLD_F,   UNIT_HZ,   CH0, 16, 2, 100  },
+    { FLD_PF,  UNIT_NONE, CH0, 24, 2, 1000 },
+    { FLD_T,   UNIT_C,    CH0, 26, 2, 10   },
+    { FLD_EVT, UNIT_NONE, CH0, 28, 2, 1    },
 
+"""
 
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 class Hm300Decode00(Response_InverterDevInform_Simple):
@@ -590,7 +615,7 @@ class Hm300Decode0B(StatusResponse):
     @property
     def dc_energy_total_0(self):
         """ String 1 total energy in Wh """
-        return self.unpack('>L', 8)[0]
+        return self.unpack('>L', 8)[0]/1000.0
     @property
     def dc_energy_daily_0(self):
         """ String 1 daily energy in Wh """
@@ -678,7 +703,7 @@ class Hm600Decode0B(StatusResponse):
     @property
     def dc_energy_total_0(self):
         """ String 1 total energy in Wh """
-        return self.unpack('>L', 14)[0]
+        return self.unpack('>L', 14)[0]/1000.0
     @property
     def dc_energy_daily_0(self):
         """ String 1 daily energy in Wh """
@@ -707,7 +732,7 @@ class Hm600Decode0B(StatusResponse):
     @property
     def dc_energy_total_1(self):
         """ String 2 total energy in Wh """
-        return self.unpack('>L', 18)[0]
+        return self.unpack('>L', 18)[0]/1000.0
     @property
     def dc_energy_daily_1(self):
         """ String 2 daily energy in Wh """
@@ -795,7 +820,7 @@ class Hm1200Decode0B(StatusResponse):
     @property
     def dc_energy_total_0(self):
         """ String 1 total energy in Wh """
-        return self.unpack('>L', 12)[0]
+        return self.unpack('>L', 12)[0]/1000.0
     @property
     def dc_energy_daily_0(self):
         """ String 1 daily energy in Wh """
@@ -824,7 +849,7 @@ class Hm1200Decode0B(StatusResponse):
     @property
     def dc_energy_total_1(self):
         """ String 2 total energy in Wh """
-        return self.unpack('>L', 16)[0]
+        return self.unpack('>L', 16)[0]/1000.0
     @property
     def dc_energy_daily_1(self):
         """ String 2 daily energy in Wh """
@@ -853,7 +878,7 @@ class Hm1200Decode0B(StatusResponse):
     @property
     def dc_energy_total_2(self):
         """ String 3 total energy in Wh """
-        return self.unpack('>L', 34)[0]
+        return self.unpack('>L', 34)[0]/1000.0
     @property
     def dc_energy_daily_2(self):
         """ String 3 daily energy in Wh """
@@ -882,7 +907,7 @@ class Hm1200Decode0B(StatusResponse):
     @property
     def dc_energy_total_3(self):
         """ String 4 total energy in Wh """
-        return self.unpack('>L', 38)[0]
+        return self.unpack('>L', 38)[0]/1000.0
     @property
     def dc_energy_daily_3(self):
         """ String 4 daily energy in Wh """

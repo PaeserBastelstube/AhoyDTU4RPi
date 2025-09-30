@@ -5,13 +5,22 @@ require_once 'generic_json.php'; # incl. reading ahoy.yml
 $simple_hw_data = array();
 $all_hw_data = array();
 $grid_data = array();
-$sysConfig_data = array();
+$config_data = array();
 $status_data = array();
 $alarm_data = array();
 $MaxValues_data = array();
 if (!isset($inverter_id)) $inverter_id = 0;
 
 ################################################################################
+# Wie ist die Serien-Nummer der Inverter aufgebaut?
+#   erste beiden Ziffern: 10 = Gen 2 (MI) und 11 = Gen 3(HM/HMS), 13 = HMT
+#   dritte Ziffer: 2 = 1in1, 4 = 2in1 und 6 = 4in1, 8 = 6in1 Modell.
+#   vierte Ziffer: 1 = HM, 2 = HMT und "Special MI´s", 4 = HMS
+#   fünfte Ziffer ist die Jahreszahl, 1 = 2015, 2=2016, 3=2017, 4=2018, 5=2019,
+#     6=2020, 7=2021, 8=2022, 9=2023, 2024 geht es wohl wieder bei 0 oder 1 los, 
+#     da ja die Serien von vor 10 Jahren nicht mehr zu der Zeit Produziert werden.
+#   sechste und siebte Ziffer ist die Kalenderwoche in der der WR vom Band lief.
+#
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 # 1141-Series Inverters, 2 MPPT, 1 Phase
 # 1161-Series Inverters, 2 MPPT, 1 Phase
@@ -20,7 +29,7 @@ if (!isset($inverter_id)) $inverter_id = 0;
 # 1) look at "serial numer"
 # 2) read "Hardware numer" and compare with list:
 #    $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
-#    .../src/hm/hmDefines.h
+#    .../src/hm/hmDefines.h[333]
 ################################################################################
 $max_pwr = 0;
 
@@ -32,22 +41,30 @@ if (isset($ahoy_conf["inverters"][$inverter_id]["serial"])) {
 	if (isset($data_yaml["InverterDevInform_Simple"]))	$simple_hw_data	= $data_yaml["InverterDevInform_Simple"];
 	if (isset($data_yaml["InverterDevInform_All"]))		$all_hw_data	= $data_yaml["InverterDevInform_All"];
 	if (isset($data_yaml["GridOnProFilePara"]))			$grid_data		= $data_yaml["GridOnProFilePara"];
-	if (isset($data_yaml["SystemConfigPara"]))			$sysConfig_data	= $data_yaml["SystemConfigPara"];
+	if (isset($data_yaml["SystemConfigPara"]))			$config_data	= $data_yaml["SystemConfigPara"];
 	if (isset($data_yaml["RealTimeRunData_Debug"]))		$status_data	= $data_yaml["RealTimeRunData_Debug"]; # rtrd_data
 	if (isset($data_yaml["AlarmData"]))					$alarm_data		+= $data_yaml["AlarmData"];
 	if (isset($data_yaml["AlarmUpdate"]))				$alarm_data		+= $data_yaml["AlarmUpdate"];
 	if (isset($data_yaml["MaxValues"]))					$MaxValues_data	= $data_yaml["MaxValues"];
 
+	# 1) look at "serial numer"
 	switch (substr($ahoy_conf["inverters"][$inverter_id]["serial"], 0,4)) {
 		case 1121: $max_pwr =  400; break;
 		case 1141: $max_pwr =  800; break;
 		case 1161: $max_pwr = 1500; break;
 	}
+
+	# 2) read "Hardware numer" and compare with list:
 	if (isset($simple_hw_data["FLD_PART_NUM"])){
-		# print dechex($simple_hw_data["FLD_PART_NUM"]) . PHP_EOL;
-		switch (substr(dechex($simple_hw_data["FLD_PART_NUM"]),1,6)) {
-			case 101110: $max_pwr = 600; break;
-		}
+		$part_num = intval("0x" . substr(dechex($simple_hw_data["FLD_PART_NUM"]),0,6),0);
+
+		require_once 'inverter_defines.php';
+		$max_pwr = $devInfo[$part_num];
+
+		##if (isset($argv) and $argv[0] == "inverter_json.php") 
+		##	termPrint("FLD_PART_NUM: " . $simple_hw_data["FLD_PART_NUM"] . 
+		##							 " - in hex: " . dechex($part_num) .
+		##							 " - max_pwr: " . $max_pwr);
 	}
 }
 
@@ -94,14 +111,14 @@ $$inverter_var_id = [
 	"name"			=> $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
 	"serial"		=> $ahoy_conf["inverters"][$inverter_id]["serial"] ?? "",
 	"version"		=> "0",
-	"power_limit_read" => 100,
-	"power_limit_ack" => false,
-	"max_pwr"		=> $max_pwr,
-	"ts_last_success" => strtotime($status_data['time'].'CEST'),
+	"power_limit_read"	=> $config_data['FLD_ACT_ACTIVE_PWR_LIMIT'],
+	"power_limit_ack"	=> false,
+	"max_pwr"			=> $max_pwr,
+	"ts_last_success"	=> strtotime($status_data['time'].'CEST'),
 	"generation"	=> 1,
 	"status"		=> (time() - strtotime($status_data["time"].'CEST')) > 60 ? 0 : 1,
 	"alarm_cnt"		=> $status_data["event_count"] ?? 0,
-	"rssi"	=> 0,
+	"rssi"			=> 0,
 	"ts_max_ac_pwr"	=> $data_yaml["MaxValues"]["max_power_ts"] ?? 0,
 	"ts_max_temp"	=> $data_yaml["MaxValues"]["max_temp_ts"] ?? 0,
     # V   ,A   ,W   ,Hz  ,""   , °C ,   kWh    ,  Wh    ,W   ,   %      ,var ,W       ,  °C
@@ -146,8 +163,8 @@ if (isset($status_data["yield_total"])) {
 		$frequency,								# F_AC [Hz]
 		$status_data["powerfactor"],			# Pf_AC
 		$status_data["temperature"],			# Temp [°C]
-		$status_data["yield_total"] / 1000,		# Pmax-total [kW]
-		$status_data["yield_today"],			# Pmax-today [kW]
+		$status_data["yield_total"],			# P_total [kW]
+		$status_data["yield_today"],			# P_today [W]
 		$DCpower,								# P_DC [W]
 		$status_data["efficiency"],				# [%]
 		$ACQpower,								# Q [var]

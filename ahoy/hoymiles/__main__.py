@@ -317,53 +317,35 @@ class SunsetHandler:
             mqtt_client.info2mqtt({'dis_night_comm': 'False'})
   
 
+################################################################################
+################################################################################
 def main_loop(ahoy_config):
     """ Main loop """
-    # check 'interval' parameter in config-file
-    loop_interval = int(ahoy_config.get('interval', 15))
-    logging.info(f"AhoyDTU-MAIN: {loop_interval=} sec.")
-    if (loop_interval <= 0):
-        logging.critical("Parameter 'loop_interval' must grater 0 - STOP(999)")
-        exit(999)
-
-    # check 'transmit_retries' parameter in config-file
-    transmit_retries = ahoy_config.get('transmit_retries', 5)
-    if (transmit_retries <= 0):
-        logging.critical("Parameter 'transmit_retries' must grater 0 - STOP(998)")
-        exit(998)
-
-    # get inverter from config-file
-    inverters = [inverter for inverter in ahoy_config.get('inverters', [])
-                 if inverter.get('enabled', True)]
-    if len(inverters) == 0:
-        logging.critical("no inverters configured - STOP(997)")
-        exit(997)
-
-    # check all inverter names and serial numbers in config-file
-    for inverter in inverters:
-        if not 'name' in inverter:
-           inverter['name'] = 'hoymiles'
-        if not 'serial' in inverter:
-           logging.error("No inverter serial number found in ahoy.yml - STOP(996)")
-           exit(996)
-
-    # init Sunset-Handler object
-    sunset = SunsetHandler(ahoy_config.get('sunset'))
-
-    if not hoymiles.HOYMILES_VERBOSE_LOGGING and not hoymiles.HOYMILES_TRANSACTION_LOGGING:
-       logging.info(f"MAIN LOOP starts now without console output")
+    logging.info(f"MAIN LOOP starts now without console output")
 
     try:
         do_init = True
         while True:   # MAIN endless LOOP
-            t_loop_start = time.time()
-            # check sunrise and sunset times and sleep in night time
-            sunset.checkWaitForSunrise()
-            if time.time() - t_loop_start > 6 * 60 * 60:     # Interruption at night > 6h 
-               web_server.reset_max_value()
+            t_loop_start = time.time()   # save start time
+            sunset.checkWaitForSunrise() # stop work at night time
 
-            sysv_ipc = web_server.receiveInverterCommand()
-            if (sysv_ipc and isinstance(sysv_ipc, str)):
+            for inverter in inverters:         # querey each inverter
+                poll_inverter(inverter, do_init, transmit_retries)
+            do_init = False
+
+            if web_server:
+              # check reset max values
+              #if time.time() - t_loop_start > 6 * 60 * 60:
+              #   web_server.reset_max_value()
+
+              # check if all infos available for WebServer
+              # logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
+              if (int(time.strftime("%M"),10) % 5 == 0):
+                 do_init = web_server.checkOutput()
+
+              # read command from WebServer, if available
+              sysv_ipc = web_server.receiveInverterCommand()
+              if (sysv_ipc and isinstance(sysv_ipc, str)):
                 # logging.info(f"System-V(message-queue): len={sysv_ipc.__sizeof__()} type={type(sysv_ipc)} {sysv_ipc=}")
                 sysv_ipc_uns = unserialize(sysv_ipc.encode())
 
@@ -371,23 +353,14 @@ def main_loop(ahoy_config):
                 sysv_ipc_dict = {key.decode(): val.decode() if isinstance(val, bytes) else val for key, val in sysv_ipc_uns.items()}
                 logging.info(f"System-V(command): len={sysv_ipc_dict.__sizeof__()} type={type(sysv_ipc_dict)} {sysv_ipc_dict=}")
 
-                # now send command to inverter
-
-            for inverter in inverters:
-                poll_inverter(inverter, do_init, transmit_retries)
-            do_init = False
-
-            # logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
-            if (int(time.strftime("%M"),10) % 5 == 0):
-               if web_server:
-                   do_init = web_server.checkOutput()
+                # now send command to inverter-queue
 
             # calc time to pause main-loop
-            time_to_sleep = loop_interval - (time.time() - t_loop_start)
-            if time_to_sleep > 0:
+            time_to_pause = loop_interval - (time.time() - t_loop_start)
+            if time_to_pause > 0:
                if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f'MAIN-LOOP: sleep for {time_to_sleep:.2f} sec.')
-               time.sleep(time_to_sleep)
+                  logging.info(f'MAIN-LOOP: sleep for {time_to_pause:.2f} sec.')
+               time.sleep(time_to_pause)
     except Exception as e:
         logging.fatal('Exception catched: %s' % e)
         ## logging.fatal(traceback.print_exc())
@@ -446,18 +419,21 @@ def poll_inverter(inverter, do_init, retries):
         payload_ttl = retries
         response = None
         while payload_ttl > 0:
-            payload_ttl = payload_ttl - 1
+            payload_ttl -= 1
             com = hoymiles.InverterTransaction(
                     radio=hmradio,
                     txpower=inverter.get('txpower', None),
                     dtu_ser=dtu_serial,
                     inverter_ser=inverter_ser,
-                    request=next(hoymiles.compose_esb_packet(
+                    request=next(
+                      hoymiles.compose_esb_packet(
                         payload,
                         seq=b'\x80',
                         src=dtu_serial,
                         dst=inverter_ser
-                        )))
+                      )
+                    )
+                  )
             while com.rxtx():
                 try:
                     response = com.get_payload()
@@ -637,7 +613,7 @@ def init_logging(ahoy_config):
 
     logging.info(f'AhoyDTU-logging started for "{dtu_name}" with level: {logging.getLevelName(logging.root.level)}')
     if os.environ.get('TERM') is not None:
-       print(f"run before starting AHOY: tail -f {fn} &")
+       print(f"run before starting AhoyDTU: tail -f {fn} &")
 
 if __name__ == '__main__':
     # read commandline parameter
@@ -661,7 +637,7 @@ if __name__ == '__main__':
         logging.error(f"Failed to load config file: '{global_config.config_file}' - {e_yaml}")
         exit(1)
 
-    # read all parameter from configuration file as 'ahoy_config'
+    # read all parameter from configuration-file as 'ahoy_config'
     ahoy_config = dict(cfg.get('ahoy', {}))
 
     # extract 'DTU' parameter
@@ -671,12 +647,11 @@ if __name__ == '__main__':
     # init and prepare logging
     init_logging(ahoy_config)
 
-    # only one NRF24L01+ radio transceivers allowed
-    # for radio_config in ahoy_config.get('nrf', [{}]):
+    # define radio object # only one NRF24L01+ radio transceivers allowed
     radio_config = ahoy_config.get('nrf', [{}])
     hmradio = hoymiles.HoymilesNRF(**radio_config)
 
-    # create WebServer client object
+    # init WebServer client object
     web_server = None
     webserver_config = ahoy_config.get('WebServer', None)
     if webserver_config:
@@ -684,7 +659,7 @@ if __name__ == '__main__':
     if (None != web_server):
           logging.info(f"WebServer init successfull!")
 
-    # create INFLUX client object
+    # init INFLUX client object
     influx_client = None
     influx_config = ahoy_config.get('influxdb', None)
     if influx_config and influx_config.get('enabled', False):
@@ -696,14 +671,14 @@ if __name__ == '__main__':
                 bucket=influx_config.get('bucket', None),
                 measurement=influx_config.get('measurement', 'hoymiles'))
 
-    # create VOLKSZAEHLER client object
+    # init VOLKSZAEHLER client object
     volkszaehler_client = None
     volkszaehler_config = ahoy_config.get('volkszaehler', {})
     if volkszaehler_config and volkszaehler_config.get('enabled', False):
         from .outputs import VolkszaehlerOutputPlugin # import VZ-class from external "outputs" file
         volkszaehler_client = VolkszaehlerOutputPlugin(volkszaehler_config)
 
-    # create MQTT client object
+    # init MQTT client object
     mqtt_client = None                               # create client-obj-placeholder
     mqtt_config = ahoy_config.get('mqtt', None)      # get mqtt-config, if available
     sub_topic_array = []                             # create array for subscribe-topic's
@@ -724,18 +699,49 @@ if __name__ == '__main__':
            # sub_topic_array=[("Server1/kpi1",0),("Server2/kpi2",0),("Server3/kpi3",0)]
            sub_topic_array.append((sub_topic, mqtt_config.get('QoS',0)))
 
-    # start subscribe mqtt broker, if requested 'sub_topic' available
+    # subscribe mqtt topic, if requested
     if mqtt_client and len(sub_topic_array) > 0:
        if hoymiles.HOYMILES_VERBOSE_LOGGING:
           logging.info(f'MQTT: subscribe for topic/QoS: {sub_topic_array}')
        mqtt_client.client.subscribe(sub_topic_array)
+
+    # init Sunset-Handler object # need MQTT object, if available
+    sunset = SunsetHandler(ahoy_config.get('sunset'))
+
+    # check 'interval' parameter in config-file
+    loop_interval = int(ahoy_config.get('interval', 15))
+    logging.info(f"AhoyDTU-MAIN: {loop_interval=} sec.")
+    if (loop_interval <= 0):
+        logging.critical("Parameter 'loop_interval' must >= 0 - STOP(999)")
+        exit(999)
+
+    # check 'transmit_retries' parameter in config-file
+    transmit_retries = ahoy_config.get('transmit_retries', 5)
+    if (transmit_retries <= 0):
+        logging.critical("Parameter 'transmit_retries' must >= 0 - STOP(998)")
+        exit(998)
+
+    # check inverters in config-file
+    inverters = [inverter for inverter in ahoy_config.get('inverters', [])
+                 if inverter.get('enabled', True)]
+    if len(inverters) == 0:
+        logging.critical("no inverters configured - STOP(997)")
+        exit(997)
+
+    # check all inverter "name" and "serial-number" in config-file
+    for inverter in inverters:
+        if not 'name' in inverter:
+           inverter['name'] = 'hoymiles'
+        if not 'serial' in inverter:
+           logging.error("inverter without serial-number not accepted - STOP(996)")
+           exit(996)
 
     # init important runtime variables
     event_message_index = {}
     command_queue = {}
     mqtt_command_topic_subs = []
 
-    # 
+    # init command-queue and event-queue for each inverter
     for g_inverter in ahoy_config.get('inverters', []): # loop over all known inverters
         inv_str = str(g_inverter.get('serial', 0))      # get inverter serial number as index
         command_queue[inv_str] = []                     # init empty inverter-command-queue
