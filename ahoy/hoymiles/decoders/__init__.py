@@ -75,10 +75,10 @@ class Response:
         strings = params.get('strings', None)
         self.inv_strings = strings
 
-        if isinstance(params.get('time_rx', None), datetime):
-            self.time_rx = params['time_rx']
-        else:
-            self.time_rx = datetime.now()
+        # if isinstance(params.get('time_rx', None), datetime):
+        #    self.time_rx = params['time_rx']
+        #else:
+        #    self.time_rx = datetime.now()
 
     def __dict__(self):
         """ Base values, availabe in each __dict__ call """
@@ -191,7 +191,8 @@ class StatusResponse(Response):
            data['efficiency'] = 0.0
 
         data['event_count'] = self.event_count
-        data['time'] = self.time_rx
+        # data['time'] = self.time_rx
+        data['time'] = datetime.now().timestamp()
 
         if not self.unpack_error:
             return data

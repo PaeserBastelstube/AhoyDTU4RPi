@@ -287,7 +287,7 @@ function ap_ctrl($my_post){			# Active Power Control for inverter
 	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"66"}	# relative = in %
 	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_absolute","val":"870"}		# absolute in Watt
 	# _my_post: {"id":0,"token":"*","cmd":"limit_persistent_relative","val":"66"}		# persistent = Keep limit over inverter restart = yes
-	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_relative","val":"870"}	# nonpersistent = no
+	# _my_post: {"id":0,"token":"*","cmd":"limit_nonpersistent_absolute","val":"870"}	# nonpersistent = no
 	# _my_post: {"id":0,"token":"*","cmd":"restart","val":"0"}							# Restart Inverter
 	# _my_post: {"id":0,"token":"*","cmd":"power","val":"0"}							# Inverter Ausschalten
 	# _my_post: {"id":0,"token":"*","cmd":"power","val":"1"}							# Inverter Einschalten
@@ -359,7 +359,7 @@ function saveInverter($my_post){
 		$ahoy_conf["WebServer"]["TimezoneOffset"] = $my_post["val"];
 
 	# add new / delete inverter ## see setup.html:736
-	if (isset($my_post["cmd"]) and $my_post["cmd"] == "save_iv") {  ## detect inverter commands
+	if (isset($my_post["cmd"]) and $my_post["cmd"] == "save_iv") {    ## detect inverter commands
 
 		if ($my_post["ser"] == 0) {                                   ## delete inverter
 			# unset($ahoy_conf["inverters"][$my_post["id"]]);

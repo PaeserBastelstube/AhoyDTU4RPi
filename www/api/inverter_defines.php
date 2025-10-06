@@ -1,4 +1,21 @@
 <?PHP
+################################################################################
+# see: "src\hm\hmDefines.h[318]"
+// https://github.com/lumapu/ahoy/issues/1111
+// Hardware number:
+// 0xAABBCCDD
+//   ^^ ------- always 10 (for MI, HM, HMS, HMT)
+//     ^ ------ 0 = MI
+//              1 = HM
+//              1, 2 = HMS (version)
+//              3 = HMT
+//      ^ ----- 0 = 1 Input
+//              1 = 2 Inputs
+//              2 = 4 Inputs
+//              3 = 6 Inputs
+//       ^ ---- 0 = smallest with x inputs
+//              7 = biggest with x inputs
+################################################################################
 $devInfo = array(
 	# MI 2nd gen; only 0x001311 is tested,
 	# others (starting with MI-250) according to 

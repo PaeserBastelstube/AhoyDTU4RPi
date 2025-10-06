@@ -5,29 +5,34 @@
 Hoymiles micro-inverters main application
 """
 
+from os import environ
 from sys import exit
-import struct
-## import traceback
-import re
-
-import argparse
-from ruamel.yaml import YAML
-yaml = YAML(typ='rt')
 
 import logging
 from logging.handlers import RotatingFileHandler
-import os
-## from os import environ, open, close, O_CREAT
 
-import time
-from suntimes import SunTimes
-from datetime import datetime, timedelta
-
-import sysv_ipc  # for System-V FTOK, Semaphore and Shared-Memory
-from phpserialize import unserialize
+import argparse
+import struct
+import re
 import json
+## import traceback
+
+from ruamel.yaml import YAML
+yaml = YAML(typ='rt')
+
+import time          # for "time.sleep"
+from datetime import datetime, timedelta, timezone
+from suntimes import SunTimes
+
 import hoymiles  # import paket on this place, call once: "hoymiles/__init__.py"
 
+################################################################################
+# constant values
+TX_REQ_INFO =       b'\x15'
+TX_REQ_DEVCONTROL = b'\x51'
+ALL_FRAMES =        b'\x80'
+SINGLE_FRAME =      b'\x81'
+#
 ################################################################################
 # SIGINT  = Interrupt from keyboard (CTRL + C)
 # SIGTERM = Signal Handler from terminating processes
@@ -37,15 +42,14 @@ import hoymiles  # import paket on this place, call once: "hoymiles/__init__.py"
 from signal import signal, Signals, SIGINT, SIGTERM, SIGHUP
 def signal_handler(sig_num, frame):
     """ Signal Handler 
-
     param: signal number [signal-name]
     param: frame
     """
     signame = Signals(sig_num).name
-    logging.info(f'Stop by Signal <{signame}> ({sig_num})')
-    if os.environ.get('TERM') is not None:
-       print (f'\nStop by Signal <{signame}> ({sig_num}) '
-            f'at: {time.strftime("%d.%m.%Y %H:%M:%S")}\n')
+    toPrint = f"Stop by Signal <{signame}> ({sig_num}) at: {sunset.getTimeAsString()}"
+    logging.info(toPrint)
+    if environ.get('TERM') is not None:
+       print (f"\n{toPrint}")
 
     if mqtt_client:
        mqtt_client.disco()
@@ -69,231 +73,76 @@ signal(SIGHUP,  signal_handler)
 ################################################################################
 ################################################################################
 
-class WebServer:
-  """ communication with WebServices over System-V IPC objects
-  to handle maximum values
-  to send data over Shared Memory by using a Semaphore
-  to receive data from IPC Message-Queue
-  """
-  def __init__(self, web_config, config_fn):
-    self.dataToFile = {}
-    self.filepath = web_config.get('filepath', '/tmp')
-
-    self.AtMidnight = False
-    self.AtSunrise = False
-    self.AtSunset = False
-    self.NotAvailable = False
-    self.MaxValues = False
-
-    if web_config.get('InverterReset', None):
-       reset_config = web_config.get('InverterReset')
-       if reset_config.get('AtMidnight', False) == True:
-          self.AtMidnight = True
-       if reset_config.get('AtSunrise', False) == True:
-          self.AtSunrise = True
-       if reset_config.get('AtSunset', False) == True:
-          self.AtSunset = True
-       if reset_config.get('NotAvailable', False) == True:
-          self.NotAvailable = True
-       if reset_config.get('MaxValues', False) == True:
-          self.MaxValues = True
-    self.reset_max_values()
-
-    # generate the known FTOK key from specifiv file
-    #   ftok(path, id, [silence_warning = False])
-    #   Note that ftok() has limitations, and this function will issue a warning
-    #   to that effect unless silence_warning is True.
-    #   "id" must be in hex - hex(0x30) = dec(48) = chr("0")
-    self.ftokKey = sysv_ipc.ftok(config_fn, 0x30, silence_warning = True)
-    logging.debug(f"System-V: create ftokKey={self.ftokKey} hex=0x{self.ftokKey:08x}")
-
-    self.ipc_flags = sysv_ipc.IPC_CREX   # specify whether to create a new semaphore or open an existing one
-    self.ipc_mode = 0o644                # 
-    self.sem_initial_value = 3           # 
-    try: # Creates a new semaphore or opens an existing one.
-        sem_id = sysv_ipc.Semaphore(self.ftokKey, self.ipc_flags, self.ipc_mode, self.sem_initial_value)
-    except sysv_ipc.ExistentialError: # semaphore exists already
-        sem_id = sysv_ipc.Semaphore(self.ftokKey)
-    sem_id.release()                     # close Semaphore
-    sem_id.remove()                      # destry old Semaphore
-
-    try:                                 # create new message-queue (ipc_mq)
-        self.ipc_mq = sysv_ipc.MessageQueue(self.ftokKey, self.ipc_flags)
-        logging.debug(f"System-V: new message-queue with {self.ipc_mq.id=} and {self.ipc_mq.max_size=} created")
-    except sysv_ipc.ExistentialError:    # message-queue does exists allready
-        self.ipc_mq = sysv_ipc.MessageQueue(self.ftokKey)
-        logging.debug(f"System-V: existing message-queue found with {self.ipc_mq.current_messages} messages in queue")
-        while (self.ipc_mq.current_messages > 0):    # remove old messages from queue
-            self.ipc_mq.receive(False)               # wait if there's no messages
-
-  def disco(self):
-      if (self.ipc_mq):
-        self.ipc_mq.remove()      # remove message queue
-
-  def reset_max_values(self):
-      self.max_values = {'max_temp':0,'max_temp_ts':0,'max_power':0,'max_power_ts':0, 'strings':[]}
- 
-  def getMaxValues (self, data):
-      # calulate max values
-      if (self.max_values['max_temp'] < data['temperature']):
-          self.max_values['max_temp']    = data['temperature']
-          self.max_values['max_temp_ts'] = data['time'].timestamp()
-
-      if 'phases' in data:
-          all_phase_power = 0
-          for phase in data['phases']:
-              all_phase_power += phase['power']            # add power of all phases
-          if (self.max_values['max_power'] < all_phase_power):
-              self.max_values['max_power'] = all_phase_power
-              self.max_values['max_power_ts'] = data['time'].timestamp()
-
-      if 'strings' in data:
-          for ii, string in enumerate(data['strings']):
-            # print (f"{ii=} {self.max_values['strings']=} {string['power']=}")
-            if ii not in range(len(self.max_values['strings'])):
-               self.max_values['strings'].append(string['power'])
-            else:
-              if (self.max_values['strings'][ii] < string['power']):
-                self.max_values['strings'][ii] = string['power']
-      self.dataToFile["MaxValues"] = self.max_values
-      #logging.debug(f"SaveData4PHP(MaxValues): {self.dataToFile["MaxValues"]=}")
-   
-  def checkOutput(self):
-    if "DebugDecodeAny" in self.dataToFile and \
-       "InverterDevInform_Simple" in self.dataToFile and \
-       "InverterDevInform_All" in self.dataToFile:
-       return False
-    else:
-       logging.debug(f"SaveData4PHP(checkOutput): missing elements - restart main-init function")
-       return True
-
-  def eventArray (self, InfoCommand, data): # InfoCommand == "AlarmData" or "AlarmUpdate"
-	# add data to FiFo-Array (max 50 pos.
-    if InfoCommand in self.dataToFile:
-        self.dataToFile[InfoCommand].update(data)
-    else:
-        self.dataToFile[InfoCommand] = data
-
-    while len(self.dataToFile[InfoCommand]) > 50:
-        myFirstKey = next(iter(self.dataToFile[InfoCommand].keys()))
-        del(self.dataToFile[InfoCommand][myFirstKey])
-    # logging.debug(f"SaveData4PHP: len={len(self.dataToFile[InfoCommand])} {self.dataToFile[InfoCommand]=}")
-
-  def SaveData4PHP (self, inv_ser, InfoCommand, data):
-    if (InfoCommand.startswith("Alarm")):           # AlarmData == 17(0x11) + AlarmUpdate == 18(0x12)
-        self.eventArray(InfoCommand, data)          # FiFo - max 50 pos.
-    elif (InfoCommand == "RealTimeRunData_Debug"):  # RealTimeRunData_Debug == 11 (0x0B)
-        self.getMaxValues(data)                     # extract max.Values
-        # datetime object can't serialied with json.dump
-        if 'time' in data and isinstance(data['time'], datetime):
-            data['time'] = data['time'].strftime('%d.%m.%YT%H:%M:%S')
-        self.dataToFile[InfoCommand] = data
-    else:
-        self.dataToFile[InfoCommand] = data
-
-    # logging.debug(f"SaveData4PHP: try to save data to System-V IPC")
-    try: # Creates a new semaphore or opens an existing one.
-        sem_id = sysv_ipc.Semaphore(self.ftokKey, self.ipc_flags, self.ipc_mode, self.sem_initial_value)
-    except sysv_ipc.ExistentialError: # semaphore exists already
-        # now, open this existing Semaphore and read ".o_time" value
-        # for unused Semaphore, ".o_time" value is zero
-        # for used Semaphore, ".o_time" value is a timestamp
-        sem_id = sysv_ipc.Semaphore(self.ftokKey)
-        logging.debug(f"SaveData4PHP: old Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
-                      f"found with TimeStamp: {sem_id.o_time}")
-        if sem_id.o_time == 0:         # destry forgotten Semaphore and loop
-            sem_id.release()
-            sem_id.remove()
-    else:
-        sem_id.release()               # Initializing sem.o_time to nonzero value
-        ## logging.debug(f"SaveData4PHP: Semaphore hex=0x{sem_id.key:08x} semid={sem_id.id} "
-        ##               f"successfully init with TimeStamp: {sem_id.o_time}")
-
-        SHM_Data = json.dumps(# Data Serialization for writing in SHM
-            {"saveTS" : time.strftime('%d.%m.%YT%H:%M:%S'),
-             "ts_last_success" : datetime.now().timestamp(),
-              inv_ser : {** self.dataToFile}})
-
-        logging.debug(f"SaveData4PHP: type={InfoCommand} SHM with: len={len(SHM_Data)}")
-        ## logging.debug(f"SaveData4PHP: type={InfoCommand} SHM with: len={len(SHM_Data)} value={SHM_Data}")
-        # create shared memeory object (SHM)
-        # Flag IPC_CREX is shorthand for IPC_CREAT | IPC_EXCL, they are used when
-        # creating IPC objects and identified by key. If the IPC object (semaphore, ...)
-        # with that key already exists, the call raises an ExistentialError.
-        #
-        # With flags set to default=0, the module attempts to open an existing IPC object,
-        # identified by key and raises a ExistentialError if that IPC object doesn't exist.
-
-        try:
-            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey, self.ipc_flags, self.ipc_mode, len(SHM_Data))
-        except sysv_ipc.ExistentialError:
-            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey)     # SHM must exist allready
-        # check Size
-        if len(SHM_Data) != shdMemObj.size:
-            shdMemObj.detach()
-            shdMemObj.remove()
-            shdMemObj = sysv_ipc.SharedMemory(self.ftokKey, self.ipc_flags, self.ipc_mode, len(SHM_Data))
-
-        shdMemObj.write(SHM_Data)
-        shdMemObj.detach()
-        ## logging.debug(f"SaveData4PHP:  Shared-Memory created: {shdMemObj.id=} len={len(shdMemData)} value={shdMemData}")
-        sem_id.remove()                # remove Semaphore
-
-  def receiveInverterCommand (self):
-    dataReceived = False
-    try:
-        # Receives a message from the queue, returning a tuple of (message, type)
-        dataReceived = self.ipc_mq.receive(False)[0].decode()
-        logging.debug(f"System-V(message-queue): len={dataReceived.__sizeof__()} type={type(dataReceived)} {dataReceived=}")
-    except sysv_ipc.BusyError:
-        pass  # Does absolutely nothing
-        # logging.debug(f"System-V: ERROR: cannot receive data from message-queue")
-    except sysv_ipc.ExistentialError:   # The queue no longer exists
-        logging.debug("System-V: The queue no longer exists")
-        self.disco()
-
-    return (dataReceived)
-
-
 class SunsetHandler:
     """ Sunset class
     to recognize the times of sunrise, sunset and to sleep at night time
 
-    :param str inverter: inverter serial
-    :param retries: tx retry count if no inverter contact
-    :type retries: int
+    see: https://www.centron.de/tutorial/python-aktuelles-datum-und-uhrzeit-anleitung/
     """
+    sunTimes      = None
+    _localTz      = None
+    _now          = None
+    _todaySunset  = None
+    _todaySunRise = None
+    _loop_start   = None
+
     def __init__(self, sunset_config):
-        self.suntimes = None
         if sunset_config and sunset_config.get('enabled', False):
-            latitude = float(sunset_config.get('latitude',0))
-            longitude = float(sunset_config.get('longitude',0))
-            altitude = float(sunset_config.get('altitude',0))
-            self.suntimes = SunTimes(longitude=longitude, latitude=latitude, altitude=altitude)
-            self.nextSunset = self.suntimes.setutc(datetime.utcnow())
-            logging.info (f'Sunset today at: {self.nextSunset} UTC')
-            # send info to mqtt, if broker configured
-            self.sun_status2mqtt()
+            # calc suntimes values ## https://pypi.org/project/suntimes/
+            self.sunTimes = SunTimes(longitude = float(sunset_config.get('longitude',0)),
+                                      latitude = float(sunset_config.get('latitude',0)),
+                                      altitude = float(sunset_config.get('altitude',0))
+            )
+            self._todaySunRise = self.sunTimes.riselocal(datetime.now())
+            self._todaySunset  = self.sunTimes.setlocal(datetime.now())
+            self._localTz      = self._todaySunRise.tzinfo
+            logging.info (f'Today Sunrise: {self._todaySunRise.strftime("%d.%m.%Y %H:%M:%S")} - '
+                          f'Sunset: {self._todaySunset.strftime("%d.%m.%Y %H:%M:%S (%Z)")}')
         else:
             logging.info('Sunset disabled!')
 
-    def checkWaitForSunrise(self):
-        if not self.suntimes:
+    def getTimeAsString(self):                  # get Time as String
+        return datetime.now(self._localTz).strftime("%d.%m.%Y %H:%M:%S (%Z)")
+
+    def loop_start(self):                       # save start of main loop
+        self._loop_start = datetime.now(self._localTz)
+
+    def pauseMainLoop(self, loop_interval):     # pause main-loop
+        _time_to_pause = loop_interval - (datetime.now(self._localTz) - self._loop_start).total_seconds()
+        if _time_to_pause > 0:
+           logging.info(f'MAIN-LOOP: sleep for {_time_to_pause:.2f} sec.')
+           time.sleep(_time_to_pause)
+
+    def updateTimeValues(self):
+        self._now          = datetime.now(self._localTz)
+        self._todaySunset  = self.sunTimes.setlocal(self._now)
+        self._todaySunRise = self.sunTimes.riselocal(self._now)
+
+    def ifSunTime(self):
+        if self.sunTimes:
+            self.updateTimeValues()
+            if self._now > self._todaySunRise and self._now < self._todaySunset:
+                return True
+        return False
+
+    def waitForSunrise(self):
+        if not self.sunTimes:
             return
-        # if the sunset already happened for today
-        now = datetime.utcnow()
-        if self.nextSunset < now:
-            # wait until the sun rises again. if it's already after midnight, this will be today
-            nextSunrise = self.suntimes.riseutc(now)
-            if nextSunrise < now:
-                tomorrow = now + timedelta(days=1)
-                nextSunrise = self.suntimes.riseutc(tomorrow)
-            self.nextSunset = self.suntimes.setutc(nextSunrise)
-            time_to_sleep = int((nextSunrise - datetime.utcnow()).total_seconds())
-            logging.info (f'Next sunrise is at {nextSunrise} UTC, next sunset is at {self.nextSunset} UTC, sleeping for {time_to_sleep} seconds.')
-            if time_to_sleep > 0:
-               time.sleep(time_to_sleep)
-               logging.info (f'Woke up...')
+        self.updateTimeValues()
+        _time_to_sleep = 0
+        if self._now < self._todaySunRise:      # this check starts today after midnight and bevor sunrise
+            _time_to_sleep = int((self._todaySunRise - self._now).total_seconds())
+            _nextSunrise = self._todaySunRise
+        elif self._now > self._todaySunset:     # this check starts after sunset (and bevor midnight)
+            _tomorrow = self._now + timedelta(days=1)
+            _nextSunrise = self.sunTimes.riselocal(_tomorrow)
+            _time_to_sleep = int((_nextSunrise - self._now).total_seconds())
+
+        if _time_to_sleep > 0:
+            logging.info (f'Wait for next sunrise at {_nextSunrise.strftime("%d.%m.%Y %H:%M:%S (%Z)")}, '
+                          f'sleeping for {_time_to_sleep} seconds')
+            time.sleep(_time_to_sleep)
+            logging.info (f'Woke up...')
 
     def sun_status2mqtt(self):
         """ send sunset information every day to MQTT broker """
@@ -315,23 +164,28 @@ class SunsetHandler:
         else:
             # TEMPLATE: info2mqtt(data2publish)
             mqtt_client.info2mqtt({'dis_night_comm': 'False'})
-  
 
 ################################################################################
 ################################################################################
-def main_loop(ahoy_config):
+
+def main_loop():
     """ Main loop """
-    logging.info(f"MAIN LOOP starts now without console output")
+    logging.info(f"MAIN-LOOP starts now with interval {loop_interval} sec. "
+                 f"and up to {transmit_retries} retries")
 
     try:
         do_init = True
         while True:   # MAIN endless LOOP
-            t_loop_start = time.time()   # save start time
-            sunset.checkWaitForSunrise() # stop work at night time
+            sunset.loop_start()          # save start time
 
-            for inverter in inverters:         # querey each inverter
-                poll_inverter(inverter, do_init, transmit_retries)
-            do_init = False
+            for inverter in inverters:   # querey each inverter
+                # no key 'disnightcom' in dict
+                if (not inverter.get('disnightcom', False)) or (inverter.get('disnightcom', False) and sunset.ifSunTime()):
+                    poll_inverter(inverter, do_init, transmit_retries)
+                    do_init = False
+                else:
+                    sunset.waitForSunrise() # stop work at night time
+                    continue
 
             if web_server:
               # check reset max values
@@ -340,27 +194,36 @@ def main_loop(ahoy_config):
 
               # check if all infos available for WebServer
               # logging.info (f"check time: {time.strftime('%M')} - {int(time.strftime('%M'),10) % 5}")
-              if (int(time.strftime("%M"),10) % 5 == 0):
-                 do_init = web_server.checkOutput()
+              # if (int(time.strftime("%M"),10) % 5 == 0):
+              #   do_init = web_server.checkOutput()
 
               # read command from WebServer, if available
-              sysv_ipc = web_server.receiveInverterCommand()
-              if (sysv_ipc and isinstance(sysv_ipc, str)):
-                # logging.info(f"System-V(message-queue): len={sysv_ipc.__sizeof__()} type={type(sysv_ipc)} {sysv_ipc=}")
-                sysv_ipc_uns = unserialize(sysv_ipc.encode())
+              inv_cmd = web_server.receiveInverterCommand()
+              if inv_cmd:
+                  inv_ser = inverters[inv_cmd['id']]['serial']
+                  payload = inv_cmd['cmd']
+                  logging.info(f"set Inverter: {dtu_serial=} {inv_ser=} {payload=}")
 
-                # convert all items to string
-                sysv_ipc_dict = {key.decode(): val.decode() if isinstance(val, bytes) else val for key, val in sysv_ipc_uns.items()}
-                logging.info(f"System-V(command): len={sysv_ipc_dict.__sizeof__()} type={type(sysv_ipc_dict)} {sysv_ipc_dict=}")
+                  # build inverter request
+                  request=next(
+                      hoymiles.compose_esb_packet(
+                          payload,                # first element from command queue - see: InfoCommands
+                          mid=TX_REQ_DEVCONTROL,  # main command id - b'\x15' or b'\x51'
+                          seq=SINGLE_FRAME,       # single frame if - b'\x80'
+                          src=dtu_serial,
+                          dst=inv_ser
+                      )
+                  )
+                  logging.info(f"set Inverter: {request=}")
+                  # send request into command queue
 
-                # now send command to inverter-queue
+                  response = sendRequest(retries, request)    # send inverter request
+                  if response:                                # Handle response data, if any
+                      logging.debug(f'set Inverter(response): {len(response)} bytes: {hoymiles.hexify_payload(response)}')
 
-            # calc time to pause main-loop
-            time_to_pause = loop_interval - (time.time() - t_loop_start)
-            if time_to_pause > 0:
-               if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                  logging.info(f'MAIN-LOOP: sleep for {time_to_pause:.2f} sec.')
-               time.sleep(time_to_pause)
+            # time to pause main-loop
+            sunset.pauseMainLoop(loop_interval)
+
     except Exception as e:
         logging.fatal('Exception catched: %s' % e)
         ## logging.fatal(traceback.print_exc())
@@ -374,137 +237,137 @@ def poll_inverter(inverter, do_init, retries):
     :param retries: tx retry count if no inverter contact
     :type retries: int
     """
-    inverter_ser     = inverter.get('serial')
-    inverter_name    = inverter.get('name')
-    inverter_strings = inverter.get('strings')
-    inv_str          = str(inverter_ser)
+    inv_ser     = inverter.get('serial')
+    inv_name    = inverter.get('name')
+    inv_strings = inverter.get('strings')
 
     # Command queue 
     if do_init: # this command is executed at start in the morning
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 0x00
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 0x01
+      command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 0x00
+      command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_All))      # 0x01
       if webserver_config.get('rdGrid', None):
-        command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))        # 0x02
+        command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GridOnProFilePara))        # 0x02
 
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 0x03
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 0x04
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.HardWareConfig))             # 0x03
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SimpleCalibrationPara))      # 0x04
 
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 0x05
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))      # 0x0b
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0x0c
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_A_Phase))    # 0x0d
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_B_Phase))    # 0x0e
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_C_Phase))    # 0x0f
+      command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.SystemConfigPara))           # 0x05
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))      # 0x0b
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Reality))    # 0x0c
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_A_Phase))    # 0x0d
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_B_Phase))    # 0x0e
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_C_Phase))    # 0x0f
 
-      command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))                  # 0x11
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))                # 0x12
+      command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmData))                  # 0x11
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.AlarmUpdate))                # 0x12
 
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))                 # 0x13
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))               # 0x14
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))                # 0x15
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))          # 0x1E
-      # command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))              # 0xFF
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RecordData))                 # 0x13
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InternalData))               # 0x14
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetLossRate))                # 0x15
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.GetSelfCheckState))          # 0x1E
+      # command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InitDataState))              # 0xFF
 
     # this command is executed on each run
-    command_queue[inv_str].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))        # 0x0b
+    command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.RealTimeRunData_Debug))        # 0x0b
 
     # Put all queued commands for current inverter on air
-    while len(command_queue[inv_str]) > 0:
-        if hoymiles.HOYMILES_VERBOSE_LOGGING:
-           logging.info(f"Poll inverter name={inverter_name} ser={inverter_ser} "
-                        f"command={hoymiles.InfoCommands(command_queue[inv_str][0][0]).name}")
-        payload = command_queue[inv_str].pop(0)    ## get first object from command queue
+    while len(command_queue[inv_ser]) > 0:
+        payload = command_queue[inv_ser].pop(0)    ## get first element from command queue
+        logging.info(f"Poll inverter: {inv_name=} {inv_ser=} "
+                     f"command={hoymiles.InfoCommands(payload[0]).name}")
+        logging.debug(f"Poll inverter: {payload=}")
 
-        # Send payload {ttl}-times until we get at least one reponse
-        payload_ttl = retries
-        response = None
-        while payload_ttl > 0:
-            payload_ttl -= 1
-            com = hoymiles.InverterTransaction(
-                    radio=hmradio,
-                    txpower=inverter.get('txpower', None),
-                    dtu_ser=dtu_serial,
-                    inverter_ser=inverter_ser,
-                    request=next(
-                      hoymiles.compose_esb_packet(
-                        payload,
-                        seq=b'\x80',
-                        src=dtu_serial,
-                        dst=inverter_ser
-                      )
-                    )
-                  )
-            while com.rxtx():
-                try:
-                    response = com.get_payload()
-                    payload_ttl = 0
-                except Exception as e_all:
-                    if hoymiles.HOYMILES_TRANSACTION_LOGGING:
-                        logging.error(f'Error while retrieving data: {e_all}')
-                    pass
-
-        # Handle response data, if any
-        if response:
-            if hoymiles.HOYMILES_TRANSACTION_LOGGING:
-                logging.debug(f'Payload: {len(response)} bytes: {hoymiles.hexify_payload(response)}')
+        # build next inverter request
+        request = next(
+            hoymiles.compose_esb_packet(
+                payload,           # first element from command queue - see: InfoCommands
+                mid=TX_REQ_INFO,   # main command id - b'\x15' or b'\x51'
+                seq=ALL_FRAMES,    # single frame if - b'\x80'
+                src=dtu_serial,
+                dst=inv_ser
+            )
+        )
+        logging.debug(f"Poll inverter: {request=}")
+        response = sendRequest(retries, request)    # send next inverter request
+        if response:                                # Handle response data, if any
+            logging.debug(f'Payload: {len(response)} bytes: {hoymiles.hexify_payload(response)}')
 
             # get a ResponseDecoder object to decode response-payload
-            decoder = hoymiles.ResponseDecoder(response,  
-                    request=com.request,
-                    inverter_ser=inverter_ser,
-                    strings=inverter_strings
-                    )
+            decoder = hoymiles.ResponseDecoder(
+                response,  
+                request      = request,
+                inverter_ser = inv_ser,
+                strings      = inv_strings
+            )
 
             result = decoder.decode()                          # decode response from inverter
+            resultTypeName = type(result).__name__             # get class (type) name
             data = result.__dict__()                           # convert result into python-dict
 
-            resultTypeName = type(result).__name__             # get class (type) name
-            if resultTypeName == "DebugDecodeAny":
-               InfoCommand = resultTypeName
-            else:
-               InfoCommand_num  = int("0x" + resultTypeName[-2:], 16)
-               InfoCommand = hoymiles.InfoCommands(InfoCommand_num).name
+            infoCommand = "DebugDecodeAny"
+            if resultTypeName != infoCommand:
+               infoCommand_num  = int("0x" + resultTypeName[-2:], 16)
+               infoCommand = hoymiles.InfoCommands(infoCommand_num).name
 
-            if hoymiles.HOYMILES_TRANSACTION_LOGGING:
-               logging.debug(f'Decoded: {resultTypeName=} {InfoCommand=} {data=}')
-
-            if web_server:
-               web_server.SaveData4PHP(inverter_ser, InfoCommand, data)      # save for using in NGINX
-
-            if mqtt_client:
-               mqtt_client.store_status(InfoCommand, data)     # output to MQTT-Broker
+            logging.debug(f"{resultTypeName=} {infoCommand=}")
+            logging.info(f'Decoded: {data=}')
 
             # check result object for output
-            if isinstance(result, hoymiles.decoders.StatusResponse):
-                if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                   logging.info(f"StatusResponse: payload contains {len(data)} elements "
-                                f"(power={data['phases'][0]['power']} W - event_count={data['event_count']})")
+            if infoCommand == 'RealTimeRunData_Debug':
+                logging.info(f"StatusResponse: payload contains {len(data)} elements "
+                             f"(power={data['phases'][0]['power']} W - event_count={data['event_count']})")
 
                 # when 'event_count' is changed, add AlarmUpdate-command to queue
                 if data is not None and 'event_count' in data:
-                    if event_message_index[inv_str] != data['event_count']:
-                       event_message_index[inv_str]  = data['event_count']
-                       if hoymiles.HOYMILES_VERBOSE_LOGGING:
-                          logging.info(f"event_count changed to {data['event_count']} --> AlarmUpdate requested")
+                    if event_message_index[inv_ser] != data['event_count']:
+                       event_message_index[inv_ser]  = data['event_count']
+                       logging.info(f"Alarm requested: event count changed to {data['event_count']}")
+
                        # add AlarmUpdate-command to queue 
-                       command_queue[inv_str].append(
+                       command_queue[inv_ser].append(
                          hoymiles.compose_send_time_payload(
-                           hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_str]
+                           hoymiles.InfoCommands.AlarmUpdate, alarm_id=event_message_index[inv_ser]
                          )
                        )
 
-                # sent outputs
-##                if mqtt_client:
-##                   mqtt_client.store_status(data)
+            # sent outputs
+            if web_server:
+               web_server.SaveData4PHP(infoCommand, data, inv_ser) # save data for using in NGINX
 
-                if influx_client:
-                   influx_client.store_status(data)
+            if mqtt_client:
+               mqtt_client.store_status(infoCommand, data)         # output to MQTT-Broker
 
-                if volkszaehler_client:
-                   # logging.info(f"call: VolkszaehlerOutputPlugin.store_status")
-                   volkszaehler_client.store_status(data)
+            if influx_client:
+               influx_client.store_status(infoCommand, data)       # output to influxDB
 
+            if volkszaehler_client:
+               volkszaehler_client.store_status(infoCommand, data) # output to volkszaehler
 
+################################################################################
+def sendRequest(payload_ttl, request):
+    response = None
+    while payload_ttl > 0: ## Send payload {ttl}-times until we get at least one reponse
+        payload_ttl -= 1
+        com = hoymiles.InverterTransaction(    ## create query inverter (TX) object
+                radio=hmradio,
+                txpower=inverter.get('txpower', None),
+                dtu_ser=dtu_serial,
+                inverter_ser=inv_ser,
+                request=request
+              )
+
+        # Transmit next packet from tx_queue if available and wait for responses
+        while com.rxtx():
+            try:
+                response = com.get_payload()
+                payload_ttl = 0
+            except Exception as e_all:
+                logging.debug(f'Error while retrieving data: {e_all}')
+                pass
+    return response
+
+################################################################################
+################################################################################
 def mqtt_on_message(mqtt_client, userdata, message):
     ''' 
     https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html#paho.mqtt.client.Client.on_message
@@ -559,22 +422,28 @@ def mqtt_on_message(mqtt_client, userdata, message):
 
         if (len(p_message) < 2048 and len(p_message) % 2 == 0 and re.match(r'^[a-f0-9]+$', p_message)):
             payload = bytes.fromhex(p_message)
-            if hoymiles.HOYMILES_VERBOSE_LOGGING:
-               logging.info (f"MQTT-command for {inv_str=}: {payload=}")
+            logging.info (f"MQTT-command for {inv_ser=}: {payload=}")
 
             # add command (payload) to inverter-command-queue
             if payload[0] == 0x80:                      # commands must start with \x80
-                # array "command_queue[inv_str]" will be shared to an other thread --> critical section
-                command_queue[inv_str].append(hoymiles.frame_payload(payload[1:]))
+                # array "command_queue[inv_ser]" will be shared to an other thread --> critical section
+                command_queue[inv_ser].append(hoymiles.frame_payload(payload[1:]))
             else:
                 logging.info (f"MQTT-command: must start with \x80: {payload=}")
         else:
             logging.info (f"MQTT-command to long (max length: 2048 bytes) - or contains non hex char")
 
-def init_logging(ahoy_config):
-    """ init and prepare logging """
-    log_config = ahoy_config.get('logging')
-
+def init_logging(log_config):
+    """ init and prepare logging 
+        Über die Angabe des Log-Levels wird festgelegt, wie dringlich eine Nachricht ist. 
+        Im logging-Modul sind dabei folgende Werte festgelegt:
+           CRITICAL 50
+           ERROR    40
+           WARNING  30
+           INFO     20
+           DEBUG    10
+           NOTSET    0
+    """
     # default values
     fn = 'hoymiles.log'
     max_log_filesize = 1000000
@@ -586,6 +455,7 @@ def init_logging(ahoy_config):
         max_log_filesize = log_config.get('max_log_filesize', max_log_filesize)
         max_log_files    = log_config.get('max_log_files',    max_log_files)
         level            = log_config.get('level',            'ERROR')
+
         if level == 'DEBUG':
            lvl = logging.DEBUG
         elif level == 'INFO':
@@ -600,20 +470,25 @@ def init_logging(ahoy_config):
            lvl = logging.INFO
 
     # define log switches
+    if global_config.verbose:
+       hoymiles.HOYMILES_VERBOSE_LOGGING     = True
+       lvl = logging.INFO
     if global_config.log_transactions:
        hoymiles.HOYMILES_TRANSACTION_LOGGING = True
        lvl = logging.DEBUG
-    if global_config.verbose:
-       hoymiles.HOYMILES_VERBOSE_LOGGING     = True
 
     # start configured logging
     logging.basicConfig(handlers=[RotatingFileHandler(fn, maxBytes=max_log_filesize, backupCount=max_log_files)], 
         format='%(asctime)s %(levelname)s: %(message)s', 
         datefmt='%Y-%m-%d %H:%M:%S.%s', level=lvl)
 
-    logging.info(f'AhoyDTU-logging started for "{dtu_name}" with level: {logging.getLevelName(logging.root.level)}')
-    if os.environ.get('TERM') is not None:
-       print(f"run before starting AhoyDTU: tail -f {fn} &")
+    if environ.get('TERM') is not None:
+       print(f"==>run before starting AhoyDTU: tail -f {fn} &")
+
+    if lvl >= 40:
+        logging.critical(f'AhoyDTU-logging started for "{dtu_name}" with level: {logging.getLevelName(logging.root.level)}')
+    else:
+        logging.info    (f'AhoyDTU-logging started for "{dtu_name}" with level: {logging.getLevelName(logging.root.level)}')
 
 if __name__ == '__main__':
     # read commandline parameter
@@ -641,23 +516,24 @@ if __name__ == '__main__':
     ahoy_config = dict(cfg.get('ahoy', {}))
 
     # extract 'DTU' parameter
-    dtu_serial  = ahoy_config.get('dtu', {}).get('serial', None)
-    dtu_name    = ahoy_config.get('dtu', {}).get('name', 'hoymiles-dtu')
+    dtu_serial  = ahoy_config.get('dtu', {}).get('serial', None)           # String
+    dtu_name    = ahoy_config.get('dtu', {}).get('name', 'hoymiles-dtu')   # String
 
     # init and prepare logging
-    init_logging(ahoy_config)
+    init_logging(ahoy_config.get('logging', None))
 
     # define radio object # only one NRF24L01+ radio transceivers allowed
-    radio_config = ahoy_config.get('nrf', [{}])
-    hmradio = hoymiles.HoymilesNRF(**radio_config)
+    radio_config = ahoy_config.get('nrf', [{}])                            # dict
+    hmradio = hoymiles.HoymilesNRF(**radio_config)                         # obj
 
     # init WebServer client object
     web_server = None
-    webserver_config = ahoy_config.get('WebServer', None)
+    webserver_config = ahoy_config.get('WebServer', None)                  # dict
     if webserver_config:
-        web_server = WebServer(webserver_config, global_config.config_file)     # create class object
-    if (None != web_server):
-          logging.info(f"WebServer init successfull!")
+        from .ioWebServer import WebServer
+        web_server = WebServer(webserver_config, logging, global_config.config_file)
+    #if (None != web_server):
+    #      logging.info(f"WebServer init successfull!")
 
     # init INFLUX client object
     influx_client = None
@@ -701,60 +577,57 @@ if __name__ == '__main__':
 
     # subscribe mqtt topic, if requested
     if mqtt_client and len(sub_topic_array) > 0:
-       if hoymiles.HOYMILES_VERBOSE_LOGGING:
-          logging.info(f'MQTT: subscribe for topic/QoS: {sub_topic_array}')
+       logging.info(f'MQTT: subscribe for topic/QoS: {sub_topic_array}')
        mqtt_client.client.subscribe(sub_topic_array)
 
     # init Sunset-Handler object # need MQTT object, if available
-    sunset = SunsetHandler(ahoy_config.get('sunset'))
+    sunset = SunsetHandler(ahoy_config.get('sunset'))              # obj
 
     # check 'interval' parameter in config-file
-    loop_interval = int(ahoy_config.get('interval', 15))
-    logging.info(f"AhoyDTU-MAIN: {loop_interval=} sec.")
+    loop_interval = int(ahoy_config.get('interval', 15))           # int
     if (loop_interval <= 0):
         logging.critical("Parameter 'loop_interval' must >= 0 - STOP(999)")
         exit(999)
 
     # check 'transmit_retries' parameter in config-file
-    transmit_retries = ahoy_config.get('transmit_retries', 5)
+    transmit_retries = ahoy_config.get('transmit_retries', 5)      # int
     if (transmit_retries <= 0):
         logging.critical("Parameter 'transmit_retries' must >= 0 - STOP(998)")
         exit(998)
+    logging.debug(f"AhoyDTU: {loop_interval=} sec. - {transmit_retries=}")
 
-    # check inverters in config-file
+    # init important runtime variables
+    event_message_index = {}                            # dict
+    command_queue = {}                                  # dict
+    mqtt_command_topic_subs = []                        # dict
+
+    # check inverters in config-file and init important queues
     inverters = [inverter for inverter in ahoy_config.get('inverters', [])
                  if inverter.get('enabled', True)]
+    # check all inverter "name" and "serial-number" in config-file
+    for inverter in inverters:
+        if not 'name' in inverter:                      # check inverter "name"
+           inverter['name'] = 'hoymiles'
+        if not 'serial' in inverter:                    # check inverter "serial"
+           logging.error("inverter without serial-number not accepted - STOP(996)")
+           exit(996)
+
+        inv_ser = inverter.get('serial', 0)             # get inverter serial number as index
+        command_queue[inv_ser] = []                     # init empty inverter-command-queue
+        event_message_index[inv_ser] = 0                # init event-queue with value=0
+
+        # if send_raw_enabled, add topic to subscribe mqtt-command-queue
+        if mqtt_client and inverter.get('mqtt', {}).get('send_raw_enabled', False):
+           sub_topic_array.append(
+             inverter.get('mqtt', {}).get('topic',
+             f'hoymiles/{inv_ser}') + '/command',
+             mqtt_config.get('QoS',0)
+           )
+
     if len(inverters) == 0:
         logging.critical("no inverters configured - STOP(997)")
         exit(997)
 
-    # check all inverter "name" and "serial-number" in config-file
-    for inverter in inverters:
-        if not 'name' in inverter:
-           inverter['name'] = 'hoymiles'
-        if not 'serial' in inverter:
-           logging.error("inverter without serial-number not accepted - STOP(996)")
-           exit(996)
-
-    # init important runtime variables
-    event_message_index = {}
-    command_queue = {}
-    mqtt_command_topic_subs = []
-
-    # init command-queue and event-queue for each inverter
-    for g_inverter in ahoy_config.get('inverters', []): # loop over all known inverters
-        inv_str = str(g_inverter.get('serial', 0))      # get inverter serial number as index
-        command_queue[inv_str] = []                     # init empty inverter-command-queue
-        event_message_index[inv_str] = 0                # init event-queue with value=0
-
-        # if send_raw_enabled, add topic to subscribe mqtt-command-queue
-        if mqtt_client and g_inverter.get('mqtt', {}).get('send_raw_enabled', False):
-           sub_topic_array.append(
-             g_inverter.get('mqtt', {}).get('topic',
-             f'hoymiles/{inv_str}') + '/command',
-             mqtt_config.get('QoS',0)
-           )
-
     # start main-loop
-    main_loop(ahoy_config)
+    main_loop()
 

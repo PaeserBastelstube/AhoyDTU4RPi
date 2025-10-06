@@ -51,7 +51,8 @@ def ser_to_hm_addr(inverter_ser):
     :return: inverter address
     :rtype: bytes
     """
-    bcd = int(str(inverter_ser)[-8:], base=16)
+    # bcd = int(str(inverter_ser)[-8:], base=16)
+    bcd = int(inverter_ser[-8:], base=16)
     return struct.pack('>L', bcd)
 
 def ser_to_esb_addr(inverter_ser):
@@ -202,7 +203,7 @@ class ResponseDecoder(ResponseDecoderFactory):
         command    = self.request_command
         model_desc = str(InfoCommands(int(command, 16)).name)
 
-        if HOYMILES_VERBOSE_LOGGING:
+        if HOYMILES_VERBOSE_LOGGING:             # python doesn't know switch/case
             if   command.upper() == "00":                             ## 00 - 0x00
                 model_desc = "Inverter Dev Inform Simple"
             elif command.upper() == "01":                             ## 01 - 0x01
@@ -244,7 +245,7 @@ class ResponseDecoder(ResponseDecoderFactory):
                 model_desc = "event not configured - check ahoy script"
 
             logging.info(f'--> using model_decoder: {model}Decode{command.upper()}'
-                         f' - {InfoCommands(int(command, 16)).name} 0x[{command}] ({model_desc})')
+                         f' - {InfoCommands(int(command, 16)).name} [0x{command}] ({model_desc})')
 
         model_decoders = __import__('hoymiles.decoders')
         if hasattr(model_decoders, f'{model}Decode{command.upper()}'):
@@ -547,25 +548,24 @@ def frame_payload(payload):
 
     return payload
 
-def compose_esb_fragment(fragment, seq=b'\x80', src=99999999, dst=1, **params):
+def compose_esb_fragment(fragment, mid=b'15', seq=b'\x80', src=99999999, dst=1, **params):
     """
-    Build standart ESB request fragment
+    Build standart ESB request fragment (ESB = Enhanced Shockburst)
 
-    :param bytes fragment: up to 16 bytes payload chunk
-    :param seq: frame sequence byte
-    :type seq: bytes
-    :param src: dtu address
-    :type src: int
-    :param dst: inverter address
-    :type dst: int
-    :return: esb frame fragment
-    :rtype: bytes
+    :param byte fragment: up to 16 bytes payload chunk
+    :param byte mid: Main-Command-Id (0x15, 0x51)
+    :param byte seq: frame sequence byte
+    :param int  src: dtu address
+    :param int  dst: inverter address
+
+    :return bytes esb frame fragment
     :raises ValueError: if fragment size larger 16 byte
     """
     if len(fragment) > 17:
         raise ValueError(f'ESB fragment exeeds mtu: Fragment size {len(fragment)} bytes')
 
-    packet = b'\x15'
+    # packet = b'\x15'
+    packet = mid
     packet = packet + ser_to_hm_addr(dst)
     packet = packet + ser_to_hm_addr(src)
     packet = packet + seq
@@ -613,48 +613,51 @@ def compose_send_time_payload(cmdId, alarm_id=0):
 
 class InverterTransaction:
     """
-    Inverter transaction buffer, implements transport-layer functions while
-    communicating with Hoymiles inverters
+    Inverter transaction buffer, implements transport-layer functions
+    while communicating with Hoymiles inverters
     """
-    tx_queue = []
-    scratch = []
-    inverter_ser = None
-    inverter_addr = None
-    dtu_ser = None
-    req_type = None
-    time_rx = None
+    tx_queue      = []
+    scratch       = []
 
-    radio = None
-    txpower = None
+    radio         = None
+    time_rx       = None
+    txpower       = None
+
+    inverter_ser  = None
+    inverter_addr = None
+    dtu_ser       = None
+    dtu_addr      = None
+
+    request       = None
+    req_type      = None
 
     def __init__(self,
-            radio=None,
-            request_time=None,
-            inverter_ser=None,
-            dtu_ser=None,
+            radio        = None,
+            request_time = None,
+            inverter_ser = None,
+            dtu_ser      = None,
             **params):
         """
-        :param request: Transmit ESB packet
-        :type request: bytes
-        :param request_time: datetime of transmission
-        :type request_time: datetime
-        :param inverter_ser: inverter serial
-        :type inverter_ser: str
-        :param dtu_ser: DTU serial
-        :type dtu_ser: str
         :param radio: HoymilesNRF instance to use
-        :type radio: HoymilesNRF or None
+        :type  radio: HoymilesNRF or None
+
+        :param datetime request_time: datetime of transmission
+        :param str      inverter_ser: inverter serial
+        :param str      dtu_ser:      DTU serial
+        :param byte     request:      Transmit ESB packet
         """
 
         if radio:
             self.radio = radio
 
+		# Knut: die nächsten Zeilen müssen überprüft werden
+        self.request_time = request_time
+        if not request_time:
+            request_time=datetime.now()
         if 'txpower' in params:
             self.txpower = params['txpower']
 
-        if not request_time:
-            request_time=datetime.now()
-
+        # Knut: was mach "scratch"?
         self.scratch = []
         if 'scratch' in params:
             self.scratch = params['scratch']
@@ -667,12 +670,10 @@ class InverterTransaction:
         if dtu_ser:
             self.dtu_addr = ser_to_hm_addr(dtu_ser)
 
-        self.request = None
         if 'request' in params:
             self.request = params['request']
-            self.queue_tx(self.request)
-            self.inverter_addr, self.dtu_addr, seq, self.req_type = struct.unpack('>LLBB', params['request'][1:11])
-        self.request_time = request_time
+            self.queue_tx(self.request)   ## Enqueue packet for transmission if radio is available
+            self.inverter_addr, self.dtu_addr, seq, self.req_type = struct.unpack('>LLBB',self.request[1:11])
 
     def rxtx(self):
         """

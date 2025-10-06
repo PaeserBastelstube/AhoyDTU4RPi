@@ -104,19 +104,21 @@ if (isset($ahoy_conf["inverters"][$inverter_id]["name"])) {
 	$$inverter_radiostat = [];
 }
 
+	# "ts_last_success"	=> strtotime($status_data['time'].'CEST'),
+	# "status"		=> (time() - strtotime($status_data["time"].'CEST')) > 60 ? 0 : 1,
 $inverter_var_id = "inverter_id_" . $inverter_id . "_json";
 $$inverter_var_id = [
 	"id"			=> $inverter_id,
-	"enabled"		=> $ahoy_conf["inverters"][$inverter_id]["enable"] ?? false,
+	"enabled"		=> $ahoy_conf["inverters"][$inverter_id]["enabled"] ?? false,
 	"name"			=> $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
 	"serial"		=> $ahoy_conf["inverters"][$inverter_id]["serial"] ?? "",
 	"version"		=> "0",
 	"power_limit_read"	=> $config_data['FLD_ACT_ACTIVE_PWR_LIMIT'],
 	"power_limit_ack"	=> false,
 	"max_pwr"			=> $max_pwr,
-	"ts_last_success"	=> strtotime($status_data['time'].'CEST'),
+	"ts_last_success"	=> $status_data['time'],
 	"generation"	=> 1,
-	"status"		=> (time() - strtotime($status_data["time"].'CEST')) > 60 ? 0 : 1,
+	"status"		=> (time() - $status_data["time"]) > 60 ? 0 : 1,
 	"alarm_cnt"		=> $status_data["event_count"] ?? 0,
 	"rssi"			=> 0,
 	"ts_max_ac_pwr"	=> $data_yaml["MaxValues"]["max_power_ts"] ?? 0,
