@@ -10,11 +10,12 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# Installation Instructions for AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
+# Installation Instructions for AhoyDTU on Raspberry-Pi with (NGINX) WebServices and (Volkszaehler) Smart-Meter
 The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present the Hoymiles inverter data and to configure the system environment.
 In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment, as well as to display the Hoymiles inverter data.  
-For this we also need a `PHP FastCGI Process Manager` and we use the `Mosquitto MQTT Broker` for data exchange.  
-To permanent storage of the operating data of all inverters, we'll use a `Volkszaehler-Smart-Meter instance` (https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
+For this we also need a `PHP FastCGI Process Manager` and `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange.  
+To permanent storage of the operating data of all inverters, we'll use a `Volkszaehler-Smart-Meter instance` 
+(https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
 
 1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
 2. This project based on some specific linux packages, you have to install this packages first:
@@ -32,7 +33,7 @@ To permanent storage of the operating data of all inverters, we'll use a `Volksz
    ```
 4. Install Middleware with standard install-parameter and without any special security configurations
    ```code
-   sudo apt-get install -y nginx php-fpm php-yaml php-mysql mosquitto mosquitto-clients mariadb-server
+   sudo apt-get install -y nginx php-fpm php-yaml php-mysql mariadb-server
    ```
 5. Install the Smart-Meter `Volkszaehler`
    ```code
@@ -122,11 +123,8 @@ Please change the PHP-version-directory if necessary.
 No configuration is required for the standard installation of Mosquito.
 
 Finally, we have to restart the system-services for nginx and php8.2-fpm.  
-If you have any private 'mosquitto' configurations, a restart is nessasary.
 ```code
 sudo systemctl restart nginx php8.2-fpm
-or
-sudo systemctl restart nginx php8.2-fpm mosquitto
 ```
 
 ## Test your Web-Server
@@ -149,12 +147,18 @@ sudo mv composer.phar /usr/local/bin/composer
 sudo chmod +x /usr/local/bin/composer
 ```
 
-# Installation of certain PHP package libraries 
+### install with composer for https://www.php.net/manual/en/book.shmop.php
+
+
+# Additional installation on Volkszaehler Smart Meter
+
+## Installation of certain PHP package libraries 
 ```code
 cd /home/volkszaehler/
 composer install
-composer require php-mqtt/client
 # If we get various error messages, so we add some “ignore” parameters and start the installation process again:
 composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 ```
+
+

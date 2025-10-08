@@ -199,6 +199,7 @@ def main_loop():
 
               # read command from WebServer, if available
               inv_cmd = web_server.receiveInverterCommand()
+              logging.debug (f"set Inverter command {inv_cmd=}")
               if inv_cmd:
                   inv_ser = inverters[inv_cmd['id']]['serial']
                   payload = inv_cmd['cmd']
@@ -217,9 +218,14 @@ def main_loop():
                   logging.info(f"set Inverter: {request=}")
                   # send request into command queue
 
-                  response = sendRequest(retries, request)    # send inverter request
-                  if response:                                # Handle response data, if any
-                      logging.debug(f'set Inverter(response): {len(response)} bytes: {hoymiles.hexify_payload(response)}')
+                  response = sendRequest(transmit_retries, request)    # send inverter request
+                  if response:                    # Handle response data, if any
+                      logging.info(f'set Inverter(response): {len(response)} bytes: {hoymiles.hexify_payload(response)}')
+                      command_queue[inv_ser].append(
+                          hoymiles.compose_send_time_payload(
+                              hoymiles.InfoCommands.SystemConfigPara
+                          )
+                      )
 
             # time to pause main-loop
             sunset.pauseMainLoop(loop_interval)

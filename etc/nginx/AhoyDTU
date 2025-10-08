@@ -5,12 +5,12 @@
 ################################################################################
 # rewrite_log on;
 # error_log   /tmp/AhoyDTU_nginx_error.log debug;
-
-log_format postdata escape=json 
-     '$time_local - [$remote_addr] '
-     '"$request" $status $bytes_sent ' 
-     '"$http_referer" "$request_body"';
-access_log /tmp/AhoyDTU_nginx_access.log postdata;
+#
+#log_format postdata escape=json 
+#     '$time_local - [$remote_addr] '
+#     '"$request" $status $bytes_sent ' 
+#     '"$http_referer" "$request_body"';
+#access_log /tmp/AhoyDTU_nginx_access.log postdata;
 #
 # Breakdown of NGINX Log Format Variables
 #   $body_bytes_sent:			Size of the response body.
@@ -71,6 +71,20 @@ server {
 
 #	add_header Content-Type text/plain;
 #	return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri";
+
+	location ~ ^/htdocs {
+	# location ~ ^/vz {
+		limit_except GET { deny all; }
+		root /home/volkszaehler;
+		index index.php index.html;
+		try_files $uri $uri/ $uri.html /index.html;				# bei unbekannten Aufrufen wird "/index.html" geladen
+		if (!-e $request_filename){
+     	   rewrite ^/(?:middleware|api)(/.*)? /middleware.php$1 break;
+		}
+		rewrite ^/vz?$ /htdocs break;
+	# add_header Content-Type text/plain;
+	# return 200 "loc:vz document_root:$document_root, request_uri:$request_uri URI:$uri request_filename:$request_filename :$1";
+    }
 
 	location ~ ^/(events)$ {
 		limit_except GET { deny all; }

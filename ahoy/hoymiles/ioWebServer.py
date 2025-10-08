@@ -234,14 +234,18 @@ class WebServer():
         # {"id":0,"cmd":"limit_nonpersistent_relative","val":"66"}  # relative --> in %
         # {"id":0,"cmd":"limit_persistent_absolute","val":"870"}    # absolute --> in Watt
         # {"id":0,"cmd":"limit_persistent_relative","val":"66"}     # persistent --> Keep limit over inverter restart = yes
+        # packt eine Liste von Werten in eine String-Repräsentation des angegebenen Typs
 
         # now prepare command and send to inverter-queue
         if   sysv_ipc_dict["cmd"] == "power" and int(sysv_ipc_dict["val"]) == 0: # Inverter switch off
-            return struct.pack('>H', 0x0000)
+            return {'id' : sysv_ipc_dict["id"], 
+                    'cmd' : struct.pack('>H', 0x0000)}
         elif sysv_ipc_dict["cmd"] == "power" and int(sysv_ipc_dict["val"]) == 1: # Inverter switch on
-            return struct.pack('>H', 0x0100)
+            return {'id' : sysv_ipc_dict["id"], 
+                    'cmd' : struct.pack('>H', 0x0100)}
         elif sysv_ipc_dict["cmd"] == "restart":                                  # Inverter restart
-            return struct.pack('>H', 0x0200)
+            return {'id' : sysv_ipc_dict["id"], 
+                    'cmd' : struct.pack('>H', 0x0200)}
         elif sysv_ipc_dict["cmd"].startswith("limit_"):                          # set limit
             payload_limit = struct.pack('>H', int(sysv_ipc_dict["val"]))
             payload_type  = struct.pack('>H', PowerLimitControlType[sysv_ipc_dict["cmd"]])

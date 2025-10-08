@@ -10,15 +10,17 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# AhoyDTU on Raspberry-Pi with (NGINX) WebServices, (Mosquitto) MQTT-Broker and (Volkszaehler) Smart-Meter
+# AhoyDTU on Raspberry-Pi with (NGINX) WebServices and (Volkszaehler) Smart-Meter
 
 This project is partial copied from ***ahoy (lumapu)*** (https://github.com/lumapu/ahoy/)  
 ***ahoy (lumapu)*** is licensed under
 [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
 
-Since the beginning of 2024, the development of ahoy (lumapu) has focused on programming ESP microcontrollers. Unfortunately, development for Raspberry PI controllers has been frozen.  
-This project continues the development of the AhoyDTU for Raspberry PI controllers independently. For this purpose, ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system with NGINX web services.  
-An MQTT broker is used for interprocess communication between the AhoyDTU (based on Python) and the web services (based on PHP).
+Since the beginning of 2024, the development of ahoy (lumapu) has focused on programming ESP microcontrollers. 
+Unfortunately, development for Raspberry PI controllers has been frozen.  
+This project continues the development of the AhoyDTU for Raspberry PI controllers independently. 
+For this purpose, ahoy (lumapu) version v0.8.155 was copied and adapted for use on a Linux system with NGINX web services.  
+System-V IPC (Shared-Memory with Semaphore and Message-Queue) is used for interprocess communication between the AhoyDTU (based on Python) and the web services (based on PHP).
 
 The project pursues the following goals:
 * Collect data from one or more hoymiles microinverters and display it on an NGINX web service
@@ -27,12 +29,14 @@ The project pursues the following goals:
 * As an additional feature, it is planned to implement zero feed-in in battery operation. A corresponding sensor on the electricity meter is required for this.
 ---
 Seit Anfang 2024 konzentriert sich die Wartung von ahoy (lumapu) auf die Programmierung von ESP-Mikrocontrollern. Die Entwicklung für Raspberry-PI-Controller wurde leider eingestellt.  
-In diesem Projekt wird die Entwicklung der AhoyDTU für Raspberry-PI-Controller unabhängig fortgesetzt. Zu diesem Zweck wurde die ahoy (lumapu) Version v0.8.155 kopiert und für die Nutzung auf einem Linux-System mit NGINX-WebServices angepasst.  
-Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und den WebServices (basierend auf PHP) dient ein MQTT-Broker.
+In diesem Projekt wird die Entwicklung der AhoyDTU für Raspberry-PI-Controller unabhängig fortgesetzt. 
+Zu diesem Zweck wurde die ahoy (lumapu) Version v0.8.155 kopiert und für die Nutzung auf einem Linux-System mit NGINX-WebServices angepasst.  
+Zur Interprozesskommunikation zwischen der AhoyDTU (basierend auf Python) und den WebServices (basierend auf PHP) dient System-V IPC (Shared-Memory with Semaphore and Message-Queue)
 
 Folgende Ziele verfolgt das Projekt:
 * Daten von einem oder mehreren hoymiles-Mikrowechselrichtern zu sammeln und auf einem NGINX-WebServices darzustellen
-* Dauerhafte Speicherung der Betriebsdaten aller Wechselrichter in einer Volkszaehler-Smart-Meter-Instanz (https://github.com/volkszaehler/volkszaehler.org) , sowie der individuellen Auswertung dieser Daten
+* Dauerhafte Speicherung der Betriebsdaten aller Wechselrichter in einer Volkszaehler-Smart-Meter-Instanz (https://github.com/volkszaehler/volkszaehler.org), 
+ sowie der individuellen Auswertung dieser Daten
 * Alternativ können Sie das InfluxDB 2.x Dashboard für eine Photovoltaikanlage konfigurieren
 * Als zusätzliches Feature ist geplant, die Nulleinspeisung im Batteriebetrieb zu implementieren. Hierzu ist ein entsprechender Sensor am Stromzähler erforderlich.
 

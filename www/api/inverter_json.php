@@ -36,7 +36,7 @@ $max_pwr = 0;
 if (isset($ahoy_conf["inverters"][$inverter_id]["serial"])) {
 	# read AhoyDTU operating data
     $ahoy_data = readOperatingData($ahoy_config["filename"]);
-	$data_yaml = $ahoy_data[$ahoy_conf["inverters"][$inverter_id]["serial"]];
+	$data_yaml = $ahoy_data[$ahoy_conf["inverters"][$inverter_id]["serial"]] ?? [];
 
 	if (isset($data_yaml["InverterDevInform_Simple"]))	$simple_hw_data	= $data_yaml["InverterDevInform_Simple"];
 	if (isset($data_yaml["InverterDevInform_All"]))		$all_hw_data	= $data_yaml["InverterDevInform_All"];
@@ -113,7 +113,7 @@ $$inverter_var_id = [
 	"name"			=> $ahoy_conf["inverters"][$inverter_id]["name"] ?? "",
 	"serial"		=> $ahoy_conf["inverters"][$inverter_id]["serial"] ?? "",
 	"version"		=> "0",
-	"power_limit_read"	=> $config_data['FLD_ACT_ACTIVE_PWR_LIMIT'],
+	"power_limit_read"	=> $config_data['FLD_ACT_ACTIVE_PWR_LIMIT'] ?? 100,
 	"power_limit_ack"	=> false,
 	"max_pwr"			=> $max_pwr,
 	"ts_last_success"	=> $status_data['time'],
