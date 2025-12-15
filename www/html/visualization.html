@@ -23,8 +23,10 @@
         <a id="nav3" class="hide" href="/live?v=0.8.0">Live</a>
         <a id="nav12" href="#" class="hide" target="_blank">Custom Link</a>
         <span class="separator"></span>
+        <a id="nav11" class="acitve" href="/history?v=0.8.0">History</a>
         <a id="nav4" class="hide" href="/serial?v=0.8.0">Web Console</a>
         <a id="nav5" class="hide" href="/setup?v=0.8.0">Settings</a>
+        <a id="nav6" class="hide" href="/update?v=0.8.0">Update</a>
         <a id="nav7" class="hide" href="/system?v=0.8.0">System</a>
         <span class="separator"></span>
         <a id="nav8" href="/api" target="_blank">REST API</a>
@@ -69,11 +71,11 @@
             var totalsRendered = false
 
             function getErrStr(code) {
-                if(code == "ERR_AUTH") return "authentication error"
-                if(code == "ERR_INDEX") return "inverter index invalid"
-                if(code == "ERR_UNKNOWN_CMD") return "unknown cmd"
-                if(code == "ERR_LIMIT_NOT_ACCEPT") return "inverter does not accept dev control request at this moment"
-                if(code == "ERR_UNKNOWN_CMD") return "authentication error"
+                if("ERR_AUTH") return "authentication error"
+                if("ERR_INDEX") return "inverter index invalid"
+                if("ERR_UNKNOWN_CMD") return "unknown cmd"
+                if("ERR_LIMIT_NOT_ACCEPT") return "inverter does not accept dev control request at this moment"
+                if("ERR_UNKNOWN_CMD") return "authentication error"
                 return "n/a"
             }
 

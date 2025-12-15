@@ -1,16 +1,17 @@
 ################################################################################
-# WebService with NGINX for AhoyDTU
+# NGINX WebService for AhoyDTU
 ################################################################################
 
 ################################################################################
-# rewrite_log on;
-# error_log   /tmp/AhoyDTU_nginx_error.log debug;
+## rewrite_log on;
+## error_log  /tmp/AhoyDTU_nginx_error.log debug;
+## error_log  /tmp/AhoyDTU_nginx_error.log warn;
 #
-#log_format postdata escape=json 
-#     '$time_local - [$remote_addr] '
-#     '"$request" $status $bytes_sent ' 
-#     '"$http_referer" "$request_body"';
-#access_log /tmp/AhoyDTU_nginx_access.log postdata;
+##log_format postdata escape=json 
+##    '$time_local - [$remote_addr] '
+##    '"$request" $status $bytes_sent ' 
+##    '"$http_referer" "$request_body"';
+##access_log /tmp/AhoyDTU_nginx_access.log postdata;
 #
 # Breakdown of NGINX Log Format Variables
 #   $body_bytes_sent:			Size of the response body.
@@ -38,7 +39,7 @@ server {
 	server_name AhoyDTU;
 
 	root /home/AhoyDTU/www/html;
-	index index.html index.htm ; #index.php;
+	index index.html index.htm index.php;
 	default_type application/json;
 
 	# https://stackoverflow.com/questions/12165810/how-to-disable-output-buffering-in-nginx-for-php-application
@@ -72,19 +73,54 @@ server {
 #	add_header Content-Type text/plain;
 #	return 200 "loc:start document_root:$document_root, request_uri:$request_uri URI:$uri";
 
-	location ~ ^/htdocs {
-	# location ~ ^/vz {
+	########################
+	## Volkszaehler Instanz
+	########################
+	location ~* ^/(htdocs|vz)/.+\.php(.*) {
+		root /home/volkszaehler;
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/var/run/php/php-fpm.sock;
+	}
+	location ~* ^/htdocs|vz|history {
 		limit_except GET { deny all; }
 		root /home/volkszaehler;
-		index index.php index.html;
-		try_files $uri $uri/ $uri.html /index.html;				# bei unbekannten Aufrufen wird "/index.html" geladen
-		if (!-e $request_filename){
-     	   rewrite ^/(?:middleware|api)(/.*)? /middleware.php$1 break;
+		rewrite ^/vz|history $scheme://$http_host/htdocs/ break;    # trailing slash is very important (must have)
+#		include snippets/fastcgi-php.conf;
+#		if ($request_filename ~* \.php) {
+#			fastcgi_pass unix:/var/run/php/php-fpm.sock;
+#		}
+#		if (!-e $request_filename){
+#			#rewrite ^/(?:middleware|api)(/.*)? /middleware.php$1 last;
+#			rewrite ^/htdocs|vz/(?:middleware|api)(/.*)? /htdocs/middleware.php$1 last;
+#		}
+	#add_header Content-Type text/plain;
+	#return 200 "loc:htdocs document_root:$document_root, scheme:$scheme http_host:$http_host request_uri:$request_uri URI:$uri request_filename:$request_filename";
+	}
+
+##	location ~ ^/api/volkszaehler/(list)$ {
+##		limit_except GET POST { deny all; }
+##		root /home/AhoyDTU/www;
+##		if ($request_method = GET ) {
+##			return 301 $scheme://$http_host/volkszaehler.php?$1;
+##		}
+##		return 308 $scheme://$http_host/volkszaehler.php?$1;
+##	add_header Content-Type text/plain;
+##	return 200 "loc:vz document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
+##	}
+
+	########################
+	## AhoyDTU
+	########################
+	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump|AhoyDTU_.+)+$ {
+		limit_except GET POST{ deny all; }
+		root /home/AhoyDTU/www;
+		if ($uri = /login) {
+			return 301 $scheme://$http_host/$1.html;
 		}
-		rewrite ^/vz?$ /htdocs break;
-	# add_header Content-Type text/plain;
-	# return 200 "loc:vz document_root:$document_root, request_uri:$request_uri URI:$uri request_filename:$request_filename :$1";
-    }
+		return 308 $scheme://$http_host/operating.php?$1;
+	add_header Content-Type text/plain;
+	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
+	}
 
 	location ~ ^/(events)$ {
 		limit_except GET { deny all; }
@@ -104,29 +140,20 @@ server {
 	return 200 "loc:ctrl document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
 	}
 
-	location ~ ^/(erase|login|save|upload|updat|get_setup|factory|reboot|coredump|AhoyDTU_.+)+$ {
-		limit_except GET POST{ deny all; }
-		root /home/AhoyDTU/www;
-		if ($uri = /login) {
-			return 301 $scheme://$http_host/$1.html;
-		}
-		return 308 $scheme://$http_host/operating.php?$1;
-	add_header Content-Type text/plain;
-	return 200 "loc:login document_root:$document_root, request_uri:$request_uri URI:$uri :$1 REQUEST_METHOD:$request_method";
-	}
-
 	location ~ ^/api/inverter/(grid|list|id|alarm|version|radiostat|pwrack)+/?(.*)?$ {	#(G5)
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
         # Problem, while connect via SSH-Tunnel
         # https://www.ruby-forum.com/t/port-redirection-issue-while-using-ssh-tunnel/235899
         # add to target: "$scheme://$http_host"
-		return 301 $scheme://$http_host/inverter.php?$1=$2;
+		#return 301 $scheme://$http_host/inverter.php?$1=$2;
+		rewrite ^/api/inverter/(grid|list|id|alarm|version|radiostat|pwrack)+/?(.*)?$ $scheme://$http_host/inverter.php?$1=$2 break;
+        # trailing slash is very important (must have)
 	add_header Content-Type text/plain;
 	return 200 "loc:inverter document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
 
-	location ~ ^/api/setup/?(getip|networks)?$ {					#(G6)
+	location ~ ^/api/setup/?(getip|networks)?$ {				#(G6)
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www;
 		if ($request_method = GET ) {
@@ -141,7 +168,7 @@ server {
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
 		if ($uri ~* "^/api/html/(save|system)+.?$") {
-			return 301 $scheme://$http_host/html.php?$1;			#(G7)
+			return 301 $scheme://$http_host/html.php?$1;		#(G7)
 		}
 		return 301 $scheme://$http_host/api.php;
 	add_header Content-Type text/plain;
@@ -151,13 +178,13 @@ server {
 	location ~* ^/api.?$|^/api/(.+)$ {
 		limit_except GET { deny all; }
 		root /home/AhoyDTU/www;
-		if ( -f $document_root$uri ) {								#(G3)
-			return 301 $scheme://$http_host/$1;						# URI ist vollständig, neustart ohne "/api"
+		if ( -f $document_root$uri ) {							#(G3)
+			return 301 $scheme://$http_host/$1;					# URI ist vollständig, neustart ohne "/api"
 		}
-		if ( -f $document_root$uri.php ) {							#(G2)
-			return 301 $scheme://$http_host/$1.php;					# anhängen von ".php", neustart ohne "/api"
+		if ( -f $document_root$uri.php ) {						#(G2)
+			return 301 $scheme://$http_host/$1.php;				# anhängen von ".php", neustart ohne "/api"
 		}
-		return 301 $scheme://$http_host/api.php;					#(G1)
+		return 301 $scheme://$http_host/api.php;				#(G1)
 	add_header Content-Type text/plain;
 	return 200 "loc:api document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}
@@ -168,8 +195,8 @@ server {
 		# try_files $uri $uri/ $uri.html =404;
 		# try_files $uri $uri/ @extensionless-php;
 		try_files $uri $uri/ $uri.html /index.html;				# bei unbekannten Aufrufen wird "/index.html" geladen
-#	add_header Content-Type text/plain;
-#	return 200 "loc:root document_root:$document_root, request_uri:$request_uri URI:$uri";
+	#add_header Content-Type text/plain;
+	#return 200 "loc:root document_root:$document_root, request_uri:$request_uri URI:$uri";
 	}
 
 	location ~* \.php$ {
@@ -178,7 +205,7 @@ server {
 		limit_except GET POST { deny all; }
 		root /home/AhoyDTU/www/api;
 		include /etc/nginx/snippets/fastcgi-php.conf;			# bei unbekannten Aufrufen wird =404 gesendet
-		fastcgi_pass unix:/run/php/php8.2-fpm-ahoydtu.sock;		# Übergabe an PHP-FPM
+		fastcgi_pass unix:/run/php/php-fpm-ahoydtu.sock;		# Übergabe an PHP-FPM
 	# add_header Content-Type text/plain;
 	# return 200 "loc:php-last document_root:$document_root, request_uri:$request_uri URI:$uri :$1";
 	}

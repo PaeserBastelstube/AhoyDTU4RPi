@@ -363,7 +363,8 @@ function saveInverter($my_post){
 
 		if ($my_post["ser"] == 0) {                                   ## delete inverter
 			# unset($ahoy_conf["inverters"][$my_post["id"]]);
-			array_splice($ahoy_conf["inverters"], $my_post["id"], 1);
+			array_splice($ahoy_conf["inverters"], $my_post["id"], 1); ## Remove the element by offset and length
+			array_splice($ahoy_conf["volkszaehler"], $my_post["id"], 1); ## Remove the element by offset and length
 
 		} else {                                                      ## add / change inverter
 			$txpower = "max";
@@ -389,10 +390,29 @@ function saveInverter($my_post){
 					"s_yield"    => floatval($channel["yld"])
 				);
 	 		}
-			#global $debug_fn;
-			#file_put_contents($debug_fn, "\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
+
 			if (! isset($ahoy_conf["inverters"])) $ahoy_conf["inverters"] = [];
-			$ahoy_conf["inverters"][$my_post["id"]] = $inverter;
+			else $ahoy_conf["inverters"][$my_post["id"]] = $inverter;
+
+			$volkszaehler = [
+				"serial"	=> base_convert($my_post["ser"], 10, 16),  #!! Kodierung dec2hex
+				"enable"	=> $my_post["vz_enable"] ?? false,
+				"suffix"	=> $my_post["vz_suffix"] ?? "",
+				"url"		=> $my_post["vz_url"] ?? "",
+				"channels"	=> []
+			];
+			foreach ($my_post["vz_channel"] as $ii => $channel) {             ## add channel
+				if (strlen($channel[2]) >= 36) {
+					array_push($volkszaehler["channels"], ["type" => $channel[0], "uid" => $channel[2]]);
+				}
+			}
+			if (! isset($ahoy_conf["volkszaehler"])) $ahoy_conf["volkszaehler"] = [];
+			else $ahoy_conf["volkszaehler"][$my_post["id"]] = $volkszaehler;
+
+			global $debug_fn;
+			file_put_contents($debug_fn, "\n//operatingSave.php:394:inverter\n" . json_encode($inverter), FILE_APPEND | LOCK_EX);
+			file_put_contents($debug_fn, "\n//operatingSave.php:394:my_post\n" . json_encode($my_post), FILE_APPEND | LOCK_EX);
+			file_put_contents($debug_fn, "\n//operatingSave.php:394:volkszaehler\n" . json_encode($volkszaehler), FILE_APPEND | LOCK_EX);
 		}	
 	}
 	saveToAhoyConfigFile($ahoy_conf, $ahoy_config);

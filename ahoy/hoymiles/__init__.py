@@ -51,8 +51,8 @@ def ser_to_hm_addr(inverter_ser):
     :return: inverter address
     :rtype: bytes
     """
-    # bcd = int(str(inverter_ser)[-8:], base=16)
-    bcd = int(inverter_ser[-8:], base=16)
+    bcd = int(str(inverter_ser)[-8:], base=16)
+    # bcd = int(inverter_ser[-8:], base=16)
     return struct.pack('>L', bcd)
 
 def ser_to_esb_addr(inverter_ser):

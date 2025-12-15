@@ -22,8 +22,10 @@
         <a id="nav3" class="hide" href="/live?v=0.8.0">Live</a>
         <a id="nav12" href="#" class="hide" target="_blank">Custom Link</a>
         <span class="separator"></span>
+        <a id="nav11" class="acitve" href="/history?v=0.8.0">History</a>
         <a id="nav4" class="hide" href="/serial?v=0.8.0">Web Console</a>
         <a id="nav5" class="hide" href="/setup?v=0.8.0">Settings</a>
+        <a id="nav6" class="hide" href="/update?v=0.8.0">Update</a>
         <a id="nav7" class="hide" href="/system?v=0.8.0">System</a>
         <span class="separator"></span>
         <a id="nav8" href="/api" target="_blank">REST API</a>
@@ -91,7 +93,7 @@
                 parseRssi(obj)
                 parseTitle(obj)
                 env = obj.env
-                document.getElementById("version").innerHTML = "250822_ahoy_0.8.0_0000000_" + obj.env + ".bin"
+                document.getElementById("version").innerHTML = "251117_ahoy_0.8.0_0000000_" + obj.env + ".bin"
             }
 
             function hide() {

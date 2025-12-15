@@ -187,7 +187,7 @@ def main_loop():
                     sunset.waitForSunrise() # stop work at night time
                     continue
 
-            if web_server:
+            if web_server:     # interact with user  frontend
               # check reset max values
               #if time.time() - t_loop_start > 6 * 60 * 60:
               #   web_server.reset_max_value()
@@ -338,16 +338,16 @@ def poll_inverter(inverter, do_init, retries):
 
             # sent outputs
             if web_server:
-               web_server.SaveData4PHP(infoCommand, data, inv_ser) # save data for using in NGINX
+               web_server.SaveData4PHP(infoCommand, data, inv_ser)          # save data for using in NGINX
 
             if mqtt_client:
-               mqtt_client.store_status(infoCommand, data)         # output to MQTT-Broker
+               mqtt_client.store_status(infoCommand, data, inv_ser)         # output to MQTT-Broker
 
             if influx_client:
-               influx_client.store_status(infoCommand, data)       # output to influxDB
+               influx_client.store_status(infoCommand, data, inv_ser)       # output to influxDB
 
-            if volkszaehler_client:
-               volkszaehler_client.store_status(infoCommand, data) # output to volkszaehler
+            if volkszaehler_client.ser_exists(inv_ser):
+               volkszaehler_client.store_status(infoCommand, data, inv_ser) # output to volkszaehler
 
 ################################################################################
 def sendRequest(payload_ttl, request):
@@ -556,7 +556,8 @@ if __name__ == '__main__':
     # init VOLKSZAEHLER client object
     volkszaehler_client = None
     volkszaehler_config = ahoy_config.get('volkszaehler', {})
-    if volkszaehler_config and volkszaehler_config.get('enabled', False):
+    # if volkszaehler_config and volkszaehler_config.get('enabled', False):
+    if volkszaehler_config and len(volkszaehler_config) > 0:
         from .outputs import VolkszaehlerOutputPlugin # import VZ-class from external "outputs" file
         volkszaehler_client = VolkszaehlerOutputPlugin(volkszaehler_config)
 

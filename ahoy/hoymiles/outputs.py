@@ -80,7 +80,7 @@ class InfluxOutputPlugin(OutputPluginFactory):
         return
 
     # def store_status(self, response, **params):
-    def store_status(self, data, **params):
+    def store_status(self, data, inv_ser, **params):
         """
         Publish StatusResponse object
 
@@ -263,7 +263,7 @@ class MqttOutputPlugin(OutputPluginFactory):
             self.client.publish(f"{self.topic}/{mqtt_key}", mqtt_payload[mqtt_key], self.qos, self.ret)
         return
 
-    def store_status(self, InfoCommand, data, **params):
+    def store_status(self, InfoCommand, data, inv_ser, **params):
         """
         Publish StatusResponse object
 
@@ -389,116 +389,13 @@ class MqttOutputPlugin(OutputPluginFactory):
         else:
              raise ValueError('Data needs to be instance of StatusResponse or a instance of Response_InverterDevInform_All')
 
-class VzInverterOutput:
-    def __init__(self, vz_inverter_config, session):
-        self.session  = session
-        self.serial   = vz_inverter_config.get('serial')
-        self.baseurl  = vz_inverter_config.get('url', 'http://localhost/middleware/')
-        self.channels = dict()
-
-        for channel in vz_inverter_config.get('channels', []):
-            ctype = channel.get('type')
-            uid   = channel.get('uid', None)
-            # if uid and ctype:
-            if ctype:
-                self.channels[ctype] = uid
-
-    def store_status(self, data):
-        """
-        Publish StatusResponse object
-
-        :param hoymiles.decoders.StatusResponse response: StatusResponse object
-
-        :raises ValueError: when response is not instance of StatusResponse
-        """
-
-        if len(self.channels) == 0:
-           logging.debug('no channels configured - no data to send')
-           return
-
-        ts = int(round(data['time'].timestamp() * 1000))
-
-        # AC Data
-        phase_id = 0
-        if 'phases' in data:
-          for phase in data['phases']:
-            self.try_publish(ts, f'ac_voltage{phase_id}',        phase['voltage'])
-            self.try_publish(ts, f'ac_current{phase_id}',        phase['current'])
-            self.try_publish(ts, f'ac_power{phase_id}',          phase['power'])
-            self.try_publish(ts, f'ac_reactive_power{phase_id}', phase['reactive_power'])
-            self.try_publish(ts, f'ac_frequency{phase_id}',      phase['frequency'])
-            phase_id = phase_id + 1
-
-        # DC Data
-        string_id = 0
-        if 'strings' in data:
-          for string in data['strings']:
-            self.try_publish(ts, f'dc_voltage{string_id}',      string['voltage'])
-            self.try_publish(ts, f'dc_current{string_id}',      string['current'])
-            self.try_publish(ts, f'dc_power{string_id}',        string['power'])
-            self.try_publish(ts, f'dc_energy_daily{string_id}', string['energy_daily'])
-            self.try_publish(ts, f'dc_energy_total{string_id}', string['energy_total'])
-            self.try_publish(ts, f'dc_irradiation{string_id}',  string['irradiation'])
-            string_id = string_id + 1
-
-        # Global
-        if 'event_count' in data:
-            self.try_publish(ts, f'event_count', data['event_count'])
-        if 'powerfactor' in data:
-            self.try_publish(ts, f'powerfactor', data['powerfactor'])
-        if 'temperature' in data:
-            self.try_publish(ts, f'temperature', data['temperature'])
-        if 'yield_total' in data:
-            self.try_publish(ts, f'yield_total', data['yield_total'])
-        if 'yield_today' in data:
-            self.try_publish(ts, f'yield_today', data['yield_today'])
-        if 'efficiency' in data:
-            self.try_publish(ts, f'efficiency',  data['efficiency'])
-
-        # eBZ = elektronischer Basiszähler (Stromzähler)
-        if '1_8_0' in data:
-            self.try_publish(ts, f'eBZ-import', data['1_8_0'])
-        if '2_8_0' in data:
-            self.try_publish(ts, f'eBZ-export', data['2_8_0'])
-        if '16_7_0' in data:
-            self.try_publish(ts, f'eBZ-power',  data['16_7_0'])
-
-        return
-
-    def try_publish(self, ts, ctype, value):
-        if not ctype in self.channels:
-            logging.debug(f'ctype \"{ctype}\" not found in ahoy.yml')
-            return
-
-        uid = self.channels[ctype]
-        url = f'{self.baseurl}/data/{uid}.json?operation=add&ts={ts}&value={value}'
-        if uid == None:
-            logging.debug(f'ctype \"{ctype}\" has no configured uid-value in ahoy.yml')
-            return
-
-        # if HOYMILES_VERBOSE_LOGGING:
-        if HOYMILES_TRANSACTION_LOGGING:
-            logging.info(f'VZ-url: {url}')
-
-        try:
-            r = self.session.get(url)
-            if r.status_code == 404:
-                logging.critical('VZ-DB not reachable, please check "middleware"')
-            if r.status_code == 400:
-                logging.critical('UUID not configured in VZ-DB')
-            elif r.status_code != 200:
-               raise ValueError(f'Transmit result {url}')
-        except ConnectionError as e:
-            raise ValueError(f'Could not connect VZ-DB {type(e)} {e.keys()}')
-        return
-
 class VolkszaehlerOutputPlugin(OutputPluginFactory):
     def __init__(self, vz_config, **params):
         """
         Initialize VolkszaehlerOutputPlugin with VZ-config
 
-        Python Requests Module:
-        Make a request to a web page, and print the response text
+        use Python Requests Module:
+        Makes a request to a web page and print the response text
         https://requests.readthedocs.io/en/latest/user/advanced/
         """
         super().__init__(**params)
@@ -517,20 +414,76 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
         # The Session object allows you to persist certain parameters across requests.
         self.session = requests.Session()
 
+        self.ts = 0
+        self.inv_ser = ""
         self.vz_inverters = dict()
-        for inverter_in_vz_config in vz_config.get('inverters', []):
-            url    = inverter_in_vz_config.get('url')
-            serial = inverter_in_vz_config.get('serial')
-            # create class object with parameter "inverter_in_vz_config" and "requests.Session" object
-            self.vz_inverters[serial] = VzInverterOutput(inverter_in_vz_config, self.session)
-            if HOYMILES_VERBOSE_LOGGING:
-               logging.info(f"Volkszaehler: init connection object to host: {url}/{serial}")
+        for inverter_in_vz_config in vz_config:
+            enable   = inverter_in_vz_config.get('enable', False)
+            serial   = inverter_in_vz_config.get('serial', False)
+            suffix   = inverter_in_vz_config.get('suffix', '')
+            url      = inverter_in_vz_config.get('url', 'http://localhost/middleware/')
+            channels = inverter_in_vz_config.get('channels', [])
+
+            if suffix != "":
+                suffix = f"_{suffix}"
+
+            chs = dict()
+            for channel in channels:
+                ch_type = channel.get('type', False)
+                ch_uid  = channel.get('uid', False)
+                if ch_type and ch_uid:
+                    chs[ch_type] = ch_uid
+
+            # create class object to send VZ data
+            if enable and serial and len(chs) > 0:
+                if HOYMILES_VERBOSE_LOGGING:
+                   logging.info(f"Volkszaehler: init connection object for {serial} to {url}")
+                self.vz_inverters[serial] = {"session" : self.session, "suffix" : suffix, "url" : url, "channel" : chs}
+
+    def ser_exists(self, ser):
+        ## if inv_ser in self.vz_inverters:      # check, if inverter-serial-number in list of vz_inverters
+        if self.vz_inverters[ser]:
+            return True
+        else:
+            return False
 
     def disco(self, **params):
-        self.session.close()            # closing the connection
+        self.session.close()            # close all connections
         return
 
-    def store_status(self, data, **params):
+    def vz_publish(self, ctype, value):
+        # self.vz_inverters[serial] = {"session" : self.session, "suffix" : suffix, "url" : url, "channel" : chs)
+
+        if not ctype in self.vz_inverters[self.inv_ser]["channel"]:
+            logging.debug(f'ctype \"{ctype}\" not found in ahoy.yml')
+            return
+
+        ## print (self.vz_inverters[self.inv_ser]["channel"][ctype])
+        uid = self.vz_inverters[self.inv_ser]["channel"][ctype]
+        if not uid:
+            logging.debug(f'ctype \"{ctype}\" has no configured value: uid')
+            return
+
+        print (self.vz_inverters[self.inv_ser]["url"])
+        url = f'{self.vz_inverters[self.inv_ser]["url"]}/data/{uid}.json?operation=add&ts={self.ts}&value={value}'
+
+        # if HOYMILES_VERBOSE_LOGGING:
+        if HOYMILES_TRANSACTION_LOGGING:
+            logging.info(f'VZ-url: {url}')
+
+        try:
+            r = self.session.get(url)
+            if r.status_code == 404:
+                logging.critical('VZ-DB not reachable, please check "middleware"')
+            if r.status_code == 400:
+                logging.critical('UUID not configured in VZ-DB')
+            elif r.status_code != 200:
+               raise ValueError(f'Transmit result {url}')
+        except ConnectionError as e:
+            raise ValueError(f'Could not connect VZ-DB {type(e)} {e.keys()}')
+        return
+
+    def store_status(self, infoCommand, data, inv_ser, **params):
         """
         Publish StatusResponse object
 
@@ -539,43 +492,95 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
         :raises ValueError: when response is not instance of StatusResponse
         """
   
-        if len(self.vz_inverters) == 0:     # check list of inverters
-           logging.error('VolkszaehlerOutputPlugin:store_status: No inverters configured')
-           return
-
-        # prep variables for output
-        if 'phases' in data and 'strings' in data:
-           serial = data["inverter_ser"]    # extract "inverter-serial-number" from "response-data"
-
-        elif 'Time' in data:
-            __data = dict()        # create empty dict
-            for key in data:
-                if key == "Time":
-                   __data['time'] = datetime.strptime(data[key], '%Y-%m-%dT%H:%M:%S')
-                elif isinstance(data[key], dict):
-                   __data |= {'key' : key}
-                   __data |= data[key]
-
-            if not 'key' in __data:
-               raise ValueError(f"no 'key' in data - no output is sent: {__data}")
-               return
-
-            data = __data
-            if HOYMILES_VERBOSE_LOGGING:
-               # eBZ = elektronischer Basiszähler (Stromzähler)
-               serial = data['96_1_0'] 
-               logging.info(f"{data['key']}: {serial}" 
-                            f" - import:{data['1_8_0']:>8} kWh"
-                            f" - export:{data['2_8_0']:>5} kWh"
-                            f" - power:{data['16_7_0']:>8} W")
+        if   infoCommand == "InverterDevInform_Simple":   # 0x00
+            return
+        elif infoCommand == "InverterDevInform_All":      # 0x01
+            return
+        elif infoCommand == "GridOnProFilePara":          # 0x02
+            return
+        elif infoCommand == "HardWareConfig":             # 0x03
+            return
+        elif infoCommand == "SimpleCalibrationPara":      # 0x04
+            return
+        elif infoCommand == "SystemConfigPara":           # 0x05
+            return
+        elif infoCommand == "RealTimeRunData_Debug":      # 0x0b (11)
+            pass
+        elif infoCommand == "RealTimeRunData_Reality":    # 0x0c (12)
+            return
+        elif infoCommand == "RealTimeRunData_A_Phase":    # 0x0d (13)
+            return
+        elif infoCommand == "RealTimeRunData_B_Phase":    # 0x0e (14)
+            return
+        elif infoCommand == "RealTimeRunData_C_Phase":    # 0x0f (15)
+            return
+        elif infoCommand == "AlarmData":                  # 0x11 (17)
+            return
+        elif infoCommand == "AlarmUpdate":                # 0x12 (18)
+            return
+        elif infoCommand == "RecordData":                 # 0x13 (19)
+            return
+        elif infoCommand == "InternalData":               # 0x14 (20)
+            return
+        elif infoCommand == "GetLossRate":                # 0x15 (21)
+            return
+        elif infoCommand == "GetSelfCheckState":          # 0x1e (30)
+            return
         else:
-            raise ValueError(f"Unknown instance type - no output is sent: {data}")
+            raise ValueError(f"Unknown infoCommand: {infoCommand} - no output is sent")
             return
 
-        if serial in self.vz_inverters:      # check, if inverter-serial-number in list of vz_inverters
-           try:
-              # call method VzInverterOutput.store_status with parameter "data"
-              self.vz_inverters[serial].store_status(data)
-           except ValueError as e:
-              logging.warning('Could not send data to volkszaehler instance: %s' % e)
+        #ts = int(round(data['time'].timestamp() * 1000))
+        self.ts = int(round(data['time'] * 1000))   # VZ need to know the time of "data"
+        self.inv_ser = inv_ser
+
+        # self.vz_inverters[serial] = {"session" : self.session, "suffix" : suffix, "url" : url, "channel" : chs)
+        suffix = self.vz_inverters[self.inv_ser]["suffix"]
+
+        # AC Data
+        phase_id = 0
+        if 'phases' in data:
+          for phase in data['phases']:
+            self.vz_publish(f'ac_voltage{phase_id}',        phase['voltage'])
+            self.vz_publish(f'ac_current{phase_id}',        phase['current'])
+            self.vz_publish(f'ac_power{phase_id}',          phase['power'])
+            self.vz_publish(f'ac_reactive_power{phase_id}', phase['reactive_power'])
+            self.vz_publish(f'ac_frequency{phase_id}',      phase['frequency'])
+            phase_id = phase_id + 1
+
+        # DC Data
+        string_id = 0
+        if 'strings' in data:
+          for string in data['strings']:
+            self.vz_publish(f'dc_voltage{string_id}',      string['voltage'])
+            self.vz_publish(f'dc_current{string_id}',      string['current'])
+            self.vz_publish(f'dc_power{string_id}',        string['power'])
+            self.vz_publish(f'dc_energy_daily{string_id}', string['energy_daily'])
+            self.vz_publish(f'dc_energy_total{string_id}', string['energy_total'])
+            self.vz_publish(f'dc_irradiation{string_id}',  string['irradiation'])
+            string_id = string_id + 1
+
+        # Global
+        if 'event_count' in data:
+            self.vz_publish(f'Event-Count{suffix}', data['event_count'])
+        if 'powerfactor' in data:
+            self.vz_publish(f'Power-Factor{suffix}', data['powerfactor'])
+        if 'temperature' in data:
+            self.vz_publish(f'Temperature{suffix}', data['temperature'])
+        if 'yield_total' in data:
+            self.vz_publish(f'Yield-Total{suffix}', data['yield_total'])
+        if 'yield_today' in data:
+            self.vz_publish(f'Yield-Day{suffix}', data['yield_today'])
+        if 'efficiency' in data:
+            self.vz_publish(f'Efficiency{suffix}',  data['efficiency'])
+
+        """
+        # eBZ = elektronischer Basiszähler (Stromzähler)
+        if '1_8_0' in data:
+            self.vz_publish(f'eBZ-import', data['1_8_0'])
+        if '2_8_0' in data:
+            self.vz_publish(f'eBZ-export', data['2_8_0'])
+        if '16_7_0' in data:
+            self.vz_publish(f'eBZ-power',  data['16_7_0'])
+        """
 

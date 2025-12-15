@@ -23,7 +23,7 @@ if (!isset($inverter_id)) $inverter_id = 0;
 #
 # 1121-Series Intervers, 1 MPPT, 1 Phase
 # 1141-Series Inverters, 2 MPPT, 1 Phase
-# 1161-Series Inverters, 2 MPPT, 1 Phase
+# 1161-Series Inverters, 4 MPPT, 1 Phase
 # 
 # define max-power in 2 steps
 # 1) look at "serial numer"
@@ -205,17 +205,17 @@ if (isset($ahoy_conf["inverters"]) and count($ahoy_conf["inverters"]) > 0) {
 	foreach ($ahoy_conf["inverters"] as $ii => $inv) {
 		#print_r($ii); print("\n");print (json_encode($inv) . "\n");
 		array_push($inverter_list_json["inverter"], [
-			"id"           => $ii,
-			"enabled"      => $inv["enabled"],
-			"name"         => $inv["name"],
-			"serial"       => $inv["serial"],
-			"channels"     => count($inv["strings"]),
-			"freq"         => 12,
-			"disnightcom"  => $inv["disnightcom"],
-			"pa"           => $inv["txpower"],
-			"ch_name"      => [],
-			"ch_max_pwr"   => [],
-			"ch_yield_cor" => []
+			"id"			=> $ii,
+			"enabled"		=> $inv["enabled"],
+			"name"			=> $inv["name"],
+			"serial"		=> $inv["serial"],
+			"channels"		=> count($inv["strings"]),
+			"freq"			=> 12,
+			"disnightcom"	=> $inv["disnightcom"],
+			"pa"			=> $inv["txpower"],
+			"ch_name"		=> [],
+			"ch_max_pwr"	=> [],
+			"ch_yield_cor"	=> []
 		]);
 		if (isset($inv["strings"]) and count($inv["strings"]) > 0) {
 			foreach ($inv["strings"] as $jj => $string) {
@@ -225,6 +225,15 @@ if (isset($ahoy_conf["inverters"]) and count($ahoy_conf["inverters"]) > 0) {
 				array_push($inverter_list_json["inverter"][$ii]["ch_name"],      $string["s_name"]);
 				array_push($inverter_list_json["inverter"][$ii]["ch_max_pwr"],   $string["s_maxpower"]);
 				array_push($inverter_list_json["inverter"][$ii]["ch_yield_cor"], isset($string["s_yield"]) ? $string["s_yield"] : 0);
+			}
+		}
+		if (isset($ahoy_conf["volkszaehler"]) and count($ahoy_conf["volkszaehler"]) > 0) {
+			foreach ($ahoy_conf["volkszaehler"] as $jj => $iv_vz) {
+				if ($iv_vz["serial"] == $inv["serial"]) {
+					$inverter_list_json["inverter"][$ii]["vz_enable"]	= $iv_vz["enable"] ?? false;
+					$inverter_list_json["inverter"][$ii]["vz_suffix"]	= $iv_vz["suffix"] ?? "";
+					$inverter_list_json["inverter"][$ii]["vz_url"]		= $iv_vz["url"] ?? "";
+				}
 			}
 		}
 	} 
