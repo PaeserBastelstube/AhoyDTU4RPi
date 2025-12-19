@@ -452,8 +452,6 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
         return
 
     def vz_publish(self, ctype, value):
-        # self.vz_inverters[serial] = {"session" : self.session, "suffix" : suffix, "url" : url, "channel" : chs)
-
         if not ctype in self.vz_inverters[self.inv_ser]["channel"]:
             logging.debug(f'ctype \"{ctype}\" not found in ahoy.yml')
             return
@@ -464,11 +462,8 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
             logging.debug(f'ctype \"{ctype}\" has no configured value: uid')
             return
 
-        print (self.vz_inverters[self.inv_ser]["url"])
         url = f'{self.vz_inverters[self.inv_ser]["url"]}/data/{uid}.json?operation=add&ts={self.ts}&value={value}'
-
-        # if HOYMILES_VERBOSE_LOGGING:
-        if HOYMILES_TRANSACTION_LOGGING:
+        if HOYMILES_VERBOSE_LOGGING:
             logging.info(f'VZ-url: {url}')
 
         try:
@@ -541,23 +536,23 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
         phase_id = 0
         if 'phases' in data:
           for phase in data['phases']:
-            self.vz_publish(f'ac_voltage{phase_id}',        phase['voltage'])
-            self.vz_publish(f'ac_current{phase_id}',        phase['current'])
-            self.vz_publish(f'ac_power{phase_id}',          phase['power'])
-            self.vz_publish(f'ac_reactive_power{phase_id}', phase['reactive_power'])
-            self.vz_publish(f'ac_frequency{phase_id}',      phase['frequency'])
+            self.vz_publish(f'AC-Voltage{suffix}',     phase['voltage'])
+            self.vz_publish(f'AC-Current{suffix}',     phase['current'])
+            self.vz_publish(f'AC-Power{suffix}',       phase['power'])
+            self.vz_publish(f'Reactive-Power{suffix}', phase['reactive_power'])
+            self.vz_publish(f'Frequency{suffix}',      phase['frequency'])
             phase_id = phase_id + 1
 
         # DC Data
         string_id = 0
         if 'strings' in data:
           for string in data['strings']:
-            self.vz_publish(f'dc_voltage{string_id}',      string['voltage'])
-            self.vz_publish(f'dc_current{string_id}',      string['current'])
-            self.vz_publish(f'dc_power{string_id}',        string['power'])
-            self.vz_publish(f'dc_energy_daily{string_id}', string['energy_daily'])
-            self.vz_publish(f'dc_energy_total{string_id}', string['energy_total'])
-            self.vz_publish(f'dc_irradiation{string_id}',  string['irradiation'])
+            self.vz_publish(f'DC-Voltage{string_id}{suffix}',      string['voltage'])
+            self.vz_publish(f'DC-Current{string_id}{suffix}',      string['current'])
+            self.vz_publish(f'DC-Power{string_id}{suffix}',        string['power'])
+            self.vz_publish(f'DC_Energy_Today{string_id}{suffix}', string['energy_daily'])
+            self.vz_publish(f'DC_Energy_Total{string_id}{suffix}', string['energy_total'])
+            self.vz_publish(f'DC_Irradiation{string_id}{suffix}',  string['irradiation'])
             string_id = string_id + 1
 
         # Global
@@ -570,7 +565,7 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
         if 'yield_total' in data:
             self.vz_publish(f'Yield-Total{suffix}', data['yield_total'])
         if 'yield_today' in data:
-            self.vz_publish(f'Yield-Day{suffix}', data['yield_today'])
+            self.vz_publish(f'Yield-Today{suffix}', data['yield_today'])
         if 'efficiency' in data:
             self.vz_publish(f'Efficiency{suffix}',  data['efficiency'])
 

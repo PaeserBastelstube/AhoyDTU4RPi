@@ -22,20 +22,21 @@
 # 
 ################################################################################
 
-from datetime import datetime
-import json
-import sysv_ipc  # for System-V FTOK, Semaphore and Shared-Memory
 from enum import IntEnum
-from phpserialize import unserialize
-import struct
-
-################################################################################
-
 class PowerLimitControlType(IntEnum):
     limit_nonpersistent_absolute = 0x0000   # 0UL   - AbsolutNonPersistent
     limit_nonpersistent_relative = 0x0001   # 1UL   - RelativNonPersistent
     limit_persistent_absolute    = 0x0100   # 256UL - AbsolutPersistent
     limit_persistent_relative    = 0x0101   # 257UL - RelativPersistent
+
+################################################################################
+
+from datetime import datetime
+import json
+import sysv_ipc  # for System-V FTOK, Semaphore and Shared-Memory
+from phpserialize import unserialize
+import struct
+from hoymiles import HOYMILES_TRANSACTION_LOGGING, HOYMILES_VERBOSE_LOGGING
 
 ################################################################################
 
@@ -54,19 +55,26 @@ class WebServer():
 
   def __init__(self, web_config, log_obj, config_fn = "/tmp"):
     self.log_obj = log_obj
+
     if web_config.get('InverterReset', None):
        reset_config = web_config.get('InverterReset')
-       if reset_config.get('AtMidnight', False) == True:
+       ##self.log_obj.info(f"{reset_config=}")
+
+       if reset_config.get('AtMidnight', False) == "on":
           self.AtMidnight = True
-       if reset_config.get('AtSunrise', False) == True:
+       if reset_config.get('AtSunrise', False) == "on":
           self.AtSunrise = True
-       if reset_config.get('AtSunset', False) == True:
+       if reset_config.get('AtSunset', False) == "on":
           self.AtSunset = True
-       if reset_config.get('NotAvailable', False) == True:
+       if reset_config.get('NotAvailable', False) == "on":
           self.NotAvailable = True
-       if reset_config.get('MaxValues', False) == True:
+       if reset_config.get('MaxValues', False) == "on":
           self.MaxValues = True
     self.reset_max_values()
+
+    if HOYMILES_VERBOSE_LOGGING:
+        self.log_obj.info(f'configured InverterReset-Parameter: {self.AtMidnight=} {self.AtSunrise=} '
+                          f'{self.AtSunset=} {self.NotAvailable=} {self.MaxValues=}')
 
     # generate the known FTOK key from specifiv file
     #   ftok(path, id, [silence_warning = False])

@@ -5,7 +5,7 @@
 Hoymiles micro-inverters main application
 """
 
-from os import environ
+from os import environ, path
 from sys import exit
 
 import logging
@@ -85,8 +85,10 @@ class SunsetHandler:
     _todaySunset  = None
     _todaySunRise = None
     _loop_start   = None
+    _acfn         = None
+    _acfn_st      = int(datetime.now().timestamp())
 
-    def __init__(self, sunset_config):
+    def __init__(self, acfn, sunset_config):
         if sunset_config and sunset_config.get('enabled', False):
             # calc suntimes values ## https://pypi.org/project/suntimes/
             self.sunTimes = SunTimes(longitude = float(sunset_config.get('longitude',0)),
@@ -96,6 +98,7 @@ class SunsetHandler:
             self._todaySunRise = self.sunTimes.riselocal(datetime.now())
             self._todaySunset  = self.sunTimes.setlocal(datetime.now())
             self._localTz      = self._todaySunRise.tzinfo
+            self._acfn         = acfn  # ahoy config file name
             logging.info (f'Today Sunrise: {self._todaySunRise.strftime("%d.%m.%Y %H:%M:%S")} - '
                           f'Sunset: {self._todaySunset.strftime("%d.%m.%Y %H:%M:%S (%Z)")}')
         else:
@@ -106,6 +109,11 @@ class SunsetHandler:
 
     def loop_start(self):                       # save start of main loop
         self._loop_start = datetime.now(self._localTz)
+        # check for changed ahoy config file
+        ##logging.info (f'###loop_start### {self._acfn_st=} - {path.getmtime(self._acfn)=}')
+        if self._acfn_st < path.getmtime(self._acfn):
+            logging.error (f'ERROR - ahoy config changed, while running ahoy - EXIT(15)')
+            exit (15)
 
     def pauseMainLoop(self, loop_interval):     # pause main-loop
         _time_to_pause = loop_interval - (datetime.now(self._localTz) - self._loop_start).total_seconds()
@@ -179,13 +187,16 @@ def main_loop():
             sunset.loop_start()          # save start time
 
             for inverter in inverters:   # querey each inverter
+                if hoymiles.HOYMILES_VERBOSE_LOGGING:
+                    logging.info(f"Main loop for Inverter: {inverter['name']} ({inverter['serial']})")
                 # no key 'disnightcom' in dict
-                if (not inverter.get('disnightcom', False)) or (inverter.get('disnightcom', False) and sunset.ifSunTime()):
-                    poll_inverter(inverter, do_init, transmit_retries)
-                    do_init = False
-                else:
-                    sunset.waitForSunrise() # stop work at night time
-                    continue
+                if (not inverter.get('disnightcom', False)) or \
+                   (inverter.get('disnightcom', False) and sunset.ifSunTime()):
+                      poll_inverter(inverter, do_init, transmit_retries)
+                      do_init = False
+                #else:
+                #    sunset.waitForSunrise() # stop work at night time
+                #    continue
 
             if web_server:     # interact with user  frontend
               # check reset max values
@@ -247,6 +258,8 @@ def poll_inverter(inverter, do_init, retries):
     inv_name    = inverter.get('name')
     inv_strings = inverter.get('strings')
 
+    if hoymiles.HOYMILES_VERBOSE_LOGGING:
+        logging.info(f"poll_inverter for: {inv_name=} ({inv_ser})")
     # Command queue 
     if do_init: # this command is executed at start in the morning
       command_queue[inv_ser].append(hoymiles.compose_send_time_payload(hoymiles.InfoCommands.InverterDevInform_Simple))   # 0x00
@@ -588,7 +601,7 @@ if __name__ == '__main__':
        mqtt_client.client.subscribe(sub_topic_array)
 
     # init Sunset-Handler object # need MQTT object, if available
-    sunset = SunsetHandler(ahoy_config.get('sunset'))              # obj
+    sunset = SunsetHandler(global_config.config_file, ahoy_config.get('sunset'))   # obj
 
     # check 'interval' parameter in config-file
     loop_interval = int(ahoy_config.get('interval', 15))           # int
