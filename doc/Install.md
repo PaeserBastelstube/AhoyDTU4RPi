@@ -10,12 +10,17 @@ This work is licensed under a
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
 
 ---
-# Installation Instructions for AhoyDTU on Raspberry-Pi with (NGINX) WebServices and (Volkszaehler) Smart-Meter
-The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present the Hoymiles inverter data and to configure the system environment.
-In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment, as well as to display the Hoymiles inverter data.  
-For this we also need a `PHP FastCGI Process Manager` and `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange.  
-To permanent storage of the operating data of all inverters, we'll use a `Volkszaehler-Smart-Meter instance` 
-(https://github.com/volkszaehler/volkszaehler.org), as well as the individual evaluation of this data.
+# Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and Volkszaehler-Smart-Meter
+## Basics
+The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present
+the Hoymiles inverter data and to configure the system environment.
+In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment,
+to display the Hoymiles inverter data as well as to configure and display history data in a Volkszaehler-Smart-Meter environment.  
+For this, we also need a `PHP FastCGI Process Manager` and `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange.
+For the permanent storage of the historical operating data of all inverters,
+we'll use a `Volkszaehler-Smart-Meter instance`  
+(https://github.com/volkszaehler/volkszaehler.org),  
+as well as the individual evaluation of this data.
 
 1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
 2. This project based on some specific linux packages, you have to install this packages first:
@@ -44,7 +49,7 @@ To permanent storage of the operating data of all inverters, we'll use a `Volksz
    ```
 6. AhoyDTU based on python and need some python-modules, later more ...
 
-
+#  
 # Configuration instructions
 AhoyDTU and the various middleware components require individual specific configuration.
 
