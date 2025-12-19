@@ -156,7 +156,8 @@ If you have an trouble, have a look on NGINX log files:
 ```code
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
-
+#  
+# Additional installation on Volkszaehler Smart Meter
 ## Install PHP Composer
 Our `Smart-Meter Volkszaehler` calls some PHP-scripts and these PHP-scripts require specific PHP-libraries. In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`. We first install the PHP-package-manager.
 ```code
@@ -165,12 +166,7 @@ curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/local/bin/composer
 sudo chmod +x /usr/local/bin/composer
 ```
-
 ### install with composer for https://www.php.net/manual/en/book.shmop.php
-
-
-# Additional installation on Volkszaehler Smart Meter
-
 ## Installation of certain PHP package libraries 
 ```code
 cd /home/volkszaehler/
@@ -178,6 +174,38 @@ composer install
 # If we get various error messages, so we add some “ignore” parameters and start the installation process again:
 composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
+```
+
+##	Configure and start database „MariaDB“
+The operational data of the AhoyDTU will be stored and analyzed using a Volkszähler instance.
+The database "MariaDB" will be used for storage and has already been installed.
+The corresponding configuration follows:
+### Securing the database
+The installation is complete at this point, however, the database still needs to be additionally secured. Access to the database is not yet password-protected, and there are test users and test databases that need to be deleted. These steps will now be performed.
+```code
+sudo mysql_secure_installation
+```
+The setup will be answered with the following values:
+|##| Question                              | Answer     | Comment
+|--|---------------------------------------|------------|---------|
+|1:|Enter current password for root        |ENTER       |Press Enter to confirm; we will not enter anything.|
+|2:|Set root password	                   |Y           |und dann ein Passwort für den Benutzer root vergeben|
+|3:|Switch to unix_socket authentication [Y/n]|	Y	Y   | |
+|4:|Change the root password? [Y/n]        |N	n| |
+|5:|Remove anonymous users                 |Y           |We don't want such users.|
+|6:|Disallow root login remotly            |Y           |Only the root user is allowed to log in locally|
+|7:|Remove test database and access to it  |Y           |We don't need a test database.|
+|8:|Reload privilege tables now            |Y           |these need to be reloaded|
+
+### Start database “MariaDB”
+The following command is used to start the database:
+```code
+sudo systemctl status mariadb
+sudo systemctl start mariadb
+```
+Next, important files are checked. List of important variables:
+```code
+my_print_defaults --mysqld
 ```
 
 
