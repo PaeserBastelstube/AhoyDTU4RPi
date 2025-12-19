@@ -48,6 +48,20 @@ as well as the individual evaluation of this data.
    git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
    ```
 6. AhoyDTU based on python and need some python-modules, later more ...
+7. Activate SPI Interface on Raspi-HW
+   ```code
+   sudo raspi-config
+	3 Interface Options
+	I3 SPI
+	Select YES (use TAB Key)
+   ```   
+   To check the SPI-Interface use „ls“-command:
+   ```code
+   $ ls -al /dev/spi*
+   crw-rw---- 1 root spi 153, 0 Aug 20 14:43 /dev/spidev0.0
+   crw-rw---- 1 root spi 153, 1 Aug 20 14:43 /dev/spidev0.1
+   ```
+
 
 #  
 # Configuration instructions
