@@ -253,4 +253,35 @@ new:
 
 After restart Volkszaehler in a browser we receive the next error message:
 ![VZ Javascript runtime error](pictures/VZ_JS_runtime_error.png)
+This error message indicates a wrong URL configuration in `htdocs/js/options.js`
+Please edit this file in line 42:
+```code
+old:		url: 'api'
+new:		url: 'middleware.php'
+```
+After restart Volkszaehler in a browser we receive the next error message:
+![VZ Javascript runtime error](pictures/VZ_XXX.png)
+
+
+
+
+This error message indicates a missing database connection.  
+Now, we need to adjust the Volkszaehler configuration accordingly.
+```code
+cd /home/volkszaehler/etc/
+cp config.dist.yaml config.yaml
+vi config.yaml
+```
+In `config.yaml`, you find the passwords for USER and ADMIN.
+
+Now, we have to configure this passwords in database configuration:
+```code
+sudo mysql -uroot -praspberry
+CREATE DATABASE volkszaehler;  # Anlegen der Datenbank
+GRANT ALL ON volkszaehler.* to 'vz_admin'@'localhost' IDENTIFIED BY 'admin_demo' WITH GRANT OPTION;
+CREATE USER 'vz'@'localhost' IDENTIFIED BY 'demo';
+GRANT USAGE ON volkszaehler.* TO 'vz'@'localhost';
+GRANT SELECT, UPDATE, INSERT ON volkszaehler.* TO 'vz'@'localhost';
+exit;
+```
 
