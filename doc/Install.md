@@ -229,5 +229,6 @@ First start VZ and look to the error message:
 ```code
 http://localhost/htdocs
 ```
-![VZ network-error](pictures/VZ_network-error.png)
+![VZ network-error](pictures/VZ_network-error.png) 
+
 
