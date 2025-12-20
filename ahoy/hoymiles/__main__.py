@@ -359,7 +359,7 @@ def poll_inverter(inverter, do_init, retries):
             if influx_client:
                influx_client.store_status(infoCommand, data, inv_ser)       # output to influxDB
 
-            if volkszaehler_client.ser_exists(inv_ser):
+            if volkszaehler_client and volkszaehler_client.ser_exists(inv_ser):
                volkszaehler_client.store_status(infoCommand, data, inv_ser) # output to volkszaehler
 
 ################################################################################
