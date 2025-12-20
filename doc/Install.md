@@ -229,6 +229,28 @@ First start VZ and look to the error message:
 ```code
 http://localhost/htdocs
 ```
-![VZ network-error](pictures/VZ_network-error.png) 
+After accessing Volkszaehler in a browser we receive the following error message:
+![VZ network-error](pictures/VZ_network-error.png)
 
+To resolve this error message, several steps are required. First, let's look at the error message itself.  
+The long number represents a "timestamp," unfortunately not the date and time in a readable format.  
+To print this timestamp in a human readable format, the file `/home/volkszaehler/htdocs/js/functions.js`  
+must be modified, starting at line 128:  
+
+old:
+```code
+128     if (args.method === undefined || args.method == 'GET') {
+129         args.url += '?unique = ' + Date.now();
+130     }
+```
+new:
+```code
+128     if (args.method === undefined || args.method == 'GET') {
+129         timeNow = new Date();
+130         args.url += '?unique = ' + timeNow;
+131     }
+```
+
+After restart Volkszaehler in a browser we receive the next error message:
+![VZ Javascript runtime error](pictures/VZ_JS_runtime_error.png)
 
