@@ -11,7 +11,7 @@ This work is licensed under a
 
 ---
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and Volkszaehler-Smart-Meter
-## Basics
+## Basics Instructions
 The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present
 the Hoymiles inverter data and to configure the system environment.
 In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment,
@@ -61,10 +61,8 @@ as well as the individual evaluation of this data.
    crw-rw---- 1 root spi 153, 0 Aug 20 14:43 /dev/spidev0.0
    crw-rw---- 1 root spi 153, 1 Aug 20 14:43 /dev/spidev0.1
    ```
-
-
-#  
-# Configuration instructions
+---
+# AhoyDTU Configuration instructions
 AhoyDTU and the various middleware components require individual specific configuration.
 
 
@@ -127,8 +125,8 @@ urllib3            2.5.0
 zope.interface     7.2
 ```
 
-
-## configure NGINX WebServer
+---
+# NGINX WebServer configuration instructions
 To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from you installed AhoyDTU directory into NGINX and PHP system configuration. But first, you have to remove the NGINX standard configuration!
 
 ```code
@@ -156,8 +154,8 @@ If you have an trouble, have a look on NGINX log files:
 ```code
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
-#  
-# Additional installation on Volkszaehler Smart Meter
+---
+# Volkszaehler (VZ) Smart Meter configuration instructions
 ## Install PHP Composer
 Our `Smart-Meter Volkszaehler` calls some PHP-scripts and these PHP-scripts require specific PHP-libraries. In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`. We first install the PHP-package-manager.
 ```code
@@ -206,6 +204,30 @@ sudo systemctl start mariadb
 Next, important files are checked. List of important variables:
 ```code
 my_print_defaults --mysqld
+```
+### first database connection Test
+For the first connection test, call the command: 
+`sudo mysql -uroot -praspberry`
+and quit the command with `exit;`
+
+```code
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MariaDB connection id is 41
+Server version: 10.11.3-MariaDB-1+rpi1 Raspbian 12
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MariaDB [(none)]> exit;
+Bye
+```
+
+## Volkszaehler special configuration
+To Troubleshoot some Error Messages, we have to correct some VZ-scripts and configurations.  
+First start VZ and look to the error message:
+```code
+http://localhost/htdocs
 ```
 
 
