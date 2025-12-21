@@ -41,8 +41,10 @@ Folgende Ziele verfolgt das Projekt:
 * Als zusätzliches Feature ist geplant, die Nulleinspeisung im Batteriebetrieb zu implementieren. Hierzu ist ein entsprechender Sensor am Stromzähler erforderlich.
 
 Additional Informations:
+* [ Installation Instruction AhoyDTU ] (doc/Installation_Instruction_AhoyDTU.md)
 * [ Installation Instructions ](doc/Install.md)
 * [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+
 
 
 
