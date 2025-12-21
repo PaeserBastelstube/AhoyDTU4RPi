@@ -29,26 +29,7 @@ as well as the individual evaluation of this data.
    sudo apt-get -y full-upgrade
    sudo apt-get -y install cmake git python3-dev libboost-python-dev python3-pip python3-rpi.gpio
    ```
-3. AhoyDTU must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
-   ```code
-   cd /home
-   sudo mkdir AhoyDTU
-   sudo chown pi:pi AhoyDTU/
-   git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
-   ```
-4. Install Middleware with standard install-parameter and without any special security configurations
-   ```code
-   sudo apt-get install -y nginx php-fpm php-yaml php-mysql mariadb-server
-   ```
-5. Install the Smart-Meter `Volkszaehler`
-   ```code
-   cd /home
-   sudo mkdir volkszaehler
-   sudo chown pi:pi volkszaehler
-   git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
-   ```
-6. AhoyDTU based on python and need some python-modules, later more ...
-7. Activate SPI Interface on Raspi-HW
+3. Activate SPI Interface on Raspi-HW
    ```code
    sudo raspi-config
 	3 Interface Options
@@ -61,10 +42,29 @@ as well as the individual evaluation of this data.
    crw-rw---- 1 root spi 153, 0 Aug 20 14:43 /dev/spidev0.0
    crw-rw---- 1 root spi 153, 1 Aug 20 14:43 /dev/spidev0.1
    ```
+4. AhoyDTU must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
+   ```code
+   cd /home
+   sudo mkdir AhoyDTU
+   sudo chown pi:pi AhoyDTU/
+   git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
+   ```
+5. Install Middleware with standard install-parameter and without any special security configurations
+   ```code
+   sudo apt-get install -y nginx php-fpm php-yaml php-mysql mariadb-server
+   ```
+6. Install the Smart-Meter `Volkszaehler`
+   ```code
+   cd /home
+   sudo mkdir volkszaehler
+   sudo chown pi:pi volkszaehler
+   git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
+   ```
+7. AhoyDTU based on python and need some python-modules, later more ...
 ---
+
 # AhoyDTU Configuration instructions
 AhoyDTU and the various middleware components require individual specific configuration.
-
 
 ## Create a PYTHON virtual environment and install Python modules
 Important: Debian 12 follows the recommendation of [`PEP 668`]
@@ -154,3 +154,5 @@ If you have an trouble, have a look on NGINX log files:
 ```code
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
+In next step, you can install `Volkszaehler` environment to store historic data
+* [ Installation Instruction Volkszaehler ](doc/Installation_Instruction_Volkszaehler.md)
