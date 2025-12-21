@@ -118,7 +118,8 @@ class SunsetHandler:
     def pauseMainLoop(self, loop_interval):     # pause main-loop
         _time_to_pause = loop_interval - (datetime.now(self._localTz) - self._loop_start).total_seconds()
         if _time_to_pause > 0:
-           logging.info(f'MAIN-LOOP: sleep for {_time_to_pause:.2f} sec.')
+           if hoymiles.HOYMILES_VERBOSE_LOGGING:
+              logging.info(f'MAIN-LOOP: sleep for {_time_to_pause:.2f} sec.')
            time.sleep(_time_to_pause)
 
     def updateTimeValues(self):
