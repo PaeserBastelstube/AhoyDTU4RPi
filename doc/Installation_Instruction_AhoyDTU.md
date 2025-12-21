@@ -11,18 +11,21 @@ This work is licensed under a
 
 ---
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and Volkszaehler-Smart-Meter
-## Basics Instructions
-The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own WebServer to present
-the Hoymiles inverter data and to configure the system environment.
-In this project, we use an `NGINX WebServer` to configure and to control the AhoyDTU environment,
-to display the Hoymiles inverter data as well as to configure and display history data in a Volkszaehler-Smart-Meter environment.  
-For this, we also need a `PHP FastCGI Process Manager` and `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange.
-For the permanent storage of the historical operating data of all inverters,
-we'll use a `Volkszaehler-Smart-Meter instance`  
-(https://github.com/volkszaehler/volkszaehler.org),  
-as well as the individual evaluation of this data.
+The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own Web-Server to present
+the `Hoymiles inverter data` and to configure the system environment in a Web-Browser.  
+In this project, we use an `NGINX Web-Server` to display the `Hoymiles inverter runtime data`,
+to configure and to control the `AhoyDTU environment`, as well as 
+to store and to analyse historcal data in a `Volkszaehler-Smart-Meter`
+(https://github.com/volkszaehler/volkszaehler.org) environment.  
 
-1. `/tmp` must be available for all users. AhoyDTU stores log- and other temp files in this directory.
+For all of this, we need some additional middleware:
+* `NGINX Web-Service` to communicate with a human user and to store runtime data in `Volkszaehler`
+* `PHP FastCGI Process Manager` to run specific PHP scripts and for the `Volkszaehler envoronment`
+* `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange between PHP and AhoyDTU
+* `MariaDB` to store data permanent in a database
+
+## Basics Instructions
+1. `/tmp` must be available for all users, AhoyDTU stores log- and other temp files in this directory.
 2. This project based on some specific linux packages, you have to install this packages first:
    ```code
    sudo apt-get update
@@ -42,25 +45,25 @@ as well as the individual evaluation of this data.
    crw-rw---- 1 root spi 153, 0 Aug 20 14:43 /dev/spidev0.0
    crw-rw---- 1 root spi 153, 1 Aug 20 14:43 /dev/spidev0.1
    ```
-4. AhoyDTU must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
+4. AhoyDTU (based on PYTHON language) must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
    ```code
    cd /home
    sudo mkdir AhoyDTU
    sudo chown pi:pi AhoyDTU/
    git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
    ```
-5. Install Middleware with standard install-parameter and without any special security configurations
+6. Install Middleware with standard install-parameter and without any special security configurations
    ```code
    sudo apt-get install -y nginx php-fpm php-yaml php-mysql mariadb-server
    ```
-6. Install the Smart-Meter `Volkszaehler`
+7. Install the Smart-Meter `Volkszaehler`
    ```code
    cd /home
    sudo mkdir volkszaehler
    sudo chown pi:pi volkszaehler
    git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
    ```
-7. AhoyDTU based on python and need some python-modules, later more ...
+8. AhoyDTU based on python and need some python-modules, later more ...
 ---
 
 # AhoyDTU Configuration instructions
@@ -126,9 +129,10 @@ zope.interface     7.2
 ```
 
 ---
-# NGINX WebServer configuration instructions
-To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from you installed AhoyDTU directory into NGINX and PHP system configuration. But first, you have to remove the NGINX standard configuration!
-
+## NGINX WebServer configuration instructions
+To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from your 
+installed AhoyDTU directory into NGINX and PHP system configuration. 
+But first, you have to remove the NGINX standard configuration!
 ```code
 cd /home/AhoyDTU
 sudo rm /etc/nginx/sites-enabled/default
