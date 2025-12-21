@@ -12,19 +12,25 @@ This work is licensed under a
 ---
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and the Volkszaehler-Smart-Meter
 ## Volkszaehler (VZ) Smart Meter configuration instructions
-To store and to analyse operational data of the AhoyDTU we'll use a `Volkszähler` environment.  
-This `Volkszaehler` environment need a database (MariaDB), a Web-Service (nginx) and the PHP
-
+To store and to analyse operational data of the AhoyDTU we'll use a `Volkszaehler` environment.  
+This `Volkszaehler` environment need additional middleware:
+* `NGINX` Web-Service (allready installed and configured)
+* `PHP FastCGI Process Manager` (allready installed and configured)
+* `PHP Composer` to install additional PHP libraries
+* `MariaDB` database
 
 ### Install PHP Composer
-Our `Smart-Meter Volkszaehler` calls some PHP-scripts and these PHP-scripts require specific PHP-libraries. In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`. We first install the PHP-package-manager.
+Our `Smart-Meter Volkszaehler` calls some `PHP-scripts` and these PHP-scripts require specific `PHP-libraries`.
+In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`.
+We first install the PHP-package-manager.
 ```code
 cd /tmp
 curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/local/bin/composer
 sudo chmod +x /usr/local/bin/composer
 ```
-### install with composer for https://www.php.net/manual/en/book.shmop.php
+* install with composer for https://www.php.net/manual/en/book.shmop.php
+
 ### Installation of certain PHP package libraries 
 ```code
 cd /home/volkszaehler/
@@ -35,10 +41,8 @@ composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform
 ```
 ---
 ###	Configure and start database „MariaDB“
-
 The middleware database "MariaDB" was already installed in a previous step.
 
-The database "MariaDB" will be used for storage and has already been installed.
 The corresponding configuration follows:
 ### Securing the database
 The installation is complete at this point, however, the database still needs to be additionally secured. Access to the database is not yet password-protected, and there are test users and test databases that need to be deleted. These steps will now be performed.
