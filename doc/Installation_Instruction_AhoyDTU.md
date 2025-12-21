@@ -155,4 +155,4 @@ If you have an trouble, have a look on NGINX log files:
 tail /var/log/nginx/access.log /var/log/nginx/error.log
 ```
 In next step, you can install `Volkszaehler` environment to store historic data
-* [ Installation Instruction Volkszaehler ](doc/Installation_Instruction_Volkszaehler.md)
+* [ Installation Instruction Volkszaehler environment ](doc/Installation_Instruction_Volkszaehler.md)
