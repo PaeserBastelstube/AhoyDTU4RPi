@@ -11,6 +11,7 @@ This work is licensed under a
 
 ---
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and the Volkszaehler-Smart-Meter
+
 ## Volkszaehler (VZ) Smart Meter configuration instructions
 To store and to analyse operational data of the AhoyDTU we'll use a `Volkszaehler` environment.  
 This `Volkszaehler` environment need some additional middleware:
@@ -18,6 +19,9 @@ This `Volkszaehler` environment need some additional middleware:
 * `PHP FastCGI Process Manager` (allready installed and configured with AhoyDTU)
 * `PHP Composer` to install additional PHP-libraries
 * `MariaDB` database
+
+additional Informations in german language on:  
+https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/03.-Volkszaehler
 
 ## Install PHP Composer
 Our `Smart-Meter Volkszaehler` calls some `PHP-scripts` and these PHP-scripts require specific `PHP-libraries`.
@@ -39,8 +43,18 @@ composer install
 composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 ```
+## Additional Channel Type "power meter"
+Our VZ environment requires the additional channel type "power meter" to manage the "electrical energy" from an electricity meter.  
+The VZ configuration file `EntityDefinition.json` is already predefined in our AhoyDTU file archive.
+To activate this configuration, please take the following steps:
+```code
+cd /home/volkszaehler/lib/Definition
+mv EntityDefinition.json EntityDefinition.json.org
+ln -fs /home/AhoyDTU/etc/vz/EntityDefinition.json EntityDefinition.json
+```
+
 ---
-#	Configure and start database „MariaDB“
+# "MariaDB" - Configure and start the database 
 The middleware database "MariaDB" was already installed in a previous step.
 
 ## Securing the database
@@ -51,16 +65,16 @@ These steps will now be performed.
 sudo mysql_secure_installation
 ```
 The setup will be answered with the following values:
-|##| Question                              | Answer     | Comment
-|--|---------------------------------------|------------|---------|
-|1:|Enter current password for root        |ENTER       |Press Enter to confirm; we will not enter anything.|
-|2:|Set root password	                   |Y           |und dann ein Passwort für den Benutzer root vergeben|
-|3:|Switch to unix_socket authentication [Y/n]|	Y	Y   | |
-|4:|Change the root password? [Y/n]        |N	n| |
-|5:|Remove anonymous users                 |Y           |We don't want such users.|
-|6:|Disallow root login remotly            |Y           |Only the root user is allowed to log in locally|
-|7:|Remove test database and access to it  |Y           |We don't need a test database.|
-|8:|Reload privilege tables now            |Y           |these need to be reloaded|
+|##| Question                             | Answer   | Comment
+|--|--------------------------------------|----------| -------- |
+|1:|Enter current password for root       | ENTER    | Press Enter to confirm; we will not enter anything.|
+|2:|Set root password	                    | Y        | und dann ein Passwort für den Benutzer root vergeben|
+|3:|Switch to unix_socket authentication  |	Y	       | |
+|4:|Change the root password? [Y/n]       | N        | |
+|5:|Remove anonymous users                | Y        | We don't want such users.|
+|6:|Disallow root login remotly           | Y        | Only the root user is allowed to log in locally|
+|7:|Remove test database and access to it | Y        | We don't need a test database.|
+|8:|Reload privilege tables now           | Y        | these need to be reloaded|
 
 ## Start database “MariaDB”
 The following commands are used to start the database and check status:
@@ -90,13 +104,16 @@ MariaDB [(none)]> exit;
 Bye
 ```
 ---
+
 # Volkszaehler - Troubleshooting and special configuration
 To Troubleshoot some Error Messages, we have to correct some VZ-scripts and configurations.  
-First start VZ and look to the error message:
+
+## First error message
+Start VZ in your prefered browser:
 ```code
 http://localhost/htdocs
 ```
-After accessing Volkszaehler in a browser we receive the following error message:
+After accessing `Volkszaehler` we receive the following error message:  
 ![VZ network-error](pictures/VZ_network-error.png)
 
 To resolve this error message, several steps are required. First, let's look at the error message itself.  
@@ -118,19 +135,20 @@ new:
 131     }
 ```
 
-After restart Volkszaehler in a browser we receive the next error message:
-![VZ Javascript runtime error](pictures/VZ_JS_runtime_error.png)
-This error message indicates a wrong URL configuration in `htdocs/js/options.js`
+## second error message
+After restart Volkszaehler in your prefered browser, we receive the next error message:  
+![VZ Javascript runtime error](pictures/VZ_error_not-found.jpg)
+
+This error message indicates a wrong URL configuration in `htdocs/js/options.js`  
 Please edit this file in line 42:
 ```code
 old:		url: 'api'
 new:		url: 'middleware.php'
 ```
-After restart Volkszaehler in a browser we receive the next error message:
-![VZ Javascript runtime error](pictures/VZ_XXX.png)
 
-
-
+## next error message
+After restart Volkszaehler in a browser we receive the next error message:  
+![VZ Javascript runtime error](pictures/VZ_JS_runtime_error.png)
 
 This error message indicates a missing database connection.  
 Now, we need to adjust the Volkszaehler configuration accordingly.
@@ -141,7 +159,7 @@ vi config.yaml
 ```
 In `config.yaml`, you find the passwords for USER and ADMIN.
 
-Now, we have to configure this passwords in database configuration:
+Now, we have to configure this `passwords` in database configuration:
 ```code
 sudo mysql -uroot -praspberry
 CREATE DATABASE volkszaehler;  # Anlegen der Datenbank
@@ -151,4 +169,3 @@ GRANT USAGE ON volkszaehler.* TO 'vz'@'localhost';
 GRANT SELECT, UPDATE, INSERT ON volkszaehler.* TO 'vz'@'localhost';
 exit;
 ```
-
