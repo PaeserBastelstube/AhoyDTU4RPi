@@ -776,9 +776,8 @@
 				ser.dispatchEvent(new Event('change'));
 
 				var vz_channel = [];
-				var vz_url = window.location.origin + "/htdocs/middleware.php";
-				// if (typeof obj.vz_url !== 'undefined' && obj.vz_url.length > 0) vz_url = obj.vz_url;
-				getAjax(vz_url + "/channel.json?operation=get", ivListVzChannel);
+				// get VZ-Channels via REST
+				getAjax(window.location.origin + "/htdocs/middleware.php/channel.json?operation=get", ivListVzChannel);
 
 				function ivListVzChannel(vz) {
 					/* query Volkszaehler channels as variable "vz"
@@ -806,6 +805,9 @@
 
 					var vz_enable = ml("input", {name: "vz_enable", type: "checkbox"}, null);
 						vz_enable.checked = (obj.vz_enable);
+
+					var vz_url = "http://localhost/htdocs/middleware.php";
+					if (typeof obj.vz_url !== 'undefined' && obj.vz_url.length > 0) vz_url = obj.vz_url;
 					var vz_url_html = ml("input", {name: "vz_url", class: "text", type: "text", value: vz_url}, null);
 
 					var vz_suffix = "";
