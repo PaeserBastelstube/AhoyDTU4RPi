@@ -442,7 +442,7 @@ class VolkszaehlerOutputPlugin(OutputPluginFactory):
 
     def ser_exists(self, ser):
         ## if inv_ser in self.vz_inverters:      # check, if inverter-serial-number in list of vz_inverters
-        if self.vz_inverters[ser]:
+        if len(self.vz_inverters) > 0 and self.vz_inverters[ser]:
             return True
         else:
             return False
