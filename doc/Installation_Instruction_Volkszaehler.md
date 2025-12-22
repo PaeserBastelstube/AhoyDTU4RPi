@@ -13,13 +13,13 @@ This work is licensed under a
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and the Volkszaehler-Smart-Meter
 ## Volkszaehler (VZ) Smart Meter configuration instructions
 To store and to analyse operational data of the AhoyDTU we'll use a `Volkszaehler` environment.  
-This `Volkszaehler` environment need additional middleware:
-* `NGINX` Web-Service (allready installed and configured)
-* `PHP FastCGI Process Manager` (allready installed and configured)
-* `PHP Composer` to install additional PHP libraries
+This `Volkszaehler` environment need some additional middleware:
+* `NGINX` Web-Service (allready installed and configured with AhoyDTU)
+* `PHP FastCGI Process Manager` (allready installed and configured with AhoyDTU)
+* `PHP Composer` to install additional PHP-libraries
 * `MariaDB` database
 
-### Install PHP Composer
+## Install PHP Composer
 Our `Smart-Meter Volkszaehler` calls some `PHP-scripts` and these PHP-scripts require specific `PHP-libraries`.
 In order to use these PHP-libraries, they must be installed using the PHP-package-manager `Composer`.
 We first install the PHP-package-manager.
@@ -31,7 +31,7 @@ sudo chmod +x /usr/local/bin/composer
 ```
 * install with composer for https://www.php.net/manual/en/book.shmop.php
 
-### Installation of certain PHP package libraries 
+## Installation of certain PHP package libraries 
 ```code
 cd /home/volkszaehler/
 composer install
@@ -40,12 +40,13 @@ composer install --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --i
 composer require php-mqtt/client --ignore-platform-req=ext-dom --ignore-platform-req=ext-xml --ignore-platform-req=ext-xmlwriter
 ```
 ---
-###	Configure and start database „MariaDB“
+#	Configure and start database „MariaDB“
 The middleware database "MariaDB" was already installed in a previous step.
 
-The corresponding configuration follows:
-### Securing the database
-The installation is complete at this point, however, the database still needs to be additionally secured. Access to the database is not yet password-protected, and there are test users and test databases that need to be deleted. These steps will now be performed.
+## Securing the database
+The installation is complete at this point, however, the database still needs to be additionally secured.  
+Access to the database is not yet password-protected, test users and test databases are still installed and must be deleted.
+These steps will now be performed.
 ```code
 sudo mysql_secure_installation
 ```
@@ -61,17 +62,17 @@ The setup will be answered with the following values:
 |7:|Remove test database and access to it  |Y           |We don't need a test database.|
 |8:|Reload privilege tables now            |Y           |these need to be reloaded|
 
-### Start database “MariaDB”
-The following command is used to start the database:
+## Start database “MariaDB”
+The following commands are used to start the database and check status:
 ```code
-sudo systemctl status mariadb
 sudo systemctl start mariadb
+sudo systemctl status mariadb
 ```
-Next, important files are checked. List of important variables:
+Next, list and check important files and variables:
 ```code
 my_print_defaults --mysqld
 ```
-### first database connection Test
+## “MariaDB” first connection Test
 For the first connection test, call the command: 
 `sudo mysql -uroot -praspberry`
 and quit the command with `exit;`
@@ -88,8 +89,8 @@ Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
 MariaDB [(none)]> exit;
 Bye
 ```
-
-## Volkszaehler special configuration
+---
+# Volkszaehler - Troubleshooting and special configuration
 To Troubleshoot some Error Messages, we have to correct some VZ-scripts and configurations.  
 First start VZ and look to the error message:
 ```code
