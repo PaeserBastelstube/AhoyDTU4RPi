@@ -13,19 +13,20 @@ This work is licensed under a
 # Installation Instructions <br>for AhoyDTU on Raspberry-Pi with <br> NGINX-WebServices and Volkszaehler-Smart-Meter
 The already known `Ahoy(lumapu) on ESP8266 or ESP32` includes its own Web-Server to present
 the `Hoymiles inverter data` and to configure the system environment in a Web-Browser.  
-In this project, we use an `NGINX Web-Server` to display the `Hoymiles inverter runtime data`,
+In this project, we use a `NGINX Web-Server` to show the `Hoymiles inverter runtime data`,
 to configure and to control the `AhoyDTU environment`, as well as 
 to store and to analyse historcal data in a `Volkszaehler-Smart-Meter`
 (https://github.com/volkszaehler/volkszaehler.org) environment.  
 
 For all of this, we need some additional middleware:
-* `NGINX Web-Service` to communicate with a human user and to store runtime data in `Volkszaehler`
-* `PHP FastCGI Process Manager` to run specific PHP scripts and for the `Volkszaehler envoronment`
-* `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange between PHP and AhoyDTU
+* `PYTHON virtual environment` to run specific AhoyDTU scripts
+* `NGINX Web-Service` to communicate with a human user and to store runtime data in Volkszaehler
+* `PHP FastCGI Process Manager` to run specific AhoyDTU-PHP and Volkszaehler scripts
+* `System-V IPC (Shared-Memory with Semaphore and Message-Queue)` for data exchange between PHP and AhoyDTU scripts
 * `MariaDB` to store data permanent in a database
 
 ## Basics Instructions
-1. `/tmp` must be available for all users, AhoyDTU stores log- and other temp files in this directory.
+1. `/tmp` must be available for all users, AhoyDTU stores log- and other temp files in this directory. This is standard behavior on Linux.
 2. This project based on some specific linux packages, you have to install this packages first:
    ```code
    sudo apt-get update
@@ -45,32 +46,33 @@ For all of this, we need some additional middleware:
    crw-rw---- 1 root spi 153, 0 Aug 20 14:43 /dev/spidev0.0
    crw-rw---- 1 root spi 153, 1 Aug 20 14:43 /dev/spidev0.1
    ```
-4. AhoyDTU (based on PYTHON language) must be installed in a non-user HOME directory, we prefere to install this project in: `/home/AhoyDTU`:
+4. AhoyDTU (based on PYTHON language) must be installed in a non-user HOME directory,<br> we prefere to install this project in: `/home/AhoyDTU`:
    ```code
    cd /home
    sudo mkdir AhoyDTU
    sudo chown pi:pi AhoyDTU/
    git clone https://github.com/PaeserBastelstube/AhoyDTU4RPi.git AhoyDTU
    ```
-6. Install Middleware with standard install-parameter and without any special security configurations
+5. Install Middleware with standard install-parameter and (first) without any special security configurations
    ```code
    sudo apt-get install -y nginx php-fpm php-yaml php-mysql mariadb-server
    ```
-7. Install the Smart-Meter `Volkszaehler`
+6. Install the Smart-Meter `Volkszaehler`
    ```code
    cd /home
    sudo mkdir volkszaehler
    sudo chown pi:pi volkszaehler
    git clone https://github.com/volkszaehler/volkszaehler.org.git volkszaehler
    ```
-8. AhoyDTU based on python and need some python-modules, later more ...
+7. AhoyDTU based on python.<br> You need a PYTHON (private) virtual environment and some specific python-modules - later more ...
+
 ---
 
 # AhoyDTU Configuration instructions
 AhoyDTU and the various middleware components require individual specific configuration.
 
-## Create a PYTHON virtual environment and install Python modules
-Important: Debian 12 follows the recommendation of [`PEP 668`]
+## Create a PYTHON virtual environment
+`Important:` Debian 12 follows the recommendation of [`PEP 668`]
 (https://peps.python.org/pep-0668/)  
 Now, python is configured as "externally-managed-environment" !
 - You have to use a python virtual environment. See: `https://docs.python.org/3/library/venv.html`
@@ -85,7 +87,8 @@ If you need to start individual python scripts, activate the virtual environment
 source ahoyenv/bin/activate
 ```
 
-### AhoyDTU requires the installation of certain python libraries:
+## Installation of certain PYTHON libraries
+AhoyDTU based on PYTHON scripts, they need a set of specific PYTHON libraries:
 ```code
 ahoyenv/bin/python3 -m pip install --upgrade crcmod datetime paho-mqtt phpserialize pyRF24 requests ruamel-yaml SunTimes sysv-ipc
 ```
@@ -100,7 +103,7 @@ cd ..
 This step takes a while!
 
 
-### Finally, check all installed `python modules`:
+## Finally, check all installed `python modules`:
 ```code
 ahoyenv/bin/python3 -m pip list         ## check: search for pyRF24
 Package            Version
@@ -129,21 +132,18 @@ zope.interface     7.2
 ```
 
 ---
-## NGINX WebServer configuration instructions
-To configure NGINX and PHP FastCGI Process Manager, we need two sym-links from your 
-installed AhoyDTU directory into NGINX and PHP system configuration. 
-But first, you have to remove the NGINX standard configuration!
+# NGINX WebServer configuration instructions
+To configure `NGINX` and `PHP FastCGI Process Manager`, we need two sym-links from your 
+installed AhoyDTU directory into `NGINX and PHP system environment`. 
+But first, you have to remove the standard NGINX configuration!
 ```code
-cd /home/AhoyDTU
 sudo rm /etc/nginx/sites-enabled/default
-sudo ln -fs etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
-sudo ln -fs etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
+sudo ln -fs /home/AhoyDTU/etc/php-fpm/AhoyDTU.conf /etc/php/8.2/fpm/pool.d/AhoyDTU.conf
+sudo ln -fs /home/AhoyDTU/etc/nginx/AhoyDTU /etc/nginx/sites-enabled/AhoyDTU
 sudo nginx -t
 ```
-Please change the PHP-version-directory if necessary.  
-No configuration is required for the standard installation of Mosquito.
-
-Finally, we have to restart the system-services for nginx and php8.2-fpm.  
+Please change the `PHP-version-directory` if necessary.  
+Finally, we have to restart the system-services for `nginx` and `php8.2-fpm`.  
 ```code
 sudo systemctl restart nginx php8.2-fpm
 ```
