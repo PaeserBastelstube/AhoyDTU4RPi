@@ -43,7 +43,8 @@ Folgende Ziele verfolgt das Projekt:
 Additional Informations:
 * [ Installation Instruction AhoyDTU ](doc/Installation_Instruction_AhoyDTU.md)
 * [ Installation Instruction Volkszaehler ](doc/Installation_Instruction_Volkszaehler.md)
-* [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/Grundlagen-und-Hintergrund))
+* [ Basics and Background (in German language only) ](https://github.com/PaeserBastelstube/AhoyDTU4RPi/wiki/01.-Grundlagen-und-Hintergrund)
+
 
 
 
