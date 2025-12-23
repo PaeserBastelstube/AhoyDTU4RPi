@@ -304,10 +304,6 @@
                             <legend class="des">Radio (CMT2300A)</legend>
                             <div id="cmt"></div>
                         </fieldset>
-                        <fieldset class="mb-4">
-                            <legend class="des">Ethernet</legend>
-                            <div id="eth"></div>
-                        </fieldset>
                     </div>
 
                     <div class="row mb-4 mt-4">
@@ -1116,30 +1112,6 @@
 				}
 			}
 
-            function parseEth(obj) {
-				var en = inp("ethEn", null, null, ["cb"], "ethEn", "checkbox");
-					en.checked = obj["en"];
-				var pinList = esp32pins;
-					pinList = raspipins;
-				var e = document.getElementById("eth");
-					e.replaceChildren (ml("div", {class: "row mb-3"}, [
-						ml("div", {class: "col-8 col-sm-3 my-2"}, "Ethernet enable"),
-						ml("div", {class: "col-8 col-sm-3 my-2"}, "OS managed")
-				]));
- 				let pins = [];
-                pins = [['cs', 'ethCs'], ['sclk', 'ethSclk'], ['miso', 'ethMiso'], ['mosi', 'ethMosi'], ['irq', 'ethIrq'], ['reset', 'ethRst']];
-				for(p of pins) {
-					e.append(
-						ml("div", {class: "row mb-3"}, [
-							ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
-							ml("div", {class: "col-12 col-sm-9"},
-								sel(p[1], pinList, obj[p[0]])
-							)
-						])
-					);
-				}
-			}
-
 			function parseSerial(obj) {
 				var e = document.getElementById("serialCb");
 				var l = [["serEn", "show_live_data", "print inverter data"], 
@@ -1174,7 +1146,6 @@
 					parsePinout(root.pinout);
 					parseNrfRadio(root.radioNrf);
 					parseCmtRadio(root.radioCmt);
-					parseEth(root.eth);
 					parseSerial(root.serial);
 					getAjax("/api/inverter/list", parseIv);
 				}
