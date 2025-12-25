@@ -59,6 +59,33 @@
                 ])
             }
 
+            var pins = ['cs', 'sclk', 'miso', 'mosi', 'irq', 'reset']
+            function step1(obj) {
+                console.log(obj)
+                lst = []
+                for(p of pins) {
+                    lst.push(
+                        ml("div", {class: "row mb-3"}, [
+                            ml("div", {class: "col-12 col-sm-3 my-2"}, p.toUpperCase()),
+                            ml("div", {class: "col-12 col-sm-9"},
+                                sel(p, pinList, obj[p])
+                            )
+                        ])
+                    )
+                }
+                let en = inp("en", null, null, ["cb"], "en", "checkbox");
+                en.checked = obj["en"];
+
+                return sect("Network Setup", [
+                    ml("div", {class: "row mb-3"}, [
+                        ml("div", {class: "col-8"}, "Ethernet enable"),
+                        ml("div", {class: "col-4"}, en)
+                    ]),
+                    ...lst,
+                    ml("div", {class: "row my-4"}, ml("div", {class: "col a-r"}, ml("input", {type: "button", class:"btn", value: "reboot >>", onclick: () => {saveEth()}}, null))),
+                    ml("div", {class: "row mt-5"}, ml("div", {class: "col a-c"}, ml("a", {onclick: () => {redirect()}}, "stop wizard")))
+                ])
+            }
             function step1Wifi() {
                 return ml("div", {}, [
                     ml("div", {class: "row my-5"}, ml("div", {class: "col"}, ml("span", {class: "fs-1"}, "Welcome to AhoyDTU"))),
@@ -94,6 +121,16 @@
                 }
             }
 
+            function saveEth() {
+                let o = {
+                    cmd: "save_eth",
+                    en: document.getElementsByName("en")[0].checked
+                }
+                for(p of pins) {
+                    o[p] = document.getElementsByName(p)[0].value
+                }
+                getAjax("/api/setup", ((o) => {}), "POST", JSON.stringify(o));
+            }
             function saveWifi() {
                 var ssid = document.getElementById("net").value;
                 if(-1 == ssid)
@@ -102,6 +139,7 @@
             }
 
             function init() {
+                getAjax("/api/setup", ((o) => c.append(step1(o.eth))));
                 function nets(obj) {
                     clearInterval(v)
                     v = setInterval(() => {getAjax('/api/setup/networks', nets)}, 4000)

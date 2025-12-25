@@ -594,24 +594,25 @@
             }
 
             function parseGeneric(obj) {
-                parseNav(obj)
-                parseESP(obj)
-                parseRssi(obj)
-                parseTitle(obj)
+                parseNav(obj);
+                parseESP(obj);
+                parseRssi(obj);
+                parseTitle(obj);
 
                 if(0 != obj.cst_lnk.length) {
-                    document.getElementsByName("cstLnk")[0].value = obj.cst_lnk
-                    document.getElementsByName("cstLnkTxt")[0].value = obj.cst_lnk_txt
+                    document.getElementsByName("cstLnk")[0].value = obj.cst_lnk;
+                    document.getElementsByName("cstLnkTxt")[0].value = obj.cst_lnk_txt;
                 }
 
                 ts = obj.ts_now;
                 window.setInterval("tick()", 1000);
 
-                var tz = []
+                var tz = [];
                 for(i = 0; i < 24; i += 0.5)
                     tz.push([i, ((i-12 > 0) ? "+" : "") + String(i-12)]);
-                document.getElementById("timezone").append(sel("timezone", tz, obj.timezone + 12))
-                var region = [[0, "Europe (860 - 870 MHz)"], [1, "USA, Indonesia (905 - 925 MHz)"], [2, "Brazil (915 - 928 MHz)"]]
+
+                document.getElementById("timezone").append(sel("timezone", tz, obj.timezone + 12));
+                var region = [[0, "Europe (860 - 870 MHz)"], [1, "USA, Indonesia (905 - 925 MHz)"], [2, "Brazil (915 - 928 MHz)"]];
                 document.getElementById("region").append(sel("region", region, obj.region));
             }
 
@@ -657,9 +658,11 @@
                 e.append(ml("table", {class: "table"}, ml("tbody", {}, lines)));
                 if(obj.max_num_inverters > obj.inverter.length)
 					e.append(ml("div", {class: "row my-3"}, 
-							 ml("div", {class: "col a-r"}, 
-							 ml("input", {type: "button", value: "add Inverter", 
-								class: "btn", onclick: function() { ivModal(add); }}, null))));
+						ml("div", {class: "col a-r"}, 
+							ml("input", {type: "button", value: "add Inverter", class: "btn", onclick: function() { ivModal(add); }}, null)
+						)
+					));
+
                 ivGlob(obj);
             }
 
@@ -672,101 +675,101 @@
 
 			function ivModal(obj) {
 				var lines = [];
-				lines.push(ml("tr", {}, [
-					ml("th", {style: "width: 10%;"}, "Input"),
-					ml("th", {}, "Max Module Power [Wp]"),
-					ml("th", {}, "Name (optional)"),
-					ml("th", {}, "Yield Correction [kWh] (optional)")
-				]));
+                lines.push(ml("tr", {}, [
+                    ml("th", {style: "width: 10%;"}, "Input"),
+                    ml("th", {}, "Max Module Power [Wp]"),
+                    ml("th", {}, "Name (optional)"),
+                    ml("th", {}, "Yield Correction [kWh] (optional)")
+                ]));
 
-                for(let i = 0; i < 6; i++) {
-                    lines.push(ml("tr", {id: "ch"+i}, [
-                        ml("td", {}, String(i+1)),
-                        ml("td", {}, ml("input", {name: "ch_p"+i, class: "text", type: "number", max: 999, value: obj.ch_max_pwr[i]}, null)),
-                        ml("td", {}, ml("input", {name: "ch_n"+i, class: "text", type: "text", maxlength: 15, value: (undefined === obj.ch_name[i]) ? "" : obj.ch_name[i]}, null)),
-                        ml("td", {}, ml("input", {name: "yld_c"+i, class: "text", type: "number", max: 999999, value: obj.ch_yield_cor[i], step: "0.001"}, null))
-                    ]));
-                }
+				for(let i = 0; i < 6; i++) {
+					lines.push(ml("tr", {id: "ch"+i}, [
+						ml("td", {}, String(i+1)),
+						ml("td", {}, ml("input", {name: "ch_p"+i, class: "text", type: "number", max: 999, value: obj.ch_max_pwr[i]}, null)),
+						ml("td", {}, ml("input", {name: "ch_n"+i, class: "text", type: "text", maxlength: 15, value: (undefined === obj.ch_name[i]) ? "" : obj.ch_name[i]}, null)),
+						ml("td", {}, ml("input", {name: "yld_c"+i, class: "text", type: "number", max: 999999, value: obj.ch_yield_cor[i], step: "0.001"}, null))
+					]));
+				}
 
-                var cbEn = ml("input", {name: "enable", type: "checkbox"}, null);
-					cbEn.checked = (obj.enabled);
-                var cbDisNightCom = ml("input", {name: "disnightcom", type: "checkbox"}, null);
+				var cbEn             	  = ml("input", {name: "enable", type: "checkbox"}, null);
+					cbEn.checked          = (obj.enabled);
+				var cbDisNightCom   	  = ml("input", {name: "disnightcom", type: "checkbox"}, null);
 					cbDisNightCom.checked = (obj.disnightcom);
-                var ser = ml("input", {name: "ser", class: "text", type: "text", pattern: "[0-9a-fA-F]{12}", value: obj.serial}, null);
+				var ser             	  = ml("input", {name: "ser", class: "text", type: "text", pattern: "[0-9a-fA-F]{12}", value: obj.serial}, null);
 
-                var html = ml("div", {}, [
-                    tabs(["General", "Inputs", "Radio", "Advanced"]),
-                    ml("div", {id: "divGeneral", class: "tab-content"}, [
-                        divRow("Enabled", cbEn),
-                        divRow("Serial", ser),
-                        divRow("Name", ml("input", {name: "name", class: "text", type: "text", value: obj.name}, null))
-                    ]),
-                    ml("div", {id: "divInputs", class: "tab-content hide"}, [
-                        ml("div", {class: "row mb-3"},
-                            ml("table", {class: "table"}, ml("tbody", {}, lines))
-                        )
-                    ]),
-                    ml("div", {id: "divRadio", class: "tab-content hide"}, [
-                        ml("input", {type: "hidden", name: "isnrf"}, null),
-                        ml("div", {id: "setcmt"}, [
-                            divRow("Frequency", sel("freq", esp32cmtFreq, obj.freq)),
-                            divRow("Power Level", sel("cmtpa", esp32cmtPa, obj.pa)),
-                            divRow("Catch Inverter", ml("input", {type: "button", value: "start", class: "btn", onclick: function() { cmtSearch(); }}, null))
-                        ]),
-                        ml("div", {id: "setnrf"},
-                            divRow("Power Level", sel("nrfpa", nrfPa, obj.pa))
-                        ),
-                    ]),
-                    ml("div", {id: "divAdvanced", class: "tab-content hide"}, [
-                        ml("div", {class: "row mb-3"}, [
-                            ml("div", {class: "col-10"}, "Pause communication during night (lat. and lon. need to be set)"),
-                            ml("div", {class: "col-2"}, cbDisNightCom)
-                        ])
-						,
+				var html = ml("div", {}, [
+					tabs(["General", "Inputs", "Radio", "Advanced"]),
+					ml("div", {id: "divGeneral", class: "tab-content"}, [
+						divRow("Enabled", cbEn),
+						divRow("Serial", ser),
+						divRow("Name", ml("input", {name: "name", class: "text", type: "text", value: obj.name}, null))
+					]),
+					ml("div", {id: "divInputs", class: "tab-content hide"}, [
+						ml("div", {class: "row mb-3"},
+							ml("table", {class: "table"}, ml("tbody", {}, lines))
+						)
+					]),
+					ml("div", {id: "divRadio", class: "tab-content hide"}, [
+						ml("input", {type: "hidden", name: "isnrf"}, null),
+						ml("div", {id: "setcmt"}, [
+							divRow("Frequency", sel("freq", esp32cmtFreq, obj.freq)),
+							divRow("Power Level", sel("cmtpa", esp32cmtPa, obj.pa)),
+							divRow("Catch Inverter", ml("input", {type: "button", value: "start", class: "btn", onclick: function() { cmtSearch(); }}, null))
+						]),
+						ml("div", {id: "setnrf"},
+							divRow("Power Level", sel("nrfpa", nrfPa, obj.pa))
+						),
+					]),
+					ml("div", {id: "divAdvanced", class: "tab-content hide"}, [
+						ml("div", {class: "row mb-3"}, [
+							ml("div", {class: "col-10"}, "Pause communication during night (lat. and lon. need to be set)"),
+							ml("div", {class: "col-2"}, cbDisNightCom)
+						]),
 						ml("div", {id: "ivListVzChannel"},[]),
-                    ]),
-                    ml("div", {class: "row mt-5"}, [
-                        ml("div", {class: "col-8", id: "res"}, ""),
-                        ml("div", {class: "col-4 a-r"}, ml("input", {type: "button", value: "save", class: "btn", onclick: function() { ivSave(); }}, null))
-                    ])
-                ]);
+					]),
+					ml("div", {class: "row mt-5"}, [
+						ml("div", {class: "col-8", id: "res"}, ""),
+						ml("div", {class: "col-4 a-r"}, ml("input", {type: "button", value: "save", class: "btn", onclick: function() { ivSave(); }}, null))
+					])
+				]);
 
-                ['keyup', 'change'].forEach(function(evt) {
-                    ser.addEventListener(evt, (e) => {
-                        var sn = parseInt(ser.value, 16);
-                        sn = Math.floor(sn / Math.pow(2, 32));
+				['keyup', 'change'].forEach(function(evt) {
+					ser.addEventListener(evt, (e) => {
+						var sn = parseInt(ser.value, 16);
+							sn = Math.floor(sn / Math.pow(2, 32));
 
-                        var max = 1;
-                        switch(sn & 0x00f0) {
-                            case 0x0010: max = 1; break;
-                            case 0x0040: max = 2; break;
-                            case 0x0060: max = 4; break;
-                            case 0x0080: max = 6; break;
-                        }
-                        for(var i = 0; i < 6; i++) {
-                            setHide("ch"+i, (i >= max));
-                        }
+						var max = 1;
+						switch(sn & 0x00f0) {
+							case 0x0010: max = 1; break;
+							case 0x0040: max = 2; break;
+							case 0x0060: max = 4; break;
+							case 0x0080: max = 6; break;
+						}
 
-                        var nrf = true;
-                        switch(sn & 0xff00) {
-                            case 0x1000: nrf = true; break;
-                            case 0x1100:
-                                switch(sn & 0x000f) {
-                                    case 0x0004:
-                                    case 0x0005: nrf = false; break;
-                                    default:     nrf = true; break;
-                                }
-                                break;
-                            case 0x1300: nrf = false; break;
-                        }
-                        setHide("setcmt", nrf);
-                        setHide("setnrf", !nrf);
-                        document.getElementsByName("isnrf")[0].value = nrf;
-                    })
-                });
+						for(var i = 0; i < 6; i++) {
+							setHide("ch"+i, (i >= max));
+						}
 
-                modal("Edit inverter: " + obj.name + " (" + obj.serial + ")", html);
-                ser.dispatchEvent(new Event('change'));
+						var nrf = true;
+						switch(sn & 0xff00) {
+							case 0x1000: nrf = true; break;
+							case 0x1100:
+								switch(sn & 0x000f) {
+									case 0x0004:
+									case 0x0005: nrf = false; break;
+ 									default:     nrf = true; break;
+								}
+								break;
+							case 0x1300: nrf = false; break;
+						}
+						setHide("setcmt", nrf);
+						setHide("setnrf", !nrf);
+						document.getElementsByName("isnrf")[0].value = nrf;
+					})
+				})
+
+				modal("Edit inverter: " + obj.name + " (" + obj.serial + ")", html);
+				ser.dispatchEvent(new Event('change'));
 
 				var vz_channel = [];
 				// get VZ-Channels via REST
@@ -865,288 +868,290 @@
 
 					// Add Channel via REST/GET
 					// http://localhost:5680/htdocs/middleware.php/channel.json?operation=add&title=Testzaehler&type=power&resolution=1000&description=Swissnox&public=1
-					let addCH = "/htdocs/middleware.php/channel.json?operation=add&title=" + ch[0] + "&type=" + ch[1] + "&resolution=1&&public=1";
-					getAjax(window.location.origin +  addCH, cb);
+					let addCH = "/channel.json?operation=add&title=" + ch[0] + "&type=" + ch[1] + "&resolution=1&&public=1";
+					getAjax(vz_url + addCH, cb);
 
 				}
 
 				function vzDelChannel(ch) {
 					modalClose();
 					// Delete Channel via REST/GET
-					let delCH = "/htdocs/middleware.php/channel.json?operation=delete&uuid=" + ch[2];
-					getAjax(window.location.origin +  delCH, cb);
+					let delCH = "/channel.json?operation=delete&uuid=" + ch[2];
+					getAjax(vz_url + delCH, cb);
 				}
 
-                function ivSave() {
-                    var o = {}
-                    o.cmd  = "save_iv"
-                    o.token = "*"
-                    o.id   = obj.id
+				function ivSave() {
+					var o = {};
+						o.cmd  = "save_iv";
+						o.token = "*";
+						o.id   = obj.id;
 
-                    let sn = document.getElementsByName("ser")[0].value
-                    if(sn[0] == 'A')
-                        sn = convHerf(sn)
-                    o.ser  = parseInt(sn, 16)
+					let sn = document.getElementsByName("ser")[0].value;
+					if(sn[0] == 'A') sn = convHerf(sn);
 
-                    o.name = document.getElementsByName("name")[0].value;
-                    o.en   = document.getElementsByName("enable")[0].checked;
-                    o.ch = [];
-                    for(let i = 0; i < 6; i++) {
-                        var q = new Object();
-                        q.pwr  = document.getElementsByName("ch_p"+i)[0].value;
-                        q.name = document.getElementsByName("ch_n"+i)[0].value;
-                        q.yld  = document.getElementsByName("yld_c"+i)[0].value;
-                        o.ch.push(q);
-                    }
-                    if("true" == document.getElementsByName("isnrf")[0].value)
-                        o.pa = document.getElementsByName("nrfpa")[0].value;
-                    else
-                        o.pa   = document.getElementsByName("cmtpa")[0].value;
-                    o.freq = document.getElementsByName("freq")[0].value;
-                    o.disnightcom = document.getElementsByName("disnightcom")[0].checked;
+					o.ser  = parseInt(sn, 16);
+					o.name = document.getElementsByName("name")[0].value;
+					o.en   = document.getElementsByName("enable")[0].checked;
+					o.ch = [];
+
+					for(let i = 0; i < 6; i++) {
+						var q = new Object();
+							q.pwr  = document.getElementsByName("ch_p"+i)[0].value;
+							q.name = document.getElementsByName("ch_n"+i)[0].value;
+							q.yld  = document.getElementsByName("yld_c"+i)[0].value;
+						o.ch.push(q);
+					}
+
+					if("true" == document.getElementsByName("isnrf")[0].value)
+						o.pa = document.getElementsByName("nrfpa")[0].value;
+					else
+						o.pa   = document.getElementsByName("cmtpa")[0].value;
+
+					o.freq = document.getElementsByName("freq")[0].value;
+					o.disnightcom = document.getElementsByName("disnightcom")[0].checked;
 					o.vz_enable = document.getElementsByName("vz_enable")[0].checked;
 					o.vz_suffix = document.getElementsByName("vz_suffix")[0].value;
 					o.vz_url = document.getElementsByName("vz_url")[0].value;
 					o.vz_channel = (vz_channel);
 
-                    getAjax("/api/setup", cb, "POST", JSON.stringify(o));
+					getAjax("/api/setup", cb, "POST", JSON.stringify(o));
 					modalClose();
-                }
+				}
 
-                function cmtSearch() {
-                    var o = {}
-                    o.cmd = "cmt_search"
-                    o.token = "*"
-                    o.id = obj.id
-                    o.to_ch = document.getElementsByName("freq")[0].value;
+				function cmtSearch() {
+					var o = {};
+						o.cmd = "cmt_search";
+						o.token = "*";
+						o.id = obj.id;
+						o.to_ch = document.getElementsByName("freq")[0].value;
+					getAjax("/api/ctrl", cb, "POST", JSON.stringify(o));
+				}
 
-                    getAjax("/api/ctrl", cb, "POST", JSON.stringify(o));
-                }
+				function convHerf(sn) {
+					let sn_int = 0n;
+					const CHARS = "0123456789ABCDEFGHJKLMNPRSTUVWXY";
 
-                function convHerf(sn) {
-                    let sn_int = 0n;
-                    const CHARS = "0123456789ABCDEFGHJKLMNPRSTUVWXY";
+					for (let i = 0; i < 9; ++i) {
+						const pos = CHARS.indexOf(sn[i]);
+						const shift = 42 - 5 * i - (i <= 2 ? 0 : 2);
+						sn_int |= BigInt(pos) << BigInt(shift);
+					}
 
-                    for (let i = 0; i < 9; ++i) {
-                        const pos = CHARS.indexOf(sn[i])
-                        const shift = 42 - 5 * i - (i <= 2 ? 0 : 2)
-                        sn_int |= BigInt(pos) << BigInt(shift)
-                    }
-
-                    let first4Hex = (sn_int >> 32n) & 0xFFFFn
-
-                    if (first4Hex === 0x2841n)
-                        first4Hex = 0x1121n
-                    else if (first4Hex === 0x2821n)
-                        first4Hex = 0x1141n
-                    else if (first4Hex === 0x2801n)
-                        first4Hex = 0x1161n
-
-                    sn_int = (sn_int & ~(0xFFFFn << 32n)) | (first4Hex << 32n);
-
-                    return sn_int.toString(16)
-                }
+					let first4Hex = (sn_int >> 32n) & 0xFFFFn;
+					if (first4Hex === 0x2841n)
+						first4Hex = 0x1121n;
+					else if (first4Hex === 0x2821n)
+						first4Hex = 0x1141n;
+					else if (first4Hex === 0x2801n)
+						first4Hex = 0x1161n;
+					sn_int = (sn_int & ~(0xFFFFn << 32n)) | (first4Hex << 32n);
+					return sn_int.toString(16);
+				}
 
                 function cb(obj2) {
-                    var e = document.getElementById("res");
-                    if(!obj2.success)
-                        e.innerHTML = "Error:" + obj2.error;
-                    else {
-                        modalClose();
-                        getAjax("/api/inverter/list", parseIv);
-                    }
-                }
-            }
+					var e = document.getElementById("res");
+					if(!obj2.success) {
+						e.innerHTML = "Error:" + obj2.error;
+					} else {
+						modalClose();
+						getAjax("/api/inverter/list", parseIv);
+					}
+				}
+			}
 
-            function ivDel(obj) {
-                var html = ml("div", {class: "row"}, [
-                    ml("div", {class: "col-9"}, "do you really want to delete inverter? (" + obj.name + ")"),
-                    ml("div", {class: "col-3 a-r"}, ml("div", {class: "col-4 a-r"}, ml("input", {type: "button", value: "yes", class: "btn", onclick: function() { del(); }}, null)))
-                ]);
-                modal("Delete inverter: " + obj.name, html);
+			function ivDel(obj) {
+				var html = ml("div", {class: "row"}, [
+					ml("div", {class: "col-9"}, "do you really want to delete inverter? (" + obj.name + ")"),
+					ml("div", {class: "col-3 a-r"}, 
+						ml("div", {class: "col-4 a-r"}, 
+						ml("input", {type: "button", value: "yes", class: "btn", onclick: function() { del(); }}, null)))
+				]);
+				modal("Delete inverter: " + obj.name, html);
 
-                function del() {
-                    var o = new Object();
-                    o.cmd  = "save_iv";
-                    o.token = "*"
-                    o.id   = obj.id;
-                    o.ser  = 0;
-                    o.name = "";
-                    o.en   = false;
-                    o.ch = [];
-                    for(let i = 0; i < 6; i++) {
-                        var q = new Object();
-                        q.pwr  = 0;
-                        q.name = "";
-                        q.yld  = 0;
-                        o.ch.push(q);
-                    }
-                    getAjax("/api/setup", cb, "POST", JSON.stringify(o));
-                }
+				function del() {
+					var o = new Object();
+						o.cmd  = "save_iv";
+						o.token = "*"
+						o.id   = obj.id;
+						o.ser  = 0;
+						o.name = "";
+						o.en   = false;
+						o.ch = [];
+					for(let i = 0; i < 6; i++) {
+						var q = new Object();
+							q.pwr  = 0;
+							q.name = "";
+							q.yld  = 0;
+							o.ch.push(q);
+					}
+					getAjax("/api/setup", cb, "POST", JSON.stringify(o));
+				}
 
-                function cb(obj) {
-                    if(obj.success) {
-                        modalClose();
-                        getAjax("/api/inverter/list", parseIv);
-                    }
-                }
-            }
+				function cb(obj) {
+					if(obj.success) {
+						modalClose();
+						getAjax("/api/inverter/list", parseIv);
+					}
+				}
+			}
 
-            function parseMqtt(obj) {
-                for(var i of [["Addr", "broker"], ["Port", "port"], ["ClientId", "clientId"], ["User", "user"], ["Pwd", "pwd"], ["Topic", "topic"], ["Interval", "interval"]])
-                    document.getElementsByName("mqtt"+i[0])[0].value = obj[i[1]];
+			function parseMqtt(obj) {
+				for(var i of [["Addr", "broker"], ["Port", "port"], ["ClientId", "clientId"], ["User", "user"], ["Pwd", "pwd"], ["Topic", "topic"], ["Interval", "interval"]])
+					document.getElementsByName("mqtt"+i[0])[0].value = obj[i[1]];
                 document.getElementsByName("mqttJson")[0].checked = obj["json"];
-                document.getElementsByName("retain")[0].checked = obj.retain
-            }
+				document.getElementsByName("retain")[0].checked = obj.retain;
+			}
 
-            function parseNtp(obj) {
-                for(var i of [["ntpAddr", "addr"], ["ntpPort", "port"], ["ntpIntvl", "interval"]])
-                    document.getElementsByName(i[0])[0].value = obj[i[1]];
-            }
+			function parseNtp(obj) {
+				for(var i of [["ntpAddr", "addr"], ["ntpPort", "port"], ["ntpIntvl", "interval"]])
+					document.getElementsByName(i[0])[0].value = obj[i[1]];
+			}
 
-            function parseSun(obj) {
-                document.getElementsByName("sunLat")[0].value = obj["lat"];
-                document.getElementsByName("sunLon")[0].value = obj["lon"];
-                for(p of [["sunOffsSr", "offsSr"], ["sunOffsSs", "offsSs"]]) {
-                    const sel = document.getElementsByName(p[0])[0];
-                    for(var i = -60; i <= 60; i++) {
-                        sel.appendChild(opt(i, i + " minutes", (i == (obj[p[1]] / 60))));
-                    }
-                }
-            }
+			function parseSun(obj) {
+				document.getElementsByName("sunLat")[0].value = obj["lat"];
+				document.getElementsByName("sunLon")[0].value = obj["lon"];
+				for(p of [["sunOffsSr", "offsSr"], ["sunOffsSs", "offsSs"]]) {
+					const sel = document.getElementsByName(p[0])[0];
+					for(var i = -60; i <= 60; i++) {
+						sel.appendChild(opt(i, i + " minutes", (i == (obj[p[1]] / 60))));
+					}
+				}
+			}
 
             function parsePinout(obj) {
-                var e = document.getElementById("pinout");
-                var pinList = esp32pins;
-                pinList = raspipins;
-                pins = [['led0', 'pinLed0', 'At least one inverter is producing'], ['led1', 'pinLed1', 'MqTT connected'], ['led2', 'pinLed2', 'Night time']];
-                for(p of pins) {
-                    e.append(
-                        ml("div", {class: "row mb-3"}, [
-                            ml("div", {class: "col-12 col-sm-3 my-2"}, p[2]),
-                            ml("div", {class: "col-12 col-sm-9"},
-                                sel(p[1], pinList, obj[p[0]])
-                            )
-                        ])
-                    );
-                }
-                e.append(
-                    ml("div", { class: "row mb-3" }, [
-                        ml("div", { class: "col-12 col-sm-3 my-2" }, "LED polarity"),
-                        ml("div", { class: "col-12 col-sm-9" },
-                            sel('pinLedHighActive', led_high_active, obj.led_high_active)
-                        )
-                    ]),
-                    ml("div", { class: "row mb-3" }, [
-                        ml("div", { class: "col-12 col-sm-3 my-2" }, "LED luminance (0-255)"),
-                        ml("div", { class: "col-12 col-sm-9" }, ml("input", {class: "text", type: "number", name: "pinLedLum", value: obj.led_lum, min: 0, max: 255}, null))
-                    ])
-                )
-            }
+				var e = document.getElementById("pinout");
+				var pinList = esp32pins;
+					pinList = raspipins;
 
-            function parseNrfRadio(obj) {
-                var e = document.getElementById("rf24");
-                var en = inp("nrfEnable", null, null, ["cb"], "nrfEnable", "checkbox");
-                en.checked = obj["en"];
+				pins = [['led0', 'pinLed0', 'At least one inverter is producing'], ['led1', 'pinLed1', 'MqTT connected'], ['led2', 'pinLed2', 'Night time']];
+				for(p of pins) {
+					e.append(
+						ml("div", {class: "row mb-3"}, [
+							ml("div", {class: "col-12 col-sm-3 my-2"}, p[2]),
+							ml("div", {class: "col-12 col-sm-9"},
+								sel(p[1], pinList, obj[p[0]])
+							)
+						])
+					);
+				}
+				e.append(
+					ml("div", { class: "row mb-3" }, [
+						ml("div", { class: "col-12 col-sm-3 my-2" }, "LED polarity"),
+						ml("div", { class: "col-12 col-sm-9" },
+							sel('pinLedHighActive', led_high_active, obj.led_high_active)
+						)
+					]),
+					ml("div", { class: "row mb-3" }, [
+						ml("div", { class: "col-12 col-sm-3 my-2" }, "LED luminance (0-255)"),
+						ml("div", { class: "col-12 col-sm-9" }, ml("input", {class: "text", type: "number", name: "pinLedLum", value: obj.led_lum, min: 0, max: 255}, null))
+					])
+				);
+			}
 
-                var pinList = esp32pins;
+			function parseNrfRadio(obj) {
+				var en = inp("nrfEnable", null, null, ["cb"], "nrfEnable", "checkbox");
+					en.checked = obj["en"];
+				var pinList = esp32pins;
+					pinList = raspipins;
+				var e = document.getElementById("rf24");
+				e.replaceChildren (ml("div", {class: "row mb-3"}, [
+					ml("div", {class: "col-8 col-sm-3 my-2"}, "NRF24 radio enable"),
+						ml("div", {class: "col-4 col-sm-9"}, en)
+				]));
 
-                e.replaceChildren (
-                    ml("div", {class: "row mb-3"}, [
-                        ml("div", {class: "col-8 col-sm-3 my-2"}, "NRF24 radio enable"),
-                        ml("div", {class: "col-4 col-sm-9"}, en)
-                    ])
-                );
-
-                var pins = [['cs', 'spiCs'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['sclk', 'spiSclk'], ['mosi', 'spiMosi'], ['miso', 'spiMiso']];
-                pinList = raspipins;
-				pins = [['spi', 'spiCSN'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['speed', 'spiSpeed']];
+ 				let pins = [];
+					pins = [['cs', 'spiCs'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['sclk', 'spiSclk'], ['mosi', 'spiMosi'], ['miso', 'spiMiso']];
+					pins = [['spi', 'spiCSN'], ['ce', 'spiCe'], ['irq', 'spiIrq'], ['speed', 'spiSpeed']];
 				pL = pinList;
-                for(p of pins) {
+
+				for(p of pins) {
 					if (p[0] == 'spi') {pinList = obj['csn'];}
 					else if (p[0] == 'speed') {pinList = [[600000, '600 kHz'],[1000000, '1 mHz'],[2000000, '2 mHz'],[10000000, '10 mHz']];}
 					else pinList = pL;
-                    e.append(
-                        ml("div", {class: "row mb-3"}, [
-                            ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
-                            ml("div", {class: "col-12 col-sm-9"},
-                                sel(p[1], pinList, obj[p[0]])
-                            )
-                        ])
-                    );
-                }
-            }
+
+					e.append(
+						ml("div", {class: "row mb-3"}, [
+							ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
+							ml("div", {class: "col-12 col-sm-9"},
+								sel(p[1], pinList, obj[p[0]])
+							)
+						])
+					);
+				}
+			}
 
             function parseCmtRadio(obj) {
-                var e = document.getElementById("cmt");
                 var en = inp("cmtEnable", null, null, ["cb"], "cmtEnable", "checkbox");
+					en.checked = obj["en"];
                 var pinList = esp32pins;
-                pinList = raspipins;
+                	pinList = raspipins;
 
-                en.checked = obj["en"];
-                e.replaceChildren (
-                    ml("div", {class: "row mb-3"}, [
-                        ml("div", {class: "col-8 col-sm-3 my-2"}, "CMT2300A radio enable"),
-                        ml("div", {class: "col-4 col-sm-9"}, en)
-                    ])
-                );
-                pins = [['sclk', 'pinCmtSclk'], ['sdio', 'pinSdio'], ['csb', 'pinCsb'], ['fcsb', 'pinFcsb'], ['gpio3', 'pinGpio3']];
-                for(p of pins) {
-                    e.append(
-                        ml("div", {class: "row mb-3"}, [
-                            ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
-                            ml("div", {class: "col-12 col-sm-9"},
-                                sel(p[1], pinList, obj[p[0]])
-                            )
-                        ])
-                    );
-                }
+                var e = document.getElementById("cmt");
+					e.replaceChildren (ml("div", {class: "row mb-3"}, [
+						ml("div", {class: "col-8 col-sm-3 my-2"}, "CMT2300A radio enable"),
+						ml("div", {class: "col-4 col-sm-9"}, en)
+				]));
 
-                var i = 0
-                while(obj.freq_max >= (obj.freq_min + i * 0.25)) {
-                    esp32cmtFreq.push([i, freqFmt.format(obj.freq_min + i * 0.25) + " MHz"])
-                    i++
-                }
-            }
+ 				let pins = [];
+					pins = [['sclk', 'pinCmtSclk'], ['sdio', 'pinSdio'], ['csb', 'pinCsb'], ['fcsb', 'pinFcsb'], ['gpio3', 'pinGpio3']];
+				for(p of pins) {
+					e.append(
+						ml("div", {class: "row mb-3"}, [
+							ml("div", {class: "col-12 col-sm-3 my-2"}, p[0].toUpperCase()),
+							ml("div", {class: "col-12 col-sm-9"},
+								sel(p[1], pinList, obj[p[0]])
+							)
+						])
+					);
+				}
 
+				let i = 0;
+				while(obj.freq_max >= (obj.freq_min + i * 0.25)) {
+					esp32cmtFreq.push([i, freqFmt.format(obj.freq_min + i * 0.25) + " MHz"]);
+					i++;
+				}
+			}
 
-            function parseSerial(obj) {
-                var e = document.getElementById("serialCb")
-                var l = [["serEn", "show_live_data", "print inverter data"], ["serDbg", "debug", "Serial Debug"], ["priv", "priv", "Privacy Mode"], ["wholeTrace", "wholeTrace", "Print whole traces in Log"], ["log2mqtt", "log2mqtt", "Send Serial debug over MqTT"]]
-                for(var i of l) {
-                    var cb = ml("input", {name: i[0], type: "checkbox"}, null)
-                    cb.checked = obj[i[1]]
-                    e.appendChild(
-                        ml("div", {class: "row mb-3"}, [
-                            ml("div", {class: "col-8 col-sm-3"}, i[2]),
-                            ml("div", {class: "col-4 col-sm-9"}, cb)
-                        ])
-                    )
-                }
-            }
+			function parseSerial(obj) {
+				var e = document.getElementById("serialCb");
+				var l = [["serEn", "show_live_data", "print inverter data"], 
+						 ["serDbg", "debug", "Serial Debug"], 
+						 ["priv", "priv", "Privacy Mode"], 
+						 ["wholeTrace", "wholeTrace", "Print whole traces in Log"], 
+						 ["log2mqtt", "log2mqtt", "Send Serial debug over MqTT"]];
+				for(var i of l) {
+					var cb = ml("input", {name: i[0], type: "checkbox"}, null)
+					cb.checked = obj[i[1]]
+					e.appendChild(
+						ml("div", {class: "row mb-3"}, [
+							ml("div", {class: "col-8 col-sm-3"}, i[2]),
+							ml("div", {class: "col-4 col-sm-9"}, cb)
+						])
+					)
+				}
+			}
 
+			function tick() {
+				document.getElementById("date").innerHTML = toIsoDateStr((new Date((++ts) * 1000)));
+			}
 
-            function tick() {
-                document.getElementById("date").innerHTML = toIsoDateStr((new Date((++ts) * 1000)));
-            }
+			function parse(root) {
+				if(null != root) {
+					parseGeneric(root.generic);
+					parseSys(root.system);
+					parseStaticIp(root.static_ip);
+					parseMqtt(root.mqtt);
+					parseNtp(root.ntp);
+					parseSun(root.sun);
+					parsePinout(root.pinout);
+					parseNrfRadio(root.radioNrf);
+					parseCmtRadio(root.radioCmt);
+					parseSerial(root.serial);
+					getAjax("/api/inverter/list", parseIv);
+				}
+			}
 
-            function parse(root) {
-                if(null != root) {
-                    parseGeneric(root.generic);
-                    parseSys(root.system);
-                    parseStaticIp(root.static_ip);
-                    parseMqtt(root.mqtt);
-                    parseNtp(root.ntp);
-                    parseSun(root.sun);
-                    parsePinout(root.pinout);
-                    parseNrfRadio(root.radioNrf);
-                    parseCmtRadio(root.radioCmt);
-                    parseSerial(root.serial);
-                    getAjax("/api/inverter/list", parseIv);
-                }
-            }
-
-            getAjax("/api/setup", parse);
-        </script>
-    </body>
+			getAjax("/api/setup", parse);
+		</script>
+	</body>
 </html>

@@ -157,12 +157,12 @@ function parseESP(obj) {
     );
 }
 
+// Ein guter Wert ist oft -50 dBm bis -70 dBm, während unter -80 dBm oder -90 dBm auf eine schwache, instabile Verbindung hindeutet.
 function parseRssi(obj) {
     var icon = iconWifi3;
-    if(obj["wifi_rssi"] <= -80)
-        icon = iconWifi1;
-    else if(obj["wifi_rssi"] <= -70)
-        icon = iconWifi2;
+	if (obj["wifi_rssi"] == "LAN connected")	icon = iconLAN;
+    else if(obj["wifi_rssi"] <= -80)			icon = iconWifi1;
+    else if(obj["wifi_rssi"] <= -70)			icon = iconWifi2;
     document.getElementById("wifiicon").replaceChildren(svg(icon, 32, 32, "icon-fg2", obj.wifi_rssi));
 }
 
