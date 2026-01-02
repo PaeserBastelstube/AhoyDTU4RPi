@@ -356,6 +356,7 @@ function saveInverter($my_post){
 	saveDebug($my_post, $ahoy_conf);
 
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "serial_utc_offset")	# call from serial WebConsole
+		if ($my_post["val"] == $ahoy_conf["WebServer"]["TimezoneOffset"] break;
 		$ahoy_conf["WebServer"]["TimezoneOffset"] = $my_post["val"];
 
 	# add new / delete inverter ## see setup.html:736

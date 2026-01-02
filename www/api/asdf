@@ -1,1 +1,0 @@
-curl --header "Content-Type: application/json" --request POST --data '{"id":0,"token":"*","cmd":"limit_nonpersistent_relative", val:100}' http://192.168.254.56
