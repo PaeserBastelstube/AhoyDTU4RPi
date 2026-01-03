@@ -20,9 +20,15 @@ if (isset($ahoy_conf["inverters"])) {
 	}
 }
 
+if (isset($generic_json["generic"]["cst_lnk"]) and isset($generic_json["generic"]["cst_lnk_txt"])) {
+	$cst_str = @file_get_contents($generic_json["generic"]["cst_lnk"]);
+	$cst_arr = json_decode($cst_str, true);
+	foreach (reset($cst_arr) as $ii => $value) {
+		if (gettype($value) == "array") $live_json["cst"] = $value;
+	}
+}
+
 if (isset($argv) and $argv[0] == "live_json.php"){
-	termPrint(
-		"/live_json:"		. PHP_EOL . json_encode($live_json)
-	);
+	termPrint("/live_json:" . PHP_EOL . json_encode($live_json));
 }
 ?>

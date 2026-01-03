@@ -49,5 +49,10 @@ $devInfo = array(
 	0x103311 => 1800, // -6T
 	0x103331 => 2250  // -6T
 );
-?>
 
+if (isset($argv) and $argv[0] == "inverter_defines.php"){
+	if (isset($_SERVER["TERM"]) and $_SERVER["TERM"] = "xterm")
+		print "/devInfo:" . PHP_EOL . json_encode($devInfo) . PHP_EOL;
+}
+
+?>

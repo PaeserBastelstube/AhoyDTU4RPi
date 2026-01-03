@@ -201,9 +201,9 @@ $inverter_list_json = ["inverter" => []];
 # print_r ($ahoy_conf);
 # loop over inverters
 if (isset($ahoy_conf["inverters"]) and count($ahoy_conf["inverters"]) > 0) {
-	#print("\n");print (json_encode($ahoy_conf["inverters"]) . "\n");
+	#print("\n") . (json_encode($ahoy_conf["inverters"]) . "\n");
 	foreach ($ahoy_conf["inverters"] as $ii => $inv) {
-		#print_r($ii); print("\n");print (json_encode($inv) . "\n");
+		#print_r($ii); print("\n") . (json_encode($inv) . "\n");
 		array_push($inverter_list_json["inverter"], [
 			"id"			=> $ii,
 			"enabled"		=> $inv["enabled"],
