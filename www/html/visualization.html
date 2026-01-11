@@ -9,7 +9,7 @@
 <link rel="stylesheet" type="text/css" href="colors.css?v=0.8.0"/>
 <meta name="robots" content="noindex, nofollow" />
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
-        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
     </head>
     <body>
 <div class="topnav">
@@ -344,7 +344,6 @@
                 }
                 model += String(obj.max_pwr) + " (Serial: " + obj.serial + ")";
 
-
                 var html = ml("table", {class: "table"}, [
                     ml("tbody", {}, [
                         tr("Model", model),
@@ -557,6 +556,20 @@
                 e.innerHTML = "inverter acknowledged active power control command";
             }
 
+			function show_cst(obj) {
+				var html = [];
+				for(a in obj["cst_data"]) {
+				  if (a != "cst_lnk_txt") {
+					html.push(ml("div", {class: "row"}, [
+						ml("div", {class: "col mt-1"}, String(a)),
+						ml("div", {class: "col mt-1"}, String(obj["cst_data"][a]))
+					]));
+				  }
+				}
+				modal("Custom link value: ".concat(obj["cst_lnk_txt"]), ml("div", {}, html));
+				///getAjax("/api/getCstLnk", show_cst);
+			}
+
             function parse(obj) {
                 if(null != obj) {
                     parseGeneric(obj["generic"]);
@@ -564,6 +577,13 @@
                     ivEn = Object.values(Object.assign({}, obj["iv"]));
                     mIvHtml = [];
                     mNum = 0;
+
+					if (obj["generic"]["cst_lnk_tas"]) {
+						mIvHtml.push(ml("div", {class: "head p-2 pointer", onclick: function() {
+								getAjax("/api/getCstLnk", show_cst);
+						}}, "Custom link value: ".concat(obj["generic"]["cst_lnk_txt"])));
+					}
+					
                     totalsRendered = false
                     total.fill(0);
                     total[3] = obj.max_total_pwr

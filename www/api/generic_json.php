@@ -116,6 +116,7 @@ $generic_json = [
 		"menu_protEn" => $menu_protEn,					# check, if prot-PW != "\0"
 		"cst_lnk"     => $ahoy_conf["WebServer"]["generic"]["cst"]["lnk"] ?? "",	# custom link
 		"cst_lnk_txt" => $ahoy_conf["WebServer"]["generic"]["cst"]["txt"] ?? "",	# custom link text
+		"cst_lnk_tas" => $ahoy_conf["WebServer"]["generic"]["cst"]["tas"] ?? false,	# custom link Tasmota
 		"region"      => $ahoy_conf["WebServer"]["generic"]["region"] ?? 0,			# wo wird das benötigt
 		"timezone"    => $ahoy_conf["WebServer"]["generic"]["timezone"] ?? 1,	 	# wo wird das benötigt
 		"esp_type"    => "RASPI"													# see HTML footer

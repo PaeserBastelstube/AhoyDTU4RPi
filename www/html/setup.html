@@ -71,7 +71,9 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-8 col-sm-3">Custom link Text</div>
-                                <div class="col-4 col-sm-9"><input type="text" name="cstLnkTxt"/></div>
+                                <div class="col-4 col-sm-7"><input type="text" name="cstLnkTxt"/></div>
+                                <div class="col-sm-1">Tasmota</div>
+                                <div class="col-sm-1"><input type="checkbox" name="cstLnkTas"/></div>
                             </div>
                         </fieldset>
                         <fieldset class="mb-4" id="serialCb">
@@ -601,6 +603,7 @@
                 if(0 != obj.cst_lnk.length) {
                     document.getElementsByName("cstLnk")[0].value = obj.cst_lnk
                     document.getElementsByName("cstLnkTxt")[0].value = obj.cst_lnk_txt
+                    document.getElementsByName("cstLnkTas")[0].checked = obj.cst_lnk_tas
                 }
 
                 ts = obj.ts_now;

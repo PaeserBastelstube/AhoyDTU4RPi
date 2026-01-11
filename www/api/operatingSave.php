@@ -45,7 +45,8 @@ function saveSettings($my_post){
 	# custom link
 	if (isset($my_post["cstLnk"]))		$ahoy_conf["WebServer"]["generic"]["cst"]["lnk"] = $my_post["cstLnk"];
 	if (isset($my_post["cstLnkTxt"]))	$ahoy_conf["WebServer"]["generic"]["cst"]["txt"] = $my_post["cstLnkTxt"];
-
+	if (isset($my_post["cstLnkTas"]))	$ahoy_conf["WebServer"]["generic"]["cst"]["tas"] = $my_post["cstLnkTas"];
+	else $ahoy_conf["WebServer"]["generic"]["cst"]["tas"] = false;
 
 	## System configuration / Serial console # from web.h - line 603
 	# "serEn":"on","serDbg":"on","priv":"on","wholeTrace":"on","log2mqtt":"on",
@@ -356,7 +357,7 @@ function saveInverter($my_post){
 	saveDebug($my_post, $ahoy_conf);
 
 	if (isset($my_post["cmd"]) and $my_post["cmd"] == "serial_utc_offset")	# call from serial WebConsole
-		if ($my_post["val"] == $ahoy_conf["WebServer"]["TimezoneOffset"] break;
+		if ($my_post["val"] == $ahoy_conf["WebServer"]["TimezoneOffset"]) return;
 		$ahoy_conf["WebServer"]["TimezoneOffset"] = $my_post["val"];
 
 	# add new / delete inverter ## see setup.html:736
